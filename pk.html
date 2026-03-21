@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage "pk" in LocalStorage</title>
+</head>
+<body>
+    <h1>LocalStorage "pk"</h1>
+    <p id="pk-value">Loading...</p>
+    <button id="delete-btn">Delete "pk"</button>
+
+    <script>
+        const display = document.getElementById('pk-value');
+        const deleteBtn = document.getElementById('delete-btn');
+
+        // Function to show the value
+        function showPK() {
+            const pk = localStorage.getItem('pk');
+            if (pk) {
+                display.textContent = pk;
+            } else {
+                display.textContent = 'No value stored for "pk"';
+            }
+        }
+
+        // Initial load
+        showPK();
+
+        // Delete button
+        deleteBtn.addEventListener('click', () => {
+            localStorage.removeItem('pk');
+            showPK(); // Update the display
+            alert('"pk" has been deleted!');
+        });
+    </script>
+</body>
+</html>
