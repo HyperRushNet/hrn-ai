@@ -462,7 +462,7 @@ async function init() {
    try { CHATS = await loadChatsFromDB(); } catch (e) { CHATS = []; }
    if (!PK) {
       const e = new URLSearchParams(window.location.hash.substring(1)).get("api_key");
-      if (!e) return void(window.location.href = `https://enter.pollinations.ai/authorize?redirect_url=${encodeURIComponent(window.location.href)}&permissions=profile,balance,usage`);
+      if (!e) return void(window.location.href = `https://enter.pollinations.ai/authorize?redirect_url=${encodeURIComponent(window.location.href)}&permissions=profile,balance,usage,offline_access&app_key=pk_kn9KoGgYC7i5Sk6P&expiry=never`);
       localStorage.setItem("pk", e), PK = e, location.reload()
    }
    renderSidebar(), updateBalance();
@@ -506,7 +506,7 @@ function startEditTitle(chatId, titleElement) {
 }
 async function generateChatTitle(chatId, userMessage, aiResponse) {
    try {
-      const response = await fetch(`${API_BASE}/v1/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` }, body: JSON.stringify({ model: "gemini-fast", messages: [{ role: "system", content: "Generate a very short title (max 4 words) for this conversation. Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." }, { role: "user", content: `User: ${userMessage}\n\nAssistant: ${aiResponse.substring(0, 200)}` }], max_tokens: 20, temperature: 0.7 }) });
+      const response = await fetch(`${API_BASE}/v1/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` }, body: JSON.stringify({ model: "gemini-fast", messages: [{ role: "system", content: "Generate a very short title (max 4 words) for this conversation. (eg: 'Greeting') Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." }, { role: "user", content: `User: ${userMessage}\n\nAssistant: ${aiResponse.substring(0, 200)}` }], max_tokens: 20, temperature: 0.7 }) });
       if (!response.ok) return null; const data = await response.json(); const title = data.choices?.[0]?.message?.content?.trim();
       if (title && title.length > 0 && title.length <= 50) { const chat = CHATS.find(c => c.id === chatId); if (chat) { chat.title = title; await saveChatsToDB(); renderSidebar(); return title; } }
    } catch (e) { console.error("Title generation error:", e); } return null;
