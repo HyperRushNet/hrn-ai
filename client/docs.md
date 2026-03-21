@@ -5,7 +5,7 @@ A modular, promise-based JavaScript wrapper for the Pollinations AI API. This cl
 ## Implementation
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.1.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.1.min.js"></script>
 ```
 
 ---
