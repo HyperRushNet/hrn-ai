@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+      <title>HyperRush AI</title>
+      <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/128/18548/18548385.png">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+      <style>
+         :root{--bg-base:#050505;--bg-surface:#0a0a0b;--bg-elevated:#141416;--border-subtle:rgba(255,255,255,0.06);--border-hover:rgba(255,255,255,0.12);--text-main:#f0f0f0;--text-muted:#71717a;--accent:#7dd3fc;--accent-dim:rgba(125,211,252,0.1);--danger:#ef4444;--sidebar-w:280px;--content-width:740px;--msg-spacing:24px;--input-spacing:160px}
+         ::-webkit-scrollbar{width:6px;height:6px}
+         ::-webkit-scrollbar-track{background:transparent}
+         ::-webkit-scrollbar-thumb{background:#27272a;border-radius:10px}
+         ::-webkit-scrollbar-thumb:hover{background:#3f3f46}
+         *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+         body{background:var(--bg-base);color:var(--text-main);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;height:100dvh;display:flex;overflow:hidden;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none}
+         
+         /* Modal Styles */
+         .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            z-index: 20000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+         }
+         .modal-overlay.active { opacity: 1; pointer-events: auto; }
+         .modal-box {
+            background: var(--bg-surface); border: 1px solid var(--border-subtle);
+            padding: 32px; border-radius: 20px; max-width: 400px; width: 90%;
+            text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transform: scale(0.95) translateY(10px); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+         }
+         .modal-overlay.active .modal-box { transform: scale(1) translateY(0); }
+         .modal-icon { width: 48px; height: 48px; margin: 0 auto 20px; color: var(--accent); }
+         .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
+         .modal-desc { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 28px; }
+         .modal-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--accent); color: #000; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+         .modal-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+         .modal-btn:active { transform: translateY(0); }
+         .modal-close { margin-top: 12px; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); }
+         .modal-close:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+
+         .input-wrap {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 16px 20px 24px 20px;
+            background: linear-gradient(transparent, #050505 90%);
+            pointer-events: none; z-index: 10020; display: flex; justify-content: center;
+         }
+         .toast-notification {
+            position: fixed; bottom: 110px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(20,20,22,0.85); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; gap: 14px;
+            z-index: 10010; box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16,1,0.3,1); pointer-events: none;
+            max-width: calc(100% - 40px); width: max-content
+         }
+         .toast-notification.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto }
+         .toast-icon { width: 20px; height: 20px; color: var(--danger); flex-shrink: 0 }
+         .toast-content { display: flex; flex-direction: column; gap: 2px }
+         .toast-title { font-size: 13px; font-weight: 600; color: var(--text-main) }
+         .toast-subtitle { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px }
+         .toast-timer { font-family: 'JetBrains Mono',monospace; color: var(--accent); font-weight: 500 }
+         @media(max-width:700px){ .toast-notification { bottom: 95px; } }
+         @media(max-width:500px){ .toast-notification { bottom: 90px; } }
+         
+         .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(12px)}
+         body.sidebar-open .sidebar-overlay{opacity:1;pointer-events:auto}
+         .sidebar{width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;padding:16px;gap:12px;position:fixed;height:100%;z-index:100;transform:translateX(-100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1)}
+         @media(min-width:1024px){.sidebar{position:relative;transform:translateX(0)}.sidebar-overlay{display:none}}
+         body.sidebar-open .sidebar{transform:translateX(0)}
+         .new-btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;background:transparent;border:1px solid var(--border-subtle);border-radius:12px;color:var(--text-main);cursor:pointer;font-size:14px;font-weight:500;transition:all 0.2s ease}
+         .new-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+         .new-btn:active{transform:scale(0.98)}
+         .chat-list{flex:1;overflow-y:auto}
+         .chat-item{padding:10px 12px;border-radius:8px;font-size:13px;color:var(--text-muted);cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;transition:background 0.15s}
+         .chat-item:hover{background:rgba(255,255,255,0.03);color:var(--text-main)}
+         .chat-item.active{background:var(--accent-dim);color:var(--accent)}
+         .chat-title-wrap{flex:1;min-width:0;display:flex;align-items:center;gap:6px}
+         .chat-title{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block;min-width:0}
+         .chat-title-input{flex:1;background:transparent;border:1px solid var(--accent);border-radius:4px;color:var(--text-main);font-family:inherit;font-size:13px;padding:2px 6px;outline:none;min-width:0;width:100%}
+         .edit-title-btn{opacity:0;transition:opacity 0.15s;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+         .edit-title-btn:hover{color:var(--accent)}
+         .edit-title-btn svg{width:12px;height:12px}
+         .chat-item:hover .edit-title-btn{opacity:0.6}
+         .chat-item:hover .edit-title-btn:hover{opacity:1}
+         .main{flex:1;display:flex;flex-direction:column;position:relative;min-width:0;overflow:hidden}
+         .header{height:54px;padding:0 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);background:rgba(5,5,5,0.8);backdrop-filter:blur(12px);z-index:10}
+         .menu-btn{background:none;border:none;color:#fff;cursor:pointer;padding:5px;opacity:0.7}
+         @media(min-width:1024px){.menu-btn{display:none}}
+         .chat-scroll{flex:1;overflow-y:auto;padding:24px;scroll-behavior:smooth}
+         .container{max-width:var(--content-width);margin:0 auto;padding-bottom:var(--input-spacing);width:100%}
+         #welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;position:relative;overflow:hidden}
+         #welcome::before{content:'';position:absolute;top:20%;left:50%;transform:translate(-50%,-50%);width:800px;height:600px;background:radial-gradient(circle,rgba(125,211,252,0.08) 0%,transparent 60%);pointer-events:none;filter:blur(60px)}
+         .welcome-content{position:relative;z-index:1;max-width:600px;width:100%;animation:fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards;opacity:0}
+         #welcome h1{font-size:30px;font-weight:600;letter-spacing:-0.5px;background:linear-gradient(135deg,#fff 0%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+         #welcome p{font-size:15px;color:var(--text-muted);margin-bottom:40px}
+         .suggestions-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%}
+         .suggestion-card{position:relative;background:rgba(255,255,255,0.02);border:1px solid var(--border-subtle);border-radius:12px;padding:16px;text-align:left;cursor:pointer;transition:all 0.2s ease;overflow:hidden}
+         .suggestion-card:hover{border-color:rgba(125,211,252,0.3);background:rgba(125,211,252,0.03)}
+         .suggestion-card strong{display:block;font-size:14px;color:var(--text-main);font-weight:600;margin-bottom:4px}
+         .suggestion-card span{display:block;font-size:12px;color:var(--text-muted);line-height:1.4}
+         @media(max-width:640px){.suggestions-grid{display:none}#welcome h1{font-size:26px}.welcome-content{padding:0 10px}}
+         @keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+         .msg{width:100%;margin-top:var(--msg-spacing);animation:fadeIn 0.3s ease;display:flex;flex-direction:column}
+         .msg.user{align-items:flex-end}
+         .msg.user .bubble{background:var(--bg-elevated);padding:10px 16px;border-radius:16px 16px 2px 16px;max-width:85%;font-size:14px;border:1px solid var(--border-subtle);line-height:1.5;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;position:relative}
+         .edit-msg-textarea{width:100%;background:var(--bg-base);border:1px solid var(--accent);color:var(--text-main);font-family:inherit;font-size:14px;padding:8px;border-radius:8px;resize:vertical;min-height:60px;outline:none}
+         .edit-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+         .edit-save-btn{background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+         .edit-cancel-btn{background:var(--bg-elevated);color:var(--text-main);border:1px solid var(--border-subtle);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer}
+         .md-body{font-size:15px;line-height:1.65;color:#d4d4d8;width:100%;overflow-wrap:break-word}
+         .md-body p{margin-bottom:12px}
+         .md-body strong{color:#fff;font-weight:600}
+         .md-body a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:all 0.2s}
+         .md-body a:hover{border-bottom-color:var(--accent)}
+         .md-body h1,.md-body h2,.md-body h3{color:#fff;margin-top:24px;margin-bottom:12px;font-weight:600}
+         .md-body h1{font-size:1.6em;border-bottom:1px solid var(--border-subtle);padding-bottom:8px}
+         .md-body h2{font-size:1.3em}
+         .md-body h3{font-size:1.1em}
+         .md-body ul,.md-body ol{padding-left:24px;margin-bottom:12px}
+         .md-body li{margin-bottom:6px}
+         .md-body ul li::marker{color:var(--accent)}
+         .md-body .task-list-item{list-style:none;margin-left:-24px}
+         .md-body input[type="checkbox"]{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1px solid var(--border-hover);border-radius:4px;margin-right:8px;vertical-align:middle;cursor:pointer;position:relative;background:transparent}
+         .md-body input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent)}
+         .md-body input[type="checkbox"]:checked::after{content:'✔';color:#000;font-size:10px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+         .table-wrapper{width:100%;overflow-x:auto;margin:16px 0;border:1px solid var(--border-subtle);border-radius:8px}
+         table{width:100%;border-collapse:collapse;font-size:14px;text-align:left}
+         th,td{padding:10px 14px;border-bottom:1px solid var(--border-subtle)}
+         th{background:rgba(255,255,255,0.03);font-weight:600;color:#fff}
+         tr:last-child td{border-bottom:none}
+         tr:hover td{background:rgba(255,255,255,0.02)}
+         .code-block{margin:16px 0;border:1px solid var(--border-subtle);border-radius:10px;background:#09090b;overflow:hidden}
+         .code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border-subtle)}
+         .code-lang{font-size:11px;color:var(--accent);font-family:'JetBrains Mono';text-transform:uppercase;letter-spacing:0.5px}
+         .code-content{overflow-x:auto}
+         pre{padding:14px;margin:0}
+         pre code{background:none !important;font-family:'JetBrains Mono',monospace;font-size:13px}
+         .actions{display:flex;gap:4px;margin-top:8px;opacity:0.5;transition:opacity 0.2s}
+         .msg:hover .actions{opacity:1}
+         .act-btn{background:none;border:none;color:#71717a;cursor:pointer;padding:6px;border-radius:6px;transition:0.15s;display:flex;align-items:center}
+         .act-btn:hover{color:var(--accent);background:var(--accent-dim)}
+         .act-btn svg{width:16px;height:16px;stroke-width:2}
+         .input-box{max-width:680px;margin:0 auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;display:flex;align-items:center;padding:10px 16px;gap:12px;pointer-events:auto;transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;width:100%}
+         .input-box:focus-within{border-color:rgba(125,211,252,0.4);background:#0a0a0b;box-shadow:0 0 0 1px rgba(125,211,252,0.1)}
+         textarea{flex:1;background:transparent;border:none;color:#fff;font-family:inherit;font-size:15px;resize:none;outline:none;max-height:200px;padding:0;line-height:1.5}
+         .send-btn{width:34px;height:34px;border-radius:10px;border:none;background:var(--border-hover);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+         .send-btn.active{background:var(--accent)}
+         .send-btn.active svg{stroke:#000}
+         .loader{display:flex;gap:5px;padding:10px 0}
+         .loader span{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:bounce 1.4s infinite}
+         mjx-container{font-size:110% !important;pointer-events:none}
+         @keyframes bounce{0%,100%{opacity:0.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+         @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+         @media(max-width:900px){:root{--msg-spacing:20px;--input-spacing:150px}.input-wrap{padding:14px 18px 22px 18px}}
+         @media(max-width:700px){:root{--msg-spacing:16px;--input-spacing:140px}.input-wrap{padding:12px 16px 20px 16px}}
+         @media(max-width:500px){:root{--msg-spacing:12px;--input-spacing:130px}.input-wrap{padding:10px 14px 18px 14px}.chat-scroll{padding:16px}}
+         @media(max-width:380px){:root{--msg-spacing:10px;--input-spacing:120px}.input-wrap{padding:8px 12px 16px 12px}.chat-scroll{padding:12px}}
+      </style>
+   </head>
+   <body>
+      <!-- Login Modal -->
+      <div id="login-modal" class="modal-overlay">
+         <div class="modal-box">
+            <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+               <polyline points="10 17 15 12 10 7"/>
+               <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            <div class="modal-title">Login Required</div>
+            <div class="modal-desc">You need to be logged in to send messages. Click below to authorize via Pollinations.</div>
+            <button class="modal-btn" onclick="initiateLogin()">Login with Pollinations</button>
+            <button class="modal-btn modal-close" onclick="closeModal()">Cancel</button>
+         </div>
+      </div>
+
+      <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+      <div class="sidebar" id="sidebar">
+         <div class="sidebar-header">
+            <button class="new-btn" onclick="newChat()" style="width:100%">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+               </svg>
+               New Chat
+            </button>
+         </div>
+         <div class="chat-list" id="chat-list"></div>
+      </div>
+      <div class="main">
+         <div id="quota-toast" class="toast-notification">
+            <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <circle cx="12" cy="12" r="10"></circle>
+               <line x1="12" y1="8" x2="12" y2="12"></line>
+               <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div class="toast-content">
+               <div class="toast-title">Limiet bereikt</div>
+               <div class="toast-subtitle">Nieuwe credits over <span id="toast-countdown" class="toast-timer">--:--</span></div>
+            </div>
+         </div>
+         <div class="header">
+            <button class="menu-btn" onclick="toggleSidebar()">
+               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+               </svg>
+            </button>
+            <div id="balance" style="font-size:11px;color:#3f3f46;font-family:'JetBrains Mono',monospace;letter-spacing:0.3px">...</div>
+         </div>
+         <div id="welcome">
+            <div class="welcome-content">
+               <h1>HyperRush AI</h1>
+               <p>From prompt to perfection.</p>
+               <div class="suggestions-grid">
+                  <div class="suggestion-card" onclick="startSuggestion('Explain quantum physics like I\'m 5 years old')">
+                     <strong>Explain Concept</strong>
+                     <span>"Explain quantum physics simply"</span>
+                  </div>
+                  <div class="suggestion-card" onclick="startSuggestion('Write a Python script for a password generator')">
+                     <strong>Write Code</strong>
+                     <span>"Python password generator"</span>
+                  </div>
+                  <div class="suggestion-card" onclick="startSuggestion('Give me 5 tips to be more productive working from home')">
+                     <strong>Ask Advice</strong>
+                     <span>"Tips for working from home"</span>
+                  </div>
+                  <div class="suggestion-card" onclick="startSuggestion('Invent a creative story about a robot in nature')">
+                     <strong>Creativity</strong>
+                     <span>"Invent a short story"</span>
+                  </div>
+               </div>
+            </div>
+         </div>
+         <div id="chat-view" class="chat-scroll" style="display:none">
+            <div class="container" id="chat-container"></div>
+         </div>
+         <div class="input-wrap">
+            <div class="input-box">
+               <textarea id="prompt" placeholder="Ask a question..." rows="1"></textarea>
+               <button id="send-btn" class="send-btn" onclick="handleSendOrStop()">
+                  <svg id="icon-send" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M12 19V5M5 12l7-7 7 7"/>
+                  </svg>
+                  <svg id="icon-stop" width="18" height="18" viewBox="0 0 24 24" fill="black" style="display:none">
+                     <rect x="6" y="6" width="12" height="12" rx="1"/>
+                  </svg>
+               </button>
+            </div>
+         </div>
+      </div>
+      <script>
+class MarkdownParser {
+   escapeHtml(e) {
+      if (!e) return "";
+      const t = {
+         "&": "&amp;",
+         "<": "&lt;",
+         ">": "&gt;",
+         '"': "&quot;",
+         "'": "&#039;"
+      };
+      return e.replace(/[&<>"']/g, (e => t[e]))
+   }
+   parse(e) {
+      if (!e) return "";
+      let t = e;
+      const n = [];
+      t = t.replace(/\$\$([\s\S]*?)\$\$/g, ((e, t) => {
+         const s = n.length;
+         return n.push(`\\[${t}\\]`), `[[MATHBLOCK${s}]]`
+      })), t = t.replace(/\$([^\$\n]+?)\$/g, ((e, t) => {
+         const s = n.length;
+         return n.push(`\\(${t}\\)`), `[[MATHBLOCK${s}]]`
+      }));
+      const s = [];
+      t = t.replace(/```(\w*)\n([\s\S]*?)(?:```|$)/g, ((e, t, n) => {
+         const o = s.length;
+         return s.push(this.renderCodeBlock(n || "", t)), `[[CODEBLOCK${o}]]`
+      }));
+      const o = [];
+      return t = t.replace(/`([^`\n]+)`/g, ((e, t) => {
+         const n = o.length;
+         return o.push(`<code class="inline-code" style="background:rgba(255,255,255,0.1);padding:2px 5px;border-radius:4px;font-size:0.9em;">${this.escapeHtml(t)}</code>`), `[[INLINECODE${n}]]`
+      })), t = this.parseTables(t), t = t.replace(/^###### (.+)$/gm, "<h6>$1</h6>").replace(/^##### (.+)$/gm, "<h5>$1</h5>").replace(/^#### (.+)$/gm, "<h4>$1</h4>").replace(/^### (.+)$/gm, "<h3>$1</h3>").replace(/^## (.+)$/gm, "<h2>$1</h2>").replace(/^# (.+)$/gm, "<h1>$1</h1>"), t = this.parseBlockquotes(t), t = t.replace(/^(---|\*\*\*|___)$/gm, '<hr style="border-color:var(--border-subtle);">'), t = this.parseLists(t), t = t.replace(/\*\*\*([^*\n]+)\*\*\*/g, "<strong><em>$1</em></strong>").replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>").replace(/__([^_\n]+)__/g, "<strong>$1</strong>").replace(/\*([^*\n]+)\*/g, "<em>$1</em>").replace(/_([^_\n]+)_/g, "<em>$1</em>"), t = t.replace(/~~([^~\n]+)~~/g, "<del>$1</del>"), t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:8px 0;">').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'), t = this.parseParagraphs(t), o.forEach(((e, n) => {
+         t = t.replace(`[[INLINECODE${n}]]`, e)
+      })), s.forEach(((e, n) => {
+         t = t.replace(`[[CODEBLOCK${n}]]`, e)
+      })), n.forEach(((e, n) => {
+         t = t.replace(`[[MATHBLOCK${n}]]`, e)
+      })), t
+   }
+   renderCodeBlock(e, t) {
+      const n = t || "code",
+         s = e.trim();
+      let o = this.escapeHtml(s);
+      try {
+         o = t && hljs.getLanguage(t) ? hljs.highlight(s, {
+            language: t
+         }).value : hljs.highlightAuto(s).value
+      } catch (e) {}
+      return `<div class="code-block"><div class="code-header"><span class="code-lang">${n}</span><button class="act-btn" onclick="copyText(this, \`${encodeURIComponent(s)}\`)" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><div class="code-content"><pre><code class="hljs">${o}</code></pre></div></div>`
+   }
+   parseTables(e) {
+      return e.replace(/^\|(.+)\|\s*\n\|([-:\s|]+)\|\s*\n((?:\|.+\|\s*\n?)+)/gm, ((e, t, n, s) => {
+         if (!t || !n || !s) return e;
+         const o = t.split("|").map((e => e.trim())).filter((e => e)),
+            a = n.split("|").map((e => (e = e.trim()).startsWith(":") && e.endsWith(":") ? "text-center" : e.endsWith(":") ? "text-right" : "text-left"));
+         return `<div class="table-wrapper"><table>${"<thead><tr>"+o.map(((e,t)=>`<th class="${a[t]||""}">${e}</th>`)).join("")+"</tr></thead>"}${"<tbody>"+s.trim().split("\n").map((e=>"<tr>"+e.split("|").map((e=>e.trim())).filter((e=>e)).map(((e,t)=>`<td class="${a[t]||""}">${e}</td>`)).join("")+"</tr>")).join("")+"</tbody>"}</table></div>`
+      }))
+   }
+   parseBlockquotes(e) {
+      const t = e.split("\n");
+      let n = [],
+         s = !1,
+         o = [];
+      for (let e of t) e.startsWith("> ") ? (s || (s = !0, o = []), o.push(e.substring(2))) : (s && (n.push('<blockquote style="border-left:3px solid var(--accent);padding-left:16px;margin:16px 0;color:#a1a1aa;">' + o.join("<br>") + "</blockquote>"), s = !1, o = []), n.push(e));
+      return s && n.push('<blockquote style="border-left:3px solid var(--accent);padding-left:16px;margin:16px 0;color:#a1a1aa;">' + o.join("<br>") + "</blockquote>"), n.join("\n")
+   }
+   parseLists(e) {
+      const t = e.split("\n");
+      let n = [],
+         s = !1,
+         o = !1,
+         a = [],
+         r = [];
+      for (let e of t) {
+         const t = e.match(/^[\s]*[-*+][\s]+\[( |x)\][\s]+(.+)$/),
+            i = e.match(/^[\s]*[-*+][\s]+(.+)$/),
+            l = e.match(/^[\s]*(\d+)\.[\s]+(.+)$/);
+         if (t) {
+            o && (n.push("<ol>" + r.join("") + "</ol>"), o = !1, r = []), s || (s = !0, a = []);
+            const e = "x" === t[1],
+               i = t[2] || "";
+            a.push(`<li class="task-list-item"><input type="checkbox" ${e?"checked":""} disabled> ${i}</li>`)
+         } else i ? (o && (n.push("<ol>" + r.join("") + "</ol>"), o = !1, r = []), s || (s = !0, a = []), a.push(`<li>${i[1]||""}</li>`)) : l ? (s && (n.push("<ul>" + a.join("") + "</ul>"), s = !1, a = []), o || (o = !0, r = []), r.push(`<li>${l[2]||""}</li>`)) : (s && (n.push("<ul>" + a.join("") + "</ul>"), s = !1, a = []), o && (n.push("<ol>" + r.join("") + "</ol>"), o = !1, r = []), n.push(e))
+      }
+      return s && n.push("<ul>" + a.join("") + "</ul>"), o && n.push("<ol>" + r.join("") + "</ol>"), n.join("\n")
+   }
+   parseParagraphs(e) {
+      return e.split(/\n\n+/).map((e => (e = e.trim()) ? e.match(/^<(h[1-6]|ul|ol|li|blockquote|hr|div|p|pre|code|table)/) || e.match(/^\[\[CODEBLOCK\d+\]\]$/) ? e : `<p>${e.replace(/\n/g,"<br>")}</p>` : "")).join("\n")
+   }
+}
+const mdParser = new MarkdownParser,
+   API_BASE = "https://gen.pollinations.ai",
+   SYS_PROMPT = `
+You are HyperRush AI. You possess a vast array of knowledge and creative capabilities.
+**CRITICAL INSTRUCTION: RESPONSE FORMATTING**
+1.  **NO EMPTY RESPONSES:** You are strictly forbidden from returning an empty response, whitespace only, or silence. Every single user input MUST result in a visible text output.
+2.  **AMBIGUITY HANDLING:** If the user input is gibberish, random names, unclear, or seems like a mistake (e.g., "asdgfds", "John Doe"), DO NOT return nothing. Instead, respond playfully or ask for clarification in the language the user seems to be using (default to English if unclear).
+    -   Example User: "blah blah" -> Example Response: "It looks like you're testing me or maybe speaking in code! How can I actually help you today?"
+    -   Example User: "dood ethan michel brassel" -> Example Response: "I'm not sure what to make of that! Is 'Ethan Michel Brassel' a person you want to know about, or just random words? Let me know how I can assist!"
+3.  **LANGUAGE MATCHING:** Always detect and match the language of the user's input (e.g., Dutch input -> Dutch output).
+4.  **FORMATTING:** Use Markdown. Use MathJax ($$...$$) for math.
+`;
+let CURRENT_ID = null,
+   CHATS = [],
+   PK = localStorage.getItem("pk"),
+   isGenerating = !1,
+   abortController = null,
+   mathjaxQueue = [],
+   lastMathjaxRender = 0;
+const DB_NAME = "HyperRushDB";
+const DB_STORE = "chatHistory";
+const PENDING_PROMPT_KEY = "pending_prompt";
+let db;
+
+function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onerror = (e) => reject("IndexedDB error: " + e.target.error);
+        request.onsuccess = (e) => {
+            db = e.target.result;
+            resolve(db);
+        };
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(DB_STORE)) {
+                db.createObjectStore(DB_STORE, { keyPath: "id" });
+            }
+        };
+    });
+}
+function dbOperation(mode, operation) {
+    return new Promise((resolve, reject) => {
+        if (!db) return reject("DB not init");
+        const transaction = db.transaction(DB_STORE, mode);
+        const store = transaction.objectStore(DB_STORE);
+        const request = operation(store);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+function saveChatsToDB() {
+    const data = { id: "main_history", chats: CHATS };
+    return dbOperation("readwrite", store => store.put(data));
+}
+function loadChatsFromDB() {
+    return dbOperation("readonly", store => store.get("main_history")).then(data => {
+        return data ? data.chats : [];
+    }).catch(() => []);
+}
+function cleanTitle(text) {
+    if (!text) return "New Chat";
+    return text.replace(/<br\s*\/?>/gi, ' ').replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').replace(/[#*`_~]/g, '').trim().substring(0, 50);
+}
+function renderMathLive(e) {
+   if (!window.MathJax) return;
+   const t = Date.now();
+   t - lastMathjaxRender < 100 || (lastMathjaxRender = t, MathJax.typesetPromise([e]).catch((e => console.log(e))))
+}
+let countdownInterval = null;
+function showQuotaToast() {
+    const toast = document.getElementById('quota-toast');
+    toast.classList.add('show');
+    if (countdownInterval) clearInterval(countdownInterval);
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+function hideQuotaToast() {
+    const toast = document.getElementById('quota-toast');
+    toast.classList.remove('show');
+    if (countdownInterval) clearInterval(countdownInterval);
+}
+function updateCountdown() {
+    const now = new Date();
+    const nextHour = new Date(now);
+    nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); 
+    const diff = nextHour - now;
+    if (diff <= 0) {
+        hideQuotaToast();
+        updateBalance();
+        return;
+    }
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    const str = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('toast-countdown').innerText = str;
+}
+
+// --- Login & Modal Logic ---
+function openModal() {
+    document.getElementById('login-modal').classList.add('active');
+}
+function closeModal() {
+    document.getElementById('login-modal').classList.remove('active');
+}
+function initiateLogin() {
+    // Save current prompt if any
+    const promptText = document.getElementById('prompt').value.trim();
+    if (promptText) {
+        localStorage.setItem(PENDING_PROMPT_KEY, promptText);
+    }
+    
+    const clientId = "hyperRushApp"; // Identifier for your app
+    const redirectUri = encodeURIComponent(window.location.href.split('?')[0]); // Clean URL
+    const authUrl = `https://enter.pollinations.ai/authorize?client_id=${clientId}&redirect_url=${redirectUri}&permissions=profile,balance,usage`;
+    
+    window.location.href = authUrl;
+}
+
+function checkAuthOnLoad() {
+    const params = new URLSearchParams(window.location.search);
+    const apiKey = params.get("api_key");
+    if (apiKey) {
+        localStorage.setItem("pk", apiKey);
+        PK = apiKey;
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+async function init() {
+   document.addEventListener("contextmenu", (e => e.preventDefault()));
+   document.addEventListener("selectstart", (e => {
+       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return true;
+       e.preventDefault();
+   }));
+   
+   // Check for API key in URL or storage
+   checkAuthOnLoad();
+   
+   await initDB();
+   try {
+      CHATS = await loadChatsFromDB();
+   } catch (e) {
+      CHATS = [];
+   }
+
+   renderSidebar();
+   updateBalance();
+
+   // Restore pending prompt if exists
+   const pendingPrompt = localStorage.getItem(PENDING_PROMPT_KEY);
+   if (pendingPrompt) {
+       document.getElementById("prompt").value = pendingPrompt;
+       localStorage.removeItem(PENDING_PROMPT_KEY); // Clear after restoring
+   }
+   
+   const e = document.getElementById("prompt");
+   e.addEventListener("input", (() => {
+      e.style.height = "auto", e.style.height = e.scrollHeight + "px"
+   })), e.addEventListener("keydown", (e => {
+      "Enter" !== e.key || e.shiftKey || (e.preventDefault(), handleSendOrStop())
+   }))
+}
+function toggleSidebar() {
+   document.body.classList.toggle("sidebar-open")
+}
+async function updateBalance() {
+   const e = document.getElementById("balance");
+   if (!PK) {
+       e.innerText = "GUEST";
+       e.style.cursor = "pointer";
+       e.onclick = openModal;
+       return;
+   }
+   
+   try {
+      const t = await fetch(`${API_BASE}/account/balance`, {
+         method: "GET",
+         headers: {
+            Authorization: `Bearer ${PK}`,
+            "Content-Type": "application/json"
+         },
+         referrer: window.location.href,
+         referrerPolicy: "strict-origin-when-cross-origin"
+      });
+      if (t.status === 402) {
+          showQuotaToast();
+          e.innerText = "LIMIET";
+          return;
+      }
+      hideQuotaToast();
+      if (!t.ok) throw new Error(`HTTP status ${t.status}`);
+      const n = await t.json();
+      e.innerText = Math.round(((n.balance || 0) + Number.EPSILON) * 1000).toLocaleString() + " CREDITS";
+      e.style.cursor = "default";
+      e.onclick = null;
+   } catch (t) {
+      console.error("Balance fetch error:", t), e.innerText = "ERROR"
+   }
+}
+function renderSidebar() {
+   const e = document.getElementById("chat-list");
+   e.innerHTML = "";
+   CHATS.forEach((t => {
+      const n = document.createElement("div");
+      n.className = "chat-item " + (t.id === CURRENT_ID ? "active" : "");
+      const titleWrap = document.createElement("div");
+      titleWrap.className = "chat-title-wrap";
+      const s = document.createElement("span");
+      s.className = "chat-title";
+      const displayTitle = cleanTitle(t.title);
+      s.innerText = displayTitle;
+      s.title = displayTitle;
+      const editBtn = document.createElement("button");
+      editBtn.className = "edit-title-btn";
+      editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+      editBtn.title = "Edit title";
+      editBtn.onclick = (e) => {
+         e.stopPropagation();
+         startEditTitle(t.id, s);
+      };
+      titleWrap.appendChild(s);
+      titleWrap.appendChild(editBtn);
+      s.ondblclick = (e) => {
+         e.stopPropagation();
+         startEditTitle(t.id, s);
+      };
+      n.onclick = () => loadChat(t.id);
+      const o = document.createElement("button");
+      o.className = "act-btn", o.onclick = e => deleteChat(t.id, e), o.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;opacity:0.6"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+      n.appendChild(titleWrap);
+      n.appendChild(o);
+      e.appendChild(n);
+   }))
+}
+function startEditTitle(chatId, titleElement) {
+   const chat = CHATS.find(c => c.id === chatId);
+   if (!chat) return;
+   const currentTitle = chat.title || "New Chat";
+   const input = document.createElement("input");
+   input.type = "text";
+   input.className = "chat-title-input";
+   input.value = currentTitle;
+   const parent = titleElement.parentNode;
+   parent.replaceChild(input, titleElement);
+   input.focus();
+   input.select();
+   const saveTitle = async () => {
+      const newTitle = input.value.trim() || "New Chat";
+      chat.title = newTitle;
+      await saveChatsToDB();
+      const newSpan = document.createElement("span");
+      newSpan.className = "chat-title";
+      newSpan.innerText = cleanTitle(newTitle);
+      newSpan.title = cleanTitle(newTitle);
+      newSpan.ondblclick = (e) => {
+         e.stopPropagation();
+         startEditTitle(chatId, newSpan);
+      };
+      parent.replaceChild(newSpan, input);
+   };
+   input.onblur = saveTitle;
+   input.onkeydown = (e) => {
+      if (e.key === "Enter") {
+         e.preventDefault();
+         input.blur();
+      } else if (e.key === "Escape") {
+         input.value = currentTitle;
+         input.blur();
+      }
+   };
+}
+async function generateChatTitle(chatId, userMessage, aiResponse) {
+   try {
+      const response = await fetch(`${API_BASE}/v1/chat/completions`, {
+         method: "POST",
+         headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${PK}`
+         },
+         body: JSON.stringify({
+            model: "gemini-fast", 
+            messages: [{
+               role: "system",
+               content: "Generate a very short title (max 4 words) for this conversation. Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message."
+            }, {
+               role: "user",
+               content: `User: ${userMessage}\n\nAssistant: ${aiResponse.substring(0, 200)}`
+            }],
+            max_tokens: 20,
+            temperature: 0.7
+         })
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      const title = data.choices?.[0]?.message?.content?.trim();
+      if (title && title.length > 0 && title.length <= 50) {
+         const chat = CHATS.find(c => c.id === chatId);
+         if (chat) {
+            chat.title = title;
+            await saveChatsToDB();
+            renderSidebar();
+            return title;
+         }
+      }
+   } catch (e) {
+      console.error("Title generation error:", e);
+   }
+   return null;
+}
+function loadChat(e) {
+   if (isGenerating) return;
+   CURRENT_ID = e;
+   const t = CHATS.find((t => t.id === e));
+   t && (document.getElementById("welcome").style.display = "none", document.getElementById("chat-view").style.display = "block", document.getElementById("chat-container").innerHTML = "", t.messages && Array.isArray(t.messages) && t.messages.forEach(((e, t) => {
+      renderMsg(e.role, e.content, t, !0)
+   })), renderSidebar(), window.innerWidth < 1024 && document.body.classList.remove("sidebar-open"))
+}
+function newChat() {
+   isGenerating || (CURRENT_ID = null, document.getElementById("welcome").style.display = "flex", document.getElementById("chat-view").style.display = "none", document.getElementById("chat-container").innerHTML = "", renderSidebar())
+}
+async function deleteChat(e, t) {
+   t.stopPropagation(), CHATS = CHATS.filter((t => t.id !== e)), await saveChatsToDB(), CURRENT_ID === e ? newChat() : renderSidebar()
+}
+function copyText(e, t) {
+   navigator.clipboard.writeText(decodeURIComponent(t));
+   const n = e.innerHTML;
+   e.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>', setTimeout((() => e.innerHTML = n), 2e3)
+}
+function startSuggestion(e) {
+   document.getElementById("prompt").value = e, handleSendOrStop()
+}
+function renderMsg(e, t, n, s) {
+   const o = "user" === e,
+      a = document.createElement("div");
+   if (a.className = "msg " + (o ? "user" : "ai"), a.id = `msg-${n}`, o) {
+      const e = document.createElement("div");
+      e.className = "bubble";
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "bubble-content";
+      contentDiv.innerText = t || "";
+      e.appendChild(contentDiv);
+      const actionsDiv = document.createElement("div");
+      actionsDiv.className = "actions";
+      actionsDiv.innerHTML = `
+         <button class="act-btn" onclick="editUserMessage(${n})" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+         </button>`;
+      e.appendChild(actionsDiv);
+      a.appendChild(e)
+   } else {
+      const e = document.createElement("div");
+      if (e.className = "md-body", s) {
+         e.innerHTML = mdParser.parse(t || ""), window.MathJax && MathJax.typesetPromise([e]).catch((e => console.log(e)));
+         const s = document.createElement("div");
+         s.className = "actions", s.innerHTML = `<button class="act-btn" onclick="handleRegen(${n})" title="Regenerate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button><button class="act-btn" onclick="copyText(this, \`${encodeURIComponent(t||"")}\`)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`, a.appendChild(s)
+      } else e.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
+      a.insertBefore(e, a.firstChild)
+   }
+   return document.getElementById("chat-container").appendChild(a), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight, a
+}
+function editUserMessage(index) {
+    const msgDiv = document.getElementById(`msg-${index}`);
+    if (!msgDiv) return;
+    const bubble = msgDiv.querySelector('.bubble');
+    const contentDiv = bubble.querySelector('.bubble-content');
+    const oldText = contentDiv.innerText;
+    const actions = bubble.querySelector('.actions');
+    if(actions) actions.style.display = 'none';
+    const textarea = document.createElement('textarea');
+    textarea.className = 'edit-msg-textarea';
+    textarea.value = oldText;
+    const btns = document.createElement('div');
+    btns.className = 'edit-actions';
+    btns.innerHTML = `
+        <button class="edit-cancel-btn" onclick="cancelEdit(${index}, \`${encodeURIComponent(oldText)}\`)">Cancel</button>
+        <button class="edit-save-btn" onclick="saveEdit(${index})">Send</button>
+    `;
+    contentDiv.replaceWith(textarea);
+    textarea.focus();
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+    bubble.appendChild(btns);
+}
+function cancelEdit(index, oldTextEncoded) {
+    const msgDiv = document.getElementById(`msg-${index}`);
+    const bubble = msgDiv.querySelector('.bubble');
+    const textarea = bubble.querySelector('.edit-msg-textarea');
+    const btns = bubble.querySelector('.edit-actions');
+    const actions = bubble.querySelector('.actions');
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'bubble-content';
+    contentDiv.innerText = decodeURIComponent(oldTextEncoded);
+    textarea.replaceWith(contentDiv);
+    bubble.removeChild(btns);
+    if(actions) actions.style.display = 'flex';
+}
+async function saveEdit(index) {
+    const msgDiv = document.getElementById(`msg-${index}`);
+    const bubble = msgDiv.querySelector('.bubble');
+    const textarea = bubble.querySelector('.edit-msg-textarea');
+    const newText = textarea.value.trim();
+    if (!newText) return;
+    const chat = CHATS.find(c => c.id === CURRENT_ID);
+    if (!chat) return;
+    chat.messages[index].content = newText;
+    chat.messages = chat.messages.slice(0, index + 1);
+    await saveChatsToDB();
+    document.getElementById("chat-container").innerHTML = "";
+    chat.messages.forEach((msg, i) => renderMsg(msg.role, msg.content, i, true));
+    streamAI(false);
+}
+async function handleRegen(e) {
+   if (isGenerating) return;
+   const t = CHATS.find((t => t.id === CURRENT_ID));
+   t && t.messages && (t.messages = t.messages.slice(0, e), await saveChatsToDB(), document.getElementById("chat-container").innerHTML = "", t.messages.forEach(((e, t) => renderMsg(e.role, e.content, t, !0))), streamAI())
+}
+function handleSendOrStop() {
+   if (isGenerating) return void(abortController && abortController.abort());
+   
+   // Check for Login
+   if (!PK) {
+       openModal();
+       return;
+   }
+
+   const e = document.getElementById("prompt"),
+      t = e.value.trim();
+   if (!t) return;
+   e.value = "", e.style.height = "auto", document.getElementById("welcome").style.display = "none", document.getElementById("chat-view").style.display = "block";
+   const isNewChat = !CURRENT_ID;
+   CURRENT_ID || (CURRENT_ID = Date.now().toString(), CHATS.unshift({
+      id: CURRENT_ID,
+      title: "New Chat",
+      messages: [],
+      needsTitle: true,
+      firstUserMessage: t
+   }), renderSidebar());
+   const n = CHATS.find((e => e.id === CURRENT_ID));
+   n && (n.messages || (n.messages = []), n.messages.push({
+      role: "user",
+      content: t
+   }), renderMsg("user", t, n.messages.length - 1, !0), streamAI(isNewChat))
+}
+async function streamAI(isNewChat = false) {
+   isGenerating = !0;
+   const e = document.getElementById("send-btn"),
+      t = document.getElementById("icon-send"),
+      n = document.getElementById("icon-stop");
+   e.classList.add("active"), t.style.display = "none", n.style.display = "block";
+   const s = CHATS.find((e => e.id === CURRENT_ID));
+   if (!s) return;
+   const o = renderMsg("assistant", "", s.messages.length, !1),
+      a = o.querySelector(".md-body");
+   let r = "";
+   abortController = new AbortController;
+   try {
+      const response = await fetch(`${API_BASE}/v1/chat/completions`, {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+               Authorization: `Bearer ${PK}`
+            },
+            body: JSON.stringify({
+               model: "gemini-search",
+               messages: [{
+                  role: "system",
+                  content: SYS_PROMPT
+               }, ...s.messages],
+               stream: !0,
+               seed: Math.floor(1e6 * Math.random())
+            }),
+            signal: abortController.signal
+         });
+      if (response.status === 402) {
+          showQuotaToast();
+          throw new Error("Quota Exceeded");
+      }
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      const t = response.body.getReader(),
+         n = new TextDecoder;
+      let o = "";
+      for (;;) {
+         const {
+            done: s,
+            value: i
+         } = await t.read();
+         if (s) break;
+         o += n.decode(i, {
+            stream: !0
+         });
+         const l = o.split("\n");
+         o = l.pop();
+         for (const t of l) {
+            if (!t.trim().startsWith("data: ")) continue;
+            const n = t.trim().slice(6);
+            if ("[DONE]" === n) break;
+            try {
+               const e = JSON.parse(n),
+                  t = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content;
+               t && (r += t, a.innerHTML = mdParser.parse(r), renderMathLive(a), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight)
+            } catch (e) {}
+         }
+      }
+      isTruncated(r) ? (s.messages.push({
+         role: "assistant",
+         content: r
+      }), r = "", s.messages.push({
+         role: "user",
+         content: "Continue exactly where you left off. Do not repeat text."
+      }), a.innerHTML += '<div style="text-align:center;color:var(--accent);font-size:12px;margin-top:10px">Continuing...</div>', await continueGeneration(s, a, r)) : (s.messages.push({
+         role: "assistant",
+         content: r
+      }), await saveChatsToDB(), updateBalance(), isNewChat && s.firstUserMessage && generateChatTitle(CURRENT_ID, s.firstUserMessage, r))
+   } catch (e) {
+      if (e.name === "AbortError") {
+          if (r.length > 0) {
+              s.messages.push({
+                 role: "assistant",
+                 content: r + " [Stopped]"
+              });
+              await saveChatsToDB();
+          }
+      } else {
+          a.innerHTML = `<span style="color:#ef4444">Error: ${e.message}</span>`;
+      }
+   } finally {
+      if (!r.trim()) {
+         r = "I apologize, but I could not generate a response for that input. Could you please try again or rephrase your message?";
+         a.innerHTML = mdParser.parse(r);
+      }
+      abortController = null, isGenerating = !1, e.classList.remove("active"), t.style.display = "block", n.style.display = "none", r.length > 0 && (o.remove(), renderMsg("assistant", r, s.messages.length - 1, !0))
+   }
+}
+function isTruncated(e) {
+   return !!e && (e.match(/```/g) || []).length % 2 != 0
+}
+async function continueGeneration(e, t, n) {
+   abortController = new AbortController;
+   try {
+      const s = (await fetch(`${API_BASE}/v1/chat/completions`, {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+               Authorization: `Bearer ${PK}`
+            },
+            body: JSON.stringify({
+               model: "gemini-search",
+               messages: [{
+                  role: "system",
+                  content: SYS_PROMPT
+               }, ...e.messages],
+               stream: !0,
+               seed: Math.floor(1e6 * Math.random())
+            }),
+            signal: abortController.signal
+         })).body.getReader(),
+         o = new TextDecoder;
+      let a = "";
+      for (;;) {
+         const {
+            done: r,
+            value: i
+         } = await s.read();
+         if (r) break;
+         a += o.decode(i, {
+            stream: !0
+         });
+         const l = a.split("\n");
+         a = l.pop();
+         for (const s of l) {
+            if (!s.trim().startsWith("data: ")) continue;
+            const o = s.trim().slice(6);
+            if ("[DONE]" === o) break;
+            try {
+               const e = JSON.parse(o),
+                  s = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content;
+               s && (n += s, t.innerHTML = mdParser.parse(n), renderMathLive(t), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight)
+            } catch (e) {}
+         }
+      }
+      e.messages[e.messages.length - 1] = {
+         role: "assistant",
+         content: n
+      }, await saveChatsToDB(), updateBalance()
+   } catch (e) {
+      console.error(e)
+   }
+}
+init();
+      </script>
+   </body>
+</html>
