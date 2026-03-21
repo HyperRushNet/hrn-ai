@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
    <head>
@@ -208,8 +207,8 @@
                <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             <div class="toast-content">
-               <div class="toast-title">Limiet bereikt</div>
-               <div class="toast-subtitle">Nieuwe credits over <span id="toast-countdown" class="toast-timer">--:--</span></div>
+               <div class="toast-title">Limit reached</div>
+               <div class="toast-subtitle">New credits in <span id="toast-countdown" class="toast-timer">--:--</span></div>
             </div>
          </div>
          <div class="header">
@@ -491,7 +490,7 @@ async function updateBalance() {
       });
       if (t.status === 402) {
           showQuotaToast();
-          e.innerText = "LIMIET";
+          e.innerText = "LIMIT";
           return;
       }
       hideQuotaToast();
