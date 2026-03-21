@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIClient Engine | v1.0.3 Source Specification</title>
+  <title>AIClient Engine | v1.0.3 Technical Spec</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,153 +22,175 @@
     }
 
     body { font-family: var(--font-sans); background-color: var(--geist-background); color: var(--geist-foreground); -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
-    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-thumb { background: var(--accents-2); border-radius: 10px; }
 
-    .sidebar { width: 300px; height: 100vh; position: sticky; top: 0; border-right: 1px solid var(--accents-2); padding: 48px 32px; background: var(--accents-1); overflow-y: auto; flex-shrink: 0; }
-    .nav-link { display: block; padding: 8px 0; font-size: 14px; color: var(--accents-3); transition: color 0.2s; text-decoration: none; }
+    /* Layout & Sidebar */
+    .sidebar { width: 300px; height: 100vh; position: sticky; top: 0; border-right: 1px solid var(--accents-2); padding: 48px 32px; background: var(--accents-1); overflow-y: auto; flex-shrink: 0; transition: transform 0.3s ease; }
+    .nav-link { display: block; padding: 10px 0; font-size: 14px; color: var(--accents-3); transition: color 0.2s; text-decoration: none; }
     .nav-link:hover { color: var(--geist-foreground); }
     .nav-link.active { color: var(--geist-success); font-weight: 600; }
 
-    section { padding: 60px 0; border-bottom: 1px solid var(--accents-2); scroll-mt: 40px; }
-    .section-label { font-size: 11px; font-weight: 800; color: var(--geist-success); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
-    .section-title { font-size: 32px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 16px; }
-    
-    .method-card { border: 1px solid var(--accents-2); border-radius: 8px; padding: 24px; margin-bottom: 16px; background: white; }
-    .code-card { background: #000; border-radius: 8px; margin: 24px 0; overflow: hidden; }
-    pre { margin: 0 !important; padding: 20px !important; font-size: 13px !important; }
+    /* Mobile Nav */
+    .mobile-header { display: none; position: sticky; top: 0; width: 100%; background: #fff; border-bottom: 1px solid var(--accents-2); z-index: 50; padding: 16px 24px; justify-content: space-between; align-items: center; }
 
-    .data-table { width: 100%; text-align: left; border-collapse: collapse; }
-    .data-table th { padding: 12px; border-bottom: 2px solid var(--accents-2); font-size: 10px; color: var(--accents-3); text-transform: uppercase; }
-    .data-table td { padding: 14px 12px; border-bottom: 1px solid var(--accents-2); font-size: 13px; font-family: var(--font-mono); vertical-align: top; }
+    /* Content Styling */
+    section { padding: 60px 0; border-bottom: 1px solid var(--accents-2); scroll-mt: 80px; }
+    .section-label { font-size: 11px; font-weight: 800; color: var(--geist-success); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
+    .section-title { font-size: clamp(24px, 5vw, 32px); font-weight: 800; letter-spacing: -0.04em; margin-bottom: 16px; }
+    
+    .method-card { border: 1px solid var(--accents-2); border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white; }
+    .code-card { background: #000; border-radius: 8px; margin: 24px 0; overflow-x: auto; }
+    pre { margin: 0 !important; padding: 20px !important; font-size: 13px !important; line-height: 1.5; }
+
+    .table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 24px 0; border: 1px solid var(--accents-2); border-radius: 8px; }
+    .data-table { width: 100%; text-align: left; border-collapse: collapse; min-width: 600px; }
+    .data-table th { padding: 12px; border-bottom: 2px solid var(--accents-2); font-size: 10px; color: var(--accents-3); text-transform: uppercase; background: var(--accents-1); }
+    .data-table td { padding: 14px 12px; border-bottom: 1px solid var(--accents-2); font-size: 13px; font-family: var(--font-mono); }
     
     .badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
     .badge-blue { background: #e6f1ff; color: #0070f3; }
-    .badge-gray { background: #f3f4f6; color: #666; }
 
-    .credits-box { margin-top: 80px; padding: 40px; background: #fafafa; border: 1px solid #eaeaea; border-radius: 12px; }
-    .credits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .credits-item h5 { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #999; margin-bottom: 8px; }
-    .credits-item p { font-size: 13px; color: #444; }
+    /* Credits Box (Right Side-ish) */
+    .credits-box { margin-top: 60px; padding: 32px; background: var(--accents-1); border: 1px solid var(--accents-2); border-radius: 12px; }
+    .credits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
+    .credits-item h5 { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--accents-3); margin-bottom: 6px; }
+    .credits-item p { font-size: 13px; color: #444; line-height: 1.4; }
 
-    @media (max-width: 1024px) { .sidebar { display: none; } }
+    /* Mobile Overrides */
+    @media (max-width: 1024px) {
+      .sidebar { position: fixed; left: -300px; z-index: 100; box-shadow: 20px 0 50px rgba(0,0,0,0.1); }
+      .sidebar.open { transform: translateX(300px); }
+      .mobile-header { display: flex; }
+      .main-content { padding: 0 24px; }
+      .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: 90; backdrop-filter: blur(4px); }
+      .overlay.active { display: block; }
+    }
   </style>
 </head>
-<body class="flex">
+<body class="flex flex-col lg:flex-row">
 
-  <aside class="sidebar">
-    <div class="mb-12 flex items-center gap-2">
+  <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+  <header class="mobile-header">
+    <div class="flex items-center gap-2">
       <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white text-[10px] font-black">AI</div>
-      <span class="font-bold text-lg tracking-tighter">AIClient <span class="text-blue-600 italic">v1.0.3</span></span>
+      <span class="font-bold text-sm tracking-tighter italic">AIClient <span class="text-blue-600">v1.0.3</span></span>
+    </div>
+    <button onclick="toggleMenu()" class="p-2">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H17" stroke="black" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="mb-12 hidden lg:flex items-center gap-2">
+      <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white text-[10px] font-black">AI</div>
+      <span class="font-bold text-lg tracking-tighter italic">AIClient <span class="text-blue-600">v1.0.3</span></span>
     </div>
 
     <nav class="space-y-6">
       <div>
         <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Core Action</h4>
-        <a href="#generate" class="nav-link active font-bold">.generate() <span class="badge badge-gray !text-[8px] px-1">Async</span></a>
+        <a href="#generate" class="nav-link active font-bold" onclick="toggleMenu(true)">.generate()</a>
       </div>
       <div>
         <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Configuration</h4>
-        <a href="#setters" class="nav-link">Fluent Setters</a>
-        <a href="#live-models" class="nav-link">Live Registry</a>
+        <a href="#setters" class="nav-link" onclick="toggleMenu(true)">Fluent Setters</a>
+        <a href="#live-models" class="nav-link" onclick="toggleMenu(true)">Live Registry</a>
       </div>
       <div>
-        <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Internal Logic</h4>
-        <a href="#history" class="nav-link">History & Seed</a>
-        <a href="#errors" class="nav-link">Error Handling</a>
+        <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Details</h4>
+        <a href="#logic" class="nav-link" onclick="toggleMenu(true)">Internal Logic</a>
+        <a href="#errors" class="nav-link" onclick="toggleMenu(true)">Error Handling</a>
       </div>
     </nav>
   </aside>
 
-  <main class="flex-1 overflow-x-hidden">
-    <div class="max-w-4xl mx-auto px-12 py-12">
+  <main class="flex-1 main-content overflow-x-hidden">
+    <div class="max-w-4xl mx-auto lg:px-12 py-6 lg:py-12">
       
       <section id="generate" class="pt-0 border-b-2 border-black">
         <div class="section-label">Main Execution</div>
         <h1 class="section-title">.generate(prompt)</h1>
-        <p class="text-gray-600 text-lg mb-6">Triggers the API request using the current <code>config</code> state.</p>
+        <p class="text-gray-600 text-base mb-6 italic">Asynchronous method derived from the source: triggers net activity & history management.</p>
         
         <div class="method-card">
           <div class="code-card">
-            <pre class="language-javascript"><code>/**
- * @param {string} prompt - Instruction for the AI (required)
- * @returns {Promise<string|Blob>} Text response or Image Blob
- * @throws {Error} If API Key is missing or prompt is empty
- */
-const result = await ai.generate("What is the speed of light?");</code></pre>
+            <pre class="language-javascript"><code>// Example Implementation
+const ai = new AIClient().setApiKey('sk-...');
+const output = await ai.generate("Explain quantum entanglement.");</code></pre>
           </div>
-          <div class="mt-4 space-y-2 text-sm text-gray-600">
-            <p>• <strong>Text Mode:</strong> Appends role <code>user</code> and <code>assistant</code> to history. Auto-trims history to <code>historyLimit</code>.</p>
-            <p>• <strong>Image Mode:</strong> Uses <code>response_format: "b64_json"</code> and converts base64 to a raw <code>image/png</code> Blob.</p>
-          </div>
+          <p class="text-[13px] text-gray-500 leading-relaxed">
+            Internally uses an <code>AbortController</code> linked to your <code>timeout</code> config. If type is <code>'image'</code>, it returns a <code>Blob</code>; if <code>'text'</code>, it returns a <code>string</code> and updates the session history.
+          </p>
         </div>
       </section>
 
       <section id="setters">
         <div class="section-label">Fluent API</div>
-        <h2 class="section-title">Configuration Methods</h2>
-        <table class="data-table">
-          <thead>
-            <tr><th>Method</th><th>Param Type</th><th>Default</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>setApiKey(t)</code></td><td>String</td><td><code>null</code></td></tr>
-            <tr><td><code>setModel(t)</code></td><td>String</td><td><code>"flux"</code></td></tr>
-            <tr><td><code>setType(t)</code></td><td><code>"text" | "image"</code></td><td><code>"text"</code></td></tr>
-            <tr><td><code>setSystemPrompt(t)</code></td><td>String</td><td><code>"You are a helpful assistant."</code></td></tr>
-            <tr><td><code>setTimeout(t)</code></td><td>Number (ms)</td><td><code>30000</code></td></tr>
-            <tr><td><code>setSeed(t)</code></td><td>Number | null</td><td><code>null (Random)</code></td></tr>
-            <tr><td><code>setDimensions(w, h)</code></td><td>Number, Number</td><td><code>1024, 1024</code></td></tr>
-            <tr><td><code>setRetry(bool, attempts, delay)</code></td><td>Bool, Int, Int</td><td><code>true, 2, 1000</code></td></tr>
-            <tr><td><code>clearHistory()</code></td><td>-</td><td>-</td></tr>
-          </tbody>
-        </table>
+        <h2 class="section-title">Configuration Setters</h2>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr><th>Method</th><th>Arg</th><th>Source Default</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>setApiKey(t)</code></td><td>String</td><td><code>null</code></td></tr>
+              <tr><td><code>setModel(t)</code></td><td>String</td><td><code>"flux"</code></td></tr>
+              <tr><td><code>setType(t)</code></td><td>'text'|'image'</td><td><code>"text"</code></td></tr>
+              <tr><td><code>setSystemPrompt(t)</code></td><td>String</td><td><code>"You are a helpful assistant."</code></td></tr>
+              <tr><td><code>setTimeout(t)</code></td><td>Number</td><td><code>30000</code></td></tr>
+              <tr><td><code>setDimensions(w, h)</code></td><td>Int, Int</td><td><code>1024, 1024</code></td></tr>
+              <tr><td><code>setRetry(b, a, d)</code></td><td>Bool, Int, Int</td><td><code>true, 2, 1000ms</code></td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section id="live-models">
         <div class="flex items-center justify-between mb-6">
             <h2 class="section-title mb-0">Live Registry</h2>
-            <span id="status-badge" class="badge badge-blue">Syncing Registry...</span>
+            <span id="status-badge" class="badge badge-blue">Syncing...</span>
         </div>
-        <div class="overflow-x-auto">
-            <table class="data-table">
+        <div class="table-wrapper">
+            <table class="data-table !my-0">
                 <thead>
-                    <tr><th>Slug</th><th>Modality</th><th>Context</th></tr>
+                    <tr><th>Model Slug</th><th>Modality</th><th>Context</th></tr>
                 </thead>
                 <tbody id="models-body" class="text-[12px]"></tbody>
             </table>
         </div>
       </section>
 
-      <section id="history">
-        <div class="section-label">Deep Dive</div>
-        <h2 class="section-title">Internal State Logic</h2>
-        <div class="grid grid-cols-2 gap-6">
+      <section id="logic">
+        <div class="section-label">Logic</div>
+        <h2 class="section-title">History & Seed Handling</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="method-card">
-            <h4 class="font-bold text-sm mb-2">History Management</h4>
+            <h4 class="font-bold text-sm mb-2">Auto-Splicing</h4>
             <p class="text-xs text-gray-500 leading-relaxed">
-              In text mode, the engine keeps a sliding window of conversations. When <code>history.length</code> exceeds <code>2 * historyLimit</code>, the oldest pair is spliced out to save tokens.
+              When <code>history.length > 2 * historyLimit</code>, the SDK removes the oldest user/assistant pair automatically.
             </p>
           </div>
           <div class="method-card">
-            <h4 class="font-bold text-sm mb-2">Deterministic Seeds</h4>
+            <h4 class="font-bold text-sm mb-2">Randomized Seeds</h4>
             <p class="text-xs text-gray-500 leading-relaxed">
-              If no seed is set via <code>setSeed()</code>, the engine generates a random integer: <code>Math.floor(1e9 * Math.random())</code> for every request.
+              Requests default to <code>Math.floor(1e9 * Math.random())</code> if no manual seed is provided via <code>setSeed()</code>.
             </p>
           </div>
         </div>
       </section>
 
       <section id="errors" class="border-none">
-        <h2 class="section-title">Error Codes</h2>
-        <div class="grid grid-cols-2 gap-6">
-          <div class="p-4 border border-red-100 bg-red-50/30 rounded">
-            <h4 class="text-[10px] font-black text-red-800 uppercase mb-1">Retry Trigger (429/5xx)</h4>
-            <p class="text-xs text-red-600">If enabled, the SDK waits <code>retryDelay</code> before re-executing <code>generate()</code>.</p>
+        <h2 class="section-title">Error Handling</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 bg-red-50 rounded border border-red-100">
+            <h4 class="text-[10px] font-bold text-red-800 uppercase mb-1">Status 429 / 5xx</h4>
+            <p class="text-xs text-red-600">Triggers recursive <code>generate()</code> if retries are enabled.</p>
           </div>
-          <div class="p-4 border border-gray-200 bg-gray-50 rounded">
-            <h4 class="text-[10px] font-black text-gray-800 uppercase mb-1">AbortError</h4>
-            <p class="text-xs text-gray-500">Triggered by the internal <code>AbortController</code> if the <code>timeout</code> limit is reached.</p>
+          <div class="p-4 bg-gray-50 rounded border border-gray-200">
+            <h4 class="text-[10px] font-bold text-gray-800 uppercase mb-1">AbortError</h4>
+            <p class="text-xs text-gray-500">Thrust when <code>timeout</code> is exceeded. Configured via <code>setTimeout()</code>.</p>
           </div>
         </div>
       </section>
@@ -177,23 +199,23 @@ const result = await ai.generate("What is the speed of light?");</code></pre>
         <h4 class="section-label !text-black mb-8">System Credits</h4>
         <div class="credits-grid">
           <div class="credits-item">
-            <h5>Provider</h5>
-            <p>Pollinations.ai Foundation</p>
-          </div>
-          <div class="credits-item">
-            <h5>Engine Build</h5>
-            <p>v1.0.3-minified (Terser v5.39.0)</p>
+            <h5>Development</h5>
+            <p>HyperRush Engineering Team</p>
           </div>
           <div class="credits-item">
             <h5>Architecture</h5>
-            <p>HyperRush Engineering</p>
+            <p>v1.0.3 Source Reference</p>
           </div>
           <div class="credits-item">
-            <h5>Environment</h5>
-            <p>Browser / ES6 Compatible</p>
+            <h5>License</h5>
+            <p>MIT / jsDelivr served</p>
+          </div>
+          <div class="credits-item">
+            <h5>Infrastructure</h5>
+            <p>Pollinations.ai API</p>
           </div>
         </div>
-        <div class="mt-12 text-[9px] text-gray-400 uppercase tracking-widest border-t border-gray-100 pt-6 text-center">
+        <div class="mt-8 pt-6 border-t border-gray-200 text-[9px] text-gray-400 uppercase tracking-widest text-center">
           AIClient Framework Documentation &copy; 2026
         </div>
       </div>
@@ -205,6 +227,20 @@ const result = await ai.generate("What is the speed of light?");</code></pre>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 
   <script>
+    // Sidebar Toggle for Mobile
+    function toggleMenu(forceClose = false) {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      if (forceClose) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+      } else {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+      }
+    }
+
+    // Registry Sync
     async function syncRegistry() {
       const tbody = document.getElementById('models-body');
       try {
@@ -212,17 +248,18 @@ const result = await ai.generate("What is the speed of light?");</code></pre>
         const data = await res.json();
         tbody.innerHTML = data.map(m => `
           <tr>
-            <td class="font-bold text-blue-600">${m.name}</td>
-            <td class="text-gray-400 uppercase">${m.input_modalities.join(' / ')}</td>
-            <td class="text-gray-400">${m.context_length ? (m.context_length/1000).toFixed(0) + 'k' : 'N/A'}</td>
+            <td class="font-bold text-blue-600 text-xs">${m.name}</td>
+            <td class="text-gray-400 uppercase text-[10px]">${m.input_modalities.join('/')}</td>
+            <td class="text-gray-400 text-xs">${m.context_length ? (m.context_length/1000).toFixed(0) + 'k' : 'N/A'}</td>
           </tr>
         `).join('');
-        document.getElementById('status-badge').innerText = 'System Live';
+        document.getElementById('status-badge').innerText = 'Connected';
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center">Sync Failed</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3">Offline</td></tr>';
       }
     }
 
+    // Scroll Observer
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
