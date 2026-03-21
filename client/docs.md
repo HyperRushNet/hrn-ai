@@ -63,7 +63,3 @@ const imageUrl = URL.createObjectURL(blob);
 * **Type**: `text`
 * **Dimensions**: 1024x1024
 * **History**: Automatic context persistence for text mode.
-
----
-
-Would you like me to add a section for common model IDs or a specific CSS stylesheet for the documentation?
