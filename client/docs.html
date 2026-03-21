@@ -1,508 +1,67 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIClient Reference Docs</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-body: #FFFFFF;
-            --bg-sidebar: #F8FAFC;
-            --bg-code: #0F172A;
-            --text-main: #0F172A;
-            --text-muted: #64748B;
-            --accent: #2563EB;
-            --border: #E2E8F0;
-            --success: #10B981;
-            --warning: #F59E0B;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-body);
-            color: var(--text-main);
-            margin: 0;
-            line-height: 1.6;
-            display: flex;
-        }
-
-        /* --- Sidebar --- */
-        nav {
-            width: 280px;
-            height: 100vh;
-            background: var(--bg-sidebar);
-            border-right: 1px solid var(--border);
-            position: fixed;
-            top: 0;
-            left: 0;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-
-        .logo {
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            display: block;
-            color: var(--text-main);
-        }
-
-        .nav-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .nav-title {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-
-        .nav-link {
-            display: block;
-            color: var(--text-muted);
-            text-decoration: none;
-            padding: 6px 0;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover { color: var(--text-main); }
-        .nav-link.active { color: var(--accent); font-weight: 500; }
-
-        /* --- Main Content --- */
-        main {
-            margin-left: 280px;
-            padding: 3rem 4rem;
-            max-width: 850px;
-            width: 100%;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1rem;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-top: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        p { color: var(--text-muted); margin-bottom: 1rem; }
-
-        /* --- Components --- */
-        .method-card {
-            background: #F8FAFC;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-        }
-
-        .method-signature {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1rem;
-            color: var(--accent);
-            font-weight: 500;
-            margin-bottom: 0.75rem;
-            display: inline-block;
-            background: #EFF6FF;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-
-        .tag {
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-            vertical-align: middle;
-            text-transform: uppercase;
-        }
-        .tag-async { background: #DBEAFE; color: #1D4ED8; }
-        .tag-return { background: #D1FAE5; color: #059669; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th { color: var(--text-muted); font-weight: 500; }
-        td code { 
-            background: #E2E8F0; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-family: 'JetBrains Mono', monospace; 
-            font-size: 0.85rem;
-            color: var(--text-main);
-        }
-
-        /* --- Code Blocks --- */
-        pre {
-            background: var(--bg-code);
-            color: #E2E8F0;
-            padding: 1.25rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            margin: 1.5rem 0;
-            position: relative;
-        }
-
-        pre code { background: none; color: inherit; }
-        
-        .copy-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: #94A3B8;
-            padding: 4px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .copy-btn:hover { background: rgba(255,255,255,0.2); color: #FFF; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AIClient Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#f4f4f5;color:#18181b;margin:0;line-height:1.6}.container{display:flex}nav{width:260px;background:#fff;border-right:1px solid #e4e4e7;height:100vh;position:fixed;overflow-y:auto;padding:2rem 1.5rem}.logo{font-weight:700;font-size:1.1rem;margin-bottom:2rem;color:#18181b}.nav-title{font-size:0.75rem;font-weight:600;color:#a1a1aa;text-transform:uppercase;letter-spacing:0.05em;margin:1.5rem 0 0.5rem 0}.nav-link{display:block;color:#52525b;text-decoration:none;font-size:0.9rem;padding:4px 0;border-radius:4px}.nav-link:hover{color:#18181b}.nav-link.active{color:#2563eb;font-weight:500}main{margin-left:260px;padding:3rem 4rem;max-width:800px;background:#fff;min-height:100vh;border-left:1px solid #e4e4e7}h1{font-size:2rem;font-weight:700;margin-bottom:0.5rem}.lead{color:#71717a;margin-bottom:3rem;font-size:1rem}h2{font-size:1.5rem;font-weight:700;border-top:1px solid #e4e4e7;margin-top:2.5rem;padding-top:1.5rem}.method-card{background:#fafafa;border:1px solid #e4e4e7;border-radius:6px;padding:1.5rem;margin:1.5rem 0}.method-signature{font-family:'JetBrains Mono',monospace;font-size:0.95rem;color:#2563eb;background:#eff6ff;padding:4px 8px;border-radius:4px;display:inline-block;margin-bottom:1rem}.description{margin-bottom:1rem;color:#3f3f46}table{width:100%;border-collapse:collapse;margin-top:1rem;font-size:0.9rem}th{text-align:left;color:#71717a;font-weight:500;border-bottom:1px solid #e4e4e7;padding:8px}td{border-bottom:1px solid #f4f4f5;padding:8px}td code{background:#f4f4f5;padding:2px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:0.85rem}pre{background:#18181b;color:#fafafa;padding:1rem;border-radius:6px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:0.85rem;position:relative}pre code{background:none;color:inherit}.copy-btn{position:absolute;top:8px;right:8px;background:#3f3f46;border:none;color:#d4d4d8;padding:4px 8px;border-radius:4px;font-size:0.75rem;cursor:pointer}.copy-btn:hover{background:#52525b}.tag{font-size:0.75rem;padding:2px 6px;border-radius:999px;font-weight:500}.tag-async{background:#dbeafe;color:#1d4ed8}.mobile-header{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#fff;border-bottom:1px solid #e4e4e7;z-index:100;padding:0 1rem;align-items:center;justify-content:space-between}.menu-btn{background:none;border:none;cursor:pointer;padding:8px}.menu-btn svg{width:24px;height:24px;stroke:#18181b}@media(max-width:768px){.mobile-header{display:flex}nav{transform:translateX(-100%);transition:transform 0.2s;z-index:101}nav.open{transform:translateX(0)}main{margin-left:0;padding:4.5rem 1.5rem 3rem;border-left:none;max-width:none}}
+</style>
 </head>
 <body>
-
-<nav>
-    <div class="logo">AIClient Docs</div>
-
-    <div class="nav-section">
-        <div class="nav-title">Introductie</div>
-        <a href="#top" class="nav-link active">Overview</a>
-        <a href="#installatie" class="nav-link">Installatie</a>
-    </div>
-
-    <div class="nav-section">
-        <div class="nav-title">Core Methoden</div>
-        <a href="#setType" class="nav-link">setType()</a>
-        <a href="#generate" class="nav-link">generate()</a>
-    </div>
-
-    <div class="nav-section">
-        <div class="nav-title">Configuratie</div>
-        <a href="#setApiKey" class="nav-link">setApiKey()</a>
-        <a href="#setModel" class="nav-link">setModel()</a>
-        <a href="#setSystemPrompt" class="nav-link">setSystemPrompt()</a>
-        <a href="#setWidth" class="nav-link">setWidth()</a>
-        <a href="#setHeight" class="nav-link">setHeight()</a>
-    </div>
-
-    <div class="nav-section">
-        <div class="nav-title">Overig</div>
-        <a href="#foutafhandeling" class="nav-link">Foutafhandeling</a>
-        <a href="#voorbeelden" class="nav-link">Voorbeelden</a>
-    </div>
+<div class="mobile-header"><span class="logo" style="margin:0">AIClient</span><button class="menu-btn" onclick="toggleNav()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div>
+<div class="container">
+<nav id="sidebar">
+<div class="logo">AIClient Docs</div>
+<div class="nav-title">Intro</div>
+<a href="#top" class="nav-link active">Overview</a>
+<a href="#installatie" class="nav-link">Installatie</a>
+<div class="nav-title">Core</div>
+<a href="#setType" class="nav-link">setType()</a>
+<a href="#generate" class="nav-link">generate()</a>
+<div class="nav-title">Configuratie</div>
+<a href="#setApiKey" class="nav-link">setApiKey()</a>
+<a href="#setModel" class="nav-link">setModel()</a>
+<a href="#setSystemPrompt" class="nav-link">setSystemPrompt()</a>
+<a href="#setWidth" class="nav-link">setWidth()</a>
+<a href="#setHeight" class="nav-link">setHeight()</a>
+<div class="nav-title">Overig</div>
+<a href="#foutafhandeling" class="nav-link">Foutafhandeling</a>
+<a href="#voorbeelden" class="nav-link">Voorbeelden</a>
 </nav>
-
 <main>
-    <h1 id="top">AIClient Documentatie</h1>
-    <p>Een modulaire, belofte-gedreven JavaScript class voor het genereren van tekst en afbeeldingen via de Pollinations API. Ontworpen voor eenvoud en robuuste foutafhandeling.</p>
-
-    <h2 id="installatie">Installatie</h2>
-    <p>Kopieer de onderstaande class naar je project. Geen externe dependencies vereist.</p>
-
-    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>class AIClient {
-    constructor() {
-        this.config = {
-            apiKey: null,
-            model: 'openai',
-            systemPrompt: 'You are a helpful assistant.',
-            type: 'text', // 'text' of 'image'
-            width: 1024,
-            height: 1024,
-            history: []
-        };
-    }
-
-    /**
-     * Stelt de API sleutel in.
-     * @param {string} key - Jouw Pollinations API key (sk_... of pk_...)
-     */
-    setApiKey(key) {
-        if (key && typeof key === 'string') {
-            this.config.apiKey = key;
-        }
-        return this;
-    }
-
-    /**
-     * Stelt het model in.
-     * @param {string} modelId - Bijv. 'openai', 'gemini', 'flux'
-     */
-    setModel(modelId) {
-        if (modelId && typeof modelId === 'string') {
-            this.config.model = modelId;
-        }
-        return this;
-    }
-
-    /**
-     * Stelt de systeem instructie in (alleen voor text modus).
-     * @param {string} prompt - De persona/instructie
-     */
-    setSystemPrompt(prompt) {
-        if (prompt && typeof prompt === 'string') {
-            this.config.systemPrompt = prompt;
-        }
-        return this;
-    }
-
-    /**
-     * Stelt het type generatie in.
-     * @param {string} type - 'text' of 'image'
-     */
-    setType(type) {
-        if (type === 'text' || type === 'image') {
-            this.config.type = type;
-        } else {
-            console.warn(`Type '${type}' niet herkend. Gebruik 'text' of 'image'.`);
-        }
-        return this;
-    }
-
-    /**
-     * Stelt de breedte in (alleen voor image modus).
-     */
-    setWidth(width) {
-        this.config.width = parseInt(width);
-        return this;
-    }
-
-    /**
-     * Stelt de hoogte in (alleen voor image modus).
-     */
-    setHeight(height) {
-        this.config.height = parseInt(height);
-        return this;
-    }
-
-    /**
-     * Hoofdmethode voor generatie.
-     * Bepaalt automatisch of er tekst of een afbeelding gegenereerd wordt.
-     * @param {string} input - De prompt
-     * @returns {Promise<string>} - Tekst of Blob URL
-     */
-    async generate(input) {
-        if (!input) throw new Error("Input prompt is vereist.");
-
-        if (this.config.type === 'image') {
-            return await this._handleImageGeneration(input);
-        } else {
-            return await this._handleTextGeneration(input);
-        }
-    }
-
-    // --- Interne helpers ---
-
-    async _handleTextGeneration(prompt) {
-        // 1. History beheer
-        this.config.history.push({ role: 'user', content: prompt });
-
-        // 2. Request Body
-        const body = {
-            model: this.config.model,
-            messages: [
-                { role: 'system', content: this.config.systemPrompt },
-                ...this.config.history
-            ]
-        };
-
-        // 3. Headers
-        const headers = { 'Content-Type': 'application/json' };
-        if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-
-        try {
-            // 4. Fetch
-            const response = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body)
-            });
-
-            const data = await response.json();
-
-            // 5. Foutafhandeling API
-            if (!response.ok) {
-                const errorMsg = data.error?.message || `Server error: ${response.status}`;
-                throw new Error(errorMsg);
-            }
-
-            // 6. Resultaat
-            const text = data.choices[0].message.content;
-            
-            // 7. Sla op in history
-            this.config.history.push({ role: 'assistant', content: text });
-            
-            return text;
-
-        } catch (error) {
-            // Rollback history bij fout
-            this.config.history.pop(); 
-            throw error; // Gooi door naar gebruiker
-        }
-    }
-
-    async _handleImageGeneration(prompt) {
-        // 1. URL Parameters
-        const params = new URLSearchParams();
-        if (this.config.apiKey) params.append('key', this.config.apiKey);
-        params.append('model', this.config.model);
-        params.append('width', this.config.width);
-        params.append('height', this.config.height);
-        params.append('nologo', 'true');
-
-        // 2. Fetch
-        const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?${params.toString()}`;
-        
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`Afbeelding generatie mislukt: ${response.status}`);
-        }
-
-        // 3. Blob teruggeven als Object URL
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
-    }
-}</code></pre>
-
-    <h2>Core Methoden</h2>
-
-    <div id="setType" class="method-card">
-        <div class="method-signature">setType(type)</div>
-        <p>Stelt in wat voor soort inhoud gegenereerd wordt. Dit bepaalt welk API endpoint wordt aangeroepen.</p>
-        <table>
-            <tr><th>Parameter</th><th>Type</th><th>Opties</th></tr>
-            <tr><td><code>type</code></td><td>string</td><td><code>"text"</code> (standaard), <code>"image"</code></td></tr>
-        </table>
-    </div>
-
-    <div id="generate" class="method-card">
-        <div class="method-signature">generate(prompt) <span class="tag tag-async">ASYNC</span></div>
-        <p>Voert de generatie uit. Retourneert een Promise die resolve naar het resultaat.</p>
-        <table>
-            <tr><th>Modus</th><th>Return Type</th><th>Beschrijving</th></tr>
-            <tr><td>Text</td><td><code>string</code></td><td>De tekst gegenereerd door de AI.</td></tr>
-            <tr><td>Image</td><td><code>string</code></td><td>Een tijdelijke Blob URL (bijv. <code>blob:https://...</code>) die direct in een <code>&lt;img&gt;</code> tag kan.</td></tr>
-        </table>
-    </div>
-
-    <h2>Configuratie</h2>
-
-    <div id="setApiKey" class="method-card">
-        <div class="method-signature">setApiKey(key)</div>
-        <p>Authenticatie optioneel voor sommige modellen, maar aanbevolen voor hogere limits.</p>
-    </div>
-
-    <div id="setModel" class="method-card">
-        <div class="method-signature">setModel(modelId)</div>
-        <p>Stelt het model in. Gebruik tekst-modellen (openai, gemini) voor text en afbeeldings-modellen (flux) voor image.</p>
-    </div>
-
-    <div id="setSystemPrompt" class="method-card">
-        <div class="method-signature">setSystemPrompt(prompt)</div>
-        <p>Stelt de 'persona' in. Wordt alleen gebruikt in <code>text</code> modus.</p>
-    </div>
-
-    <div id="setWidth" class="method-card">
-        <div class="method-signature">setWidth(pixels)</div>
-        <p>Breedte van de afbeelding. Alleen voor <code>image</code> modus.</p>
-    </div>
-
-    <h2 id="foutafhandeling">Foutafhandeling</h2>
-    <p>De <code>generate()</code> methode werpt een <code>Error</code> als er iets misgaat. Gebruik try/catch.</p>
-    <pre><code>try {
-    const result = await ai.generate("Test prompt");
-} catch (error) {
-    console.error("Generatie mislukt:", error.message);
-}</code></pre>
-
-    <h2 id="voorbeelden">Voorbeelden</h2>
-
-    <h3>Tekst Generatie</h3>
-    <pre><code>const ai = new AIClient();
-
-ai.setApiKey("sk_...")
-  .setType("text")
-  .setModel("openai")
-  .setSystemPrompt("Je bent een behulpzame assistent.");
-
-const tekst = await ai.generate("Wat is AI?");
-console.log(tekst);</code></pre>
-
-    <h3>Afbeelding Generatie</h3>
-    <pre><code>const ai = new AIClient();
-
-ai.setApiKey("sk_...")
-  .setType("image") // Schakel naar image modus
-  .setModel("flux")
-  .setWidth(1920)
-  .setHeight(1080);
-
-const url = await ai.generate("Een futuristische stad");
-
-// Toon in UI
-const img = document.createElement('img');
-img.src = url;
-document.body.appendChild(img);</code></pre>
-
+<h1 id="top">AIClient Reference</h1>
+<p class="lead">Een modulaire, belofte-gedreven JavaScript class voor tekst en afbeeldingen via de Pollinations API.</p>
+<h2 id="installatie">Installatie</h2>
+<p>Kopieer de class naar je project. Geen dependencies.</p>
+<pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>class AIClient{constructor(){this.config={apiKey:null,model:'openai',systemPrompt:'You are a helpful assistant.',type:'text',width:1024,height:1024,history:[]}}setApiKey(key){if(key&amp;&amp;typeof key==='string')this.config.apiKey=key;return this}setModel(modelId){if(modelId&amp;&amp;typeof modelId==='string')this.config.model=modelId;return this}setSystemPrompt(prompt){if(prompt&amp;&amp;typeof prompt==='string')this.config.systemPrompt=prompt;return this}setType(type){if(type==='text'||type==='image')this.config.type=type;else console.warn("Gebruik 'text' of 'image'.");return this}setWidth(w){this.config.width=parseInt(w);return this}setHeight(h){this.config.height=parseInt(h);return this}async generate(input){if(!input)throw new Error("Input is vereist.");return this.config.type==='image'?await this._genImg(input):await this._genTxt(input)}async _genTxt(prompt){this.config.history.push({role:'user',content:prompt});const body={model:this.config.model,messages:[{role:'system',content:this.config.systemPrompt},...this.config.history]};const headers={'Content-Type':'application/json'};if(this.config.apiKey)headers.Authorization=`Bearer ${this.config.apiKey}`;try{const r=await fetch('https://gen.pollinations.ai/v1/chat/completions',{method:'POST',headers,body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error?.message||`Error: ${r.status}`);const t=d.choices[0].message.content;this.config.history.push({role:'assistant',content:t});return t}catch(e){this.config.history.pop();throw e}}async _genImg(prompt){const p=new URLSearchParams();if(this.config.apiKey)p.append('key',this.config.apiKey);p.append('model',this.config.model);p.append('width',this.config.width);p.append('height',this.config.height);p.append('nologo','true');const r=await fetch(`https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?${p}`);if(!r.ok)throw new Error(`Fout: ${r.status}`);return URL.createObjectURL(await r.blob())}}</code></pre>
+<h2>Core Methoden</h2>
+<div id="setType" class="method-card"><div class="method-signature">.setType(type)</div><div class="description">Stelt het type generatie in.</div><table><tr><th>Parameter</th><th>Type</th><th>Opties</th></tr><tr><td><code>type</code></td><td>string</td><td><code>"text"</code> (default), <code>"image"</code></td></tr></table></div>
+<div id="generate" class="method-card"><div class="method-signature">.generate(prompt) <span class="tag tag-async">ASYNC</span></div><div class="description">Voert de generatie uit.</div><table><tr><th>Modus</th><th>Return</th><th>Beschrijving</th></tr><tr><td>Text</td><td><code>string</code></td><td>AI antwoord.</td></tr><tr><td>Image</td><td><code>string</code></td><td>Blob URL voor <code>&lt;img&gt;</code>.</td></tr></table></div>
+<h2 id="setApiKey">Configuratie</h2>
+<p>Alle setters retourneren <code>this</code> voor chaining.</p>
+<div class="method-card"><div class="method-signature">.setApiKey(key)</div><div class="description">API sleutel (optioneel voor sommige modellen).</div></div>
+<div id="setModel" class="method-card"><div class="method-signature">.setModel(modelId)</div><div class="description">Model ID (bv. <code>"openai"</code>, <code>"flux"</code>).</div></div>
+<div id="setSystemPrompt" class="method-card"><div class="method-signature">.setSystemPrompt(prompt)</div><div class="description">Persona (alleen tekst-modus).</div></div>
+<div id="setWidth" class="method-card"><div class="method-signature">.setWidth(pixels)</div><div class="description">Afbeelding breedte.</div></div>
+<div id="setHeight" class="method-card"><div class="method-signature">.setHeight(pixels)</div><div class="description">Afbeelding hoogte.</div></div>
+<h2 id="foutafhandeling">Foutafhandeling</h2>
+<p>Gebruik <code>try/catch</code> rondom <code>generate()</code>.</p>
+<pre><code>try{const r=await ai.generate("test")}catch(e){console.error(e.message)}</code></pre>
+<h2 id="voorbeelden">Voorbeelden</h2>
+<h3 style="font-size:1rem;font-weight:600;margin:1.5rem 0 0.5rem">Tekst</h3>
+<pre><code>const ai=new AIClient();ai.setApiKey("sk_...").setType("text").setModel("openai").setSystemPrompt("Je bent hulpvaardig.");const t=await ai.generate("Wat is AI?");console.log(t);</code></pre>
+<h3 style="font-size:1rem;font-weight:600;margin:1.5rem 0 0.5rem">Afbeelding</h3>
+<pre><code>const ai=new AIClient();ai.setApiKey("sk_...").setType("image").setModel("flux").setWidth(1920).setHeight(1080);const url=await ai.generate("Futuristische stad");const img=document.createElement('img');img.src=url;document.body.appendChild(img);</code></pre>
 </main>
-
+</div>
 <script>
-    function copyCode(btn) {
-        const code = btn.parentElement.querySelector('code').innerText;
-        navigator.clipboard.writeText(code).then(() => {
-            btn.innerText = "Gekopieerd!";
-            setTimeout(() => btn.innerText = "Copy", 2000);
-        });
-    }
-
-    // Active nav link on scroll
-    const sections = document.querySelectorAll('h2, h3');
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    window.addEventListener('scroll', () => {
-        let current = "";
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            if (pageYOffset >= sectionTop - 80) {
-                current = section.getAttribute('id');
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === '#' + current) {
-                link.classList.add('active');
-            }
-        });
-    });
+function copyCode(b){const c=b.parentElement.querySelector('code').innerText;navigator.clipboard.writeText(c);b.innerText='Done';setTimeout(()=>b.innerText='Copy',1000)}
+const nav=document.getElementById('sidebar'),links=document.querySelectorAll('.nav-link');
+function toggleNav(){nav.classList.toggle('open')}
+document.querySelectorAll('.nav-link').forEach(l=>l.addEventListener('click',()=>{if(window.innerWidth<=768)nav.classList.remove('open')}));
+window.addEventListener('scroll',()=>{let c='';document.querySelectorAll('h2,h3,.method-card').forEach(s=>{if(window.scrollY>=s.offsetTop-80)c=s.id});links.forEach(l=>{l.classList.toggle('active',l.getAttribute('href')===' #'+c})})});
 </script>
-
 </body>
 </html>
