@@ -28,6 +28,7 @@ const ai = new AIClient()
   .setType("text");
 
 const response = await ai.generate("Explain quantum physics.");
+
 console.log(response);
 ```
 
@@ -44,6 +45,8 @@ const ai = new AIClient()
 
 const blob = await ai.generate("A futuristic cityscape");
 const imageUrl = URL.createObjectURL(blob);
+
+console.log(imageUrl);
 ```
 
 ---
