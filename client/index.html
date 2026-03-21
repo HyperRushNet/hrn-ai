@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIClient Engine | v1.0.3 Documentation</title>
+  <title>AIClient Engine | Technical Specification v1.0.3</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -21,61 +21,33 @@
       --font-mono: 'JetBrains Mono', monospace;
     }
 
-    body { 
-      font-family: var(--font-sans);
-      background-color: var(--geist-background);
-      color: var(--geist-foreground);
-      -webkit-font-smoothing: antialiased;
-      scroll-behavior: smooth;
-    }
-
-    ::-webkit-scrollbar { width: 5px; }
+    body { font-family: var(--font-sans); background-color: var(--geist-background); color: var(--geist-foreground); -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: var(--accents-2); border-radius: 10px; }
 
-    .sidebar {
-      width: 300px;
-      height: 100vh;
-      position: sticky;
-      top: 0;
-      border-right: 1px solid var(--accents-2);
-      padding: 48px 32px;
-      background: var(--accents-1);
-      overflow-y: auto;
-    }
-
-    .nav-link {
-      display: block;
-      padding: 8px 0;
-      font-size: 14px;
-      color: var(--accents-3);
-      transition: color 0.2s;
-      text-decoration: none;
-    }
+    .sidebar { width: 300px; height: 100vh; position: sticky; top: 0; border-right: 1px solid var(--accents-2); padding: 48px 32px; background: var(--accents-1); overflow-y: auto; }
+    .nav-link { display: block; padding: 8px 0; font-size: 14px; color: var(--accents-3); transition: color 0.2s; text-decoration: none; }
     .nav-link:hover { color: var(--geist-foreground); }
     .nav-link.active { color: var(--geist-success); font-weight: 600; }
 
-    section { padding: 80px 0; border-bottom: 1px solid var(--accents-2); scroll-mt: 20px; }
-    .section-label { font-size: 12px; font-weight: 700; color: var(--geist-success); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 12px; }
-    .section-title { font-size: 38px; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 24px; }
-    .section-text { font-size: 16px; color: #444; line-height: 1.8; margin-bottom: 32px; }
-
-    .code-card {
-      background: #000;
-      border-radius: 12px;
-      margin: 32px 0;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.12);
-      overflow: hidden;
-    }
-    .code-nav { background: #111; padding: 12px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #222; }
-    pre { margin: 0 !important; padding: 24px !important; font-size: 13px !important; }
-
-    .data-table { width: 100%; text-align: left; border-collapse: collapse; margin: 32px 0; }
-    .data-table th { padding: 12px; border-bottom: 2px solid var(--accents-2); font-size: 11px; color: var(--accents-3); text-transform: uppercase; letter-spacing: 0.05em; }
-    .data-table td { padding: 16px 12px; border-bottom: 1px solid var(--accents-2); font-size: 13px; }
+    section { padding: 60px 0; border-bottom: 1px solid var(--accents-2); scroll-mt: 40px; }
+    .section-label { font-size: 11px; font-weight: 800; color: var(--geist-success); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
+    .section-title { font-size: 32px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 16px; }
     
-    .badge { padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+    .method-card { border: 1px solid var(--accents-2); border-radius: 8px; padding: 24px; margin-bottom: 16px; background: white; transition: border-color 0.2s; }
+    .method-card:hover { border-color: var(--geist-success); }
+    
+    .code-card { background: #000; border-radius: 8px; margin: 24px 0; overflow: hidden; }
+    .code-nav { background: #111; padding: 10px 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+    pre { margin: 0 !important; padding: 20px !important; font-size: 13px !important; }
+
+    .data-table { width: 100%; text-align: left; border-collapse: collapse; }
+    .data-table th { padding: 12px; border-bottom: 2px solid var(--accents-2); font-size: 10px; color: var(--accents-3); text-transform: uppercase; }
+    .data-table td { padding: 14px 12px; border-bottom: 1px solid var(--accents-2); font-size: 13px; font-family: var(--font-mono); }
+    
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
     .badge-blue { background: #e6f1ff; color: #0070f3; }
-    .badge-gray { background: #f3f4f6; color: #666; }
+    .badge-purple { background: #f3ebff; color: #7e22ce; }
     .badge-green { background: #e7f9ed; color: #138535; }
 
     @media (max-width: 1024px) { .sidebar { display: none; } }
@@ -85,140 +57,117 @@
 
   <aside class="sidebar">
     <div class="mb-12 flex items-center gap-2">
-      <svg width="24" height="24" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M38 0L76 76H0L38 0Z" fill="black"/></svg>
-      <span class="font-bold text-xl tracking-tight italic">AIClient <span class="text-blue-600 font-black">v3</span></span>
+      <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white text-[10px] font-black">AI</div>
+      <span class="font-bold text-lg tracking-tighter italic">AIClient <span class="text-blue-600">v1.0.3</span></span>
     </div>
 
-    <nav class="space-y-8">
+    <nav class="space-y-6">
       <div>
-        <h4 class="text-[11px] font-bold text-black uppercase mb-4 tracking-widest">Introduction</h4>
-        <a href="#welcome" class="nav-link active">Welcome</a>
-        <a href="#quickstart" class="nav-link">Quickstart</a>
+        <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Core Action</h4>
+        <a href="#generate" class="nav-link active font-bold">.generate() <span class="text-[9px] border px-1 rounded ml-1">ASYNC</span></a>
       </div>
       <div>
-        <h4 class="text-[11px] font-bold text-black uppercase mb-4 tracking-widest">Core Capabilities</h4>
-        <a href="#text-api" class="nav-link">Text Intelligence</a>
-        <a href="#image-api" class="nav-link">Image Synthesis</a>
+        <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Configuration</h4>
+        <a href="#setters" class="nav-link">Chainable Setters</a>
+        <a href="#live-models" class="nav-link">Model Identifiers</a>
       </div>
       <div>
-        <h4 class="text-[11px] font-bold text-black uppercase mb-4 tracking-widest">SDK Reference</h4>
-        <a href="#live-models" class="nav-link">Live Model Registry</a>
-        <a href="#methods" class="nav-link">Global Methods</a>
-        <a href="#errors" class="nav-link">Error Codes</a>
+        <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Registry</h4>
+        <a href="#errors" class="nav-link">Error Logic</a>
       </div>
     </nav>
   </aside>
 
   <main class="flex-1 overflow-x-hidden">
-    <div class="max-w-4xl mx-auto px-12">
+    <div class="max-w-4xl mx-auto px-12 py-12">
       
-      <section id="welcome">
-        <div class="section-label">Foundation</div>
-        <h1 class="section-title">The next generation of AI integration.</h1>
-        <p class="section-text text-xl text-balance">
-          AIClient v1.0.3 is a high-performance JavaScript SDK designed for developers who demand simplicity. 
-          By abstracting complex binary transformations, we allow you to focus on the UI.
-        </p>
-        <div class="flex gap-4">
-          <span class="badge badge-blue">ES6 Modules Compatible</span>
-          <span class="badge badge-gray">Size: 4.2kb Gzipped</span>
+      <section id="generate" class="pt-0 border-b-4 border-blue-600">
+        <div class="section-label">Execution Engine</div>
+        <h1 class="section-title text-4xl">.generate(prompt)</h1>
+        <p class="text-gray-600 text-lg mb-6 italic">The only asynchronous method that triggers network activity.</p>
+        
+        <div class="method-card">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="badge badge-purple">PROMISE</span>
+            <span class="badge badge-blue">DYNAMIC RETURN</span>
+          </div>
+          <p class="text-sm text-gray-700 leading-relaxed mb-4">
+            This method compiles all previous configurations (model, type, history) and sends a request to the Pollinations API. It is designed to be the final call in your chain.
+          </p>
+          <div class="code-card">
+            <pre class="language-javascript"><code>/**
+ * @param {string} prompt - Non-empty string instruction
+ * @returns {Promise<string|Blob>} Text if .setType('text'), Blob if .setType('image')
+ */
+const output = await ai.generate("Your instruction");</code></pre>
+          </div>
         </div>
       </section>
 
-      <section id="quickstart">
-        <h2 class="section-title">Quickstart</h2>
-        <p class="section-text">Initialize the engine and execute your first generation in under 30 seconds.</p>
-        <div class="code-card">
-          <div class="code-nav"><span class="text-[10px] text-gray-500 font-mono italic uppercase tracking-widest">cdn setup</span></div>
-          <pre class="language-html"><code>&lt;script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js"&gt;&lt;/script&gt;
-&lt;script&gt;
-  const ai = new AIClient().setApiKey("sk-pollinations-...");
-&lt;/script&gt;</code></pre>
-        </div>
-      </section>
+      <section id="setters">
+        <div class="section-label">Configuration</div>
+        <h2 class="section-title">Chainable Setters</h2>
+        <p class="text-gray-500 mb-8">These methods return <code>this</code> (the instance), allowing for a fluent API design. They do <strong>not</strong> perform network requests.</p>
 
-      <section id="text-api">
-        <h2 class="section-title">Text Intelligence</h2>
-        <p class="section-text">The SDK handles JSON parsing, choice selection, and system prompt injection automatically.</p>
-        <div class="code-card">
-          <div class="code-nav"><span class="text-[10px] text-gray-500 font-mono uppercase tracking-widest">javascript</span></div>
-          <pre class="language-javascript"><code>const response = await ai
-  .setModel("openai")
-  .setSystemPrompt("You are a senior dev.")
-  .generate("Explain hydration in React.");
-
-console.log(response); // Returns clean string</code></pre>
-        </div>
-      </section>
-
-      <section id="image-api">
-        <h2 class="section-title">Image Synthesis</h2>
-        <p class="section-text">Images are returned as raw Blobs to prevent memory leaks in the browser.</p>
-        <div class="code-card">
-          <div class="code-nav"><span class="text-[10px] text-gray-500 font-mono uppercase tracking-widest">javascript</span></div>
-          <pre class="language-javascript"><code>const blob = await ai
-  .setType("image")
-  .setDimensions(1280, 720)
-  .generate("A neon city in the year 2099.");
-
-const url = URL.createObjectURL(blob);</code></pre>
+        <div class="space-y-4">
+          <div class="method-card">
+            <code class="text-blue-600 font-bold">.setModel(slug)</code>
+            <p class="text-xs text-gray-500 mt-2">Sets the target model. Expects a <code>string</code> identifier from the registry below.</p>
+          </div>
+          <div class="method-card">
+            <code class="text-blue-600 font-bold">.setType(mode)</code>
+            <p class="text-xs text-gray-500 mt-2">Accepts <code>'text'</code> or <code>'image'</code>. Determines the endpoint and <code>.generate()</code> return type.</p>
+          </div>
+          <div class="method-card">
+            <code class="text-blue-600 font-bold">.setRequestTimeout(ms)</code>
+            <p class="text-xs text-gray-500 mt-2">Expects <code>number</code>. Aborts the request if the server doesn't respond within the window.</p>
+          </div>
+          <div class="method-card">
+            <code class="text-blue-600 font-bold">.setDimensions(w, h)</code>
+            <p class="text-xs text-gray-500 mt-2">Only applicable for <code>'image'</code> type. Sets resolution parameters.</p>
+          </div>
+          <div class="method-card">
+            <code class="text-blue-600 font-bold">.setRetry(bool, count, delay)</code>
+            <p class="text-xs text-gray-500 mt-2">Configures internal retry logic for 429 and 5xx response codes.</p>
+          </div>
         </div>
       </section>
 
       <section id="live-models">
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center justify-between mb-6">
             <h2 class="section-title mb-0">Live Model Registry</h2>
-            <span id="status-badge" class="badge badge-gray">Connecting...</span>
+            <span id="status-badge" class="badge badge-green">Connected</span>
         </div>
-        <p class="section-text">These models are currently active in the Pollinations ecosystem and can be used with <code>.setModel()</code>.</p>
         <div class="overflow-x-auto">
             <table class="data-table">
                 <thead>
-                    <tr><th>Model ID</th><th>Description</th><th>Context</th><th>Modality</th></tr>
+                    <tr><th>Identifier (Slug)</th><th>Modality</th><th>Context</th></tr>
                 </thead>
-                <tbody id="models-body">
-                    <tr><td colspan="4" class="py-12 text-center text-gray-400 italic">Fetching live models...</td></tr>
-                </tbody>
+                <tbody id="models-body" class="text-[12px]">
+                    </tbody>
             </table>
         </div>
       </section>
 
-      <section id="methods">
-        <h2 class="section-title">Global Methods</h2>
-        <table class="data-table">
-          <thead>
-            <tr><th>Method</th><th>Argument</th><th>Default</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><code>setApiKey</code></td><td>String</td><td>null</td></tr>
-            <tr><td><code>setModel</code></td><td>String</td><td>'flux'</td></tr>
-            <tr><td><code>setType</code></td><td>'text' | 'image'</td><td>'text'</td></tr>
-            <tr><td><code>setRequestTimeout</code></td><td>Number (ms)</td><td>30000</td></tr>
-            <tr><td><code>setRetry</code></td><td>Bool, Int, Int</td><td>false, 2, 1k</td></tr>
-            <tr><td><code>clearHistory</code></td><td>void</td><td>-</td></tr>
-          </tbody>
-        </table>
-      </section>
-
       <section id="errors" class="mb-20">
-        <h2 class="section-title">Error Codes</h2>
+        <h2 class="section-title">Error Handling</h2>
         <div class="grid grid-cols-2 gap-8">
-          <div>
-            <h4 class="font-bold mb-2">Auth Failure</h4>
-            <p class="text-sm text-gray-500 leading-relaxed">Thrown when the API key is rejected (401) or missing from the configuration.</p>
+          <div class="p-6 bg-red-50 rounded-lg">
+            <h4 class="font-bold text-red-900 mb-2">AuthError</h4>
+            <p class="text-xs text-red-700 leading-relaxed">Thrown during <code>.generate()</code> if <code>setApiKey</code> was not called with a valid token.</p>
           </div>
-          <div>
-            <h4 class="font-bold mb-2">AbortError</h4>
-            <p class="text-sm text-gray-500 leading-relaxed">Occurs when the <code>setRequestTimeout</code> limit is hit before the server responds.</p>
+          <div class="p-6 bg-gray-50 rounded-lg">
+            <h4 class="font-bold text-gray-900 mb-2">AbortError</h4>
+            <p class="text-xs text-gray-600 leading-relaxed">Thrown if <code>setRequestTimeout</code> is exceeded. Use <code>try/catch</code> to recover.</p>
           </div>
         </div>
       </section>
 
-      <footer class="py-20 border-t border-accents-2 text-accents-3 text-[11px] flex justify-between uppercase tracking-widest font-bold">
-        <div>© 2026 AI SDK Foundation.</div>
+      <footer class="py-12 border-t border-accents-2 text-accents-3 text-[10px] flex justify-between uppercase tracking-widest font-bold">
+        <div>AIClient Technical Docs • 2026</div>
         <div class="flex gap-6 text-black">
           <a href="#" class="hover:text-blue-600">Github</a>
-          <a href="#" class="hover:text-blue-600">NPM</a>
+          <a href="#" class="hover:text-blue-600">npm</a>
         </div>
       </footer>
     </div>
@@ -228,39 +177,23 @@ const url = URL.createObjectURL(blob);</code></pre>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 
   <script>
-    // Live Model Fetcher
-    async function initRegistry() {
+    async function syncRegistry() {
       const tbody = document.getElementById('models-body');
-      const badge = document.getElementById('status-badge');
-      
       try {
         const res = await fetch('https://gen.pollinations.ai/models');
         const data = await res.json();
-        
-        tbody.innerHTML = '';
-        data.forEach(m => {
-          const row = document.createElement('tr');
-          const context = m.context_length ? `${(m.context_length/1000).toFixed(0)}k` : 'N/A';
-          const modalities = m.input_modalities.map(t => `<span class="badge badge-gray text-[9px] uppercase">${t}</span>`).join('');
-          
-          row.innerHTML = `
-            <td class="font-mono font-bold text-blue-600">${m.name}</td>
-            <td class="text-gray-500">${m.description}</td>
-            <td class="font-mono text-xs">${context}</td>
-            <td>${modalities}</td>
-          `;
-          tbody.appendChild(row);
-        });
-
-        badge.className = 'badge badge-green';
-        badge.innerText = 'Connected';
+        tbody.innerHTML = data.map(m => `
+          <tr>
+            <td class="font-bold text-blue-600">${m.name}</td>
+            <td>${m.input_modalities.join(', ')}</td>
+            <td class="text-gray-400">${m.context_length ? (m.context_length/1000).toFixed(0) + 'k' : 'N/A'}</td>
+          </tr>
+        `).join('');
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500 py-8">Failed to sync registry.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3">Failed to load live data.</td></tr>';
       }
     }
 
-    // Intersection Observer for Sidebar
-    const observerOptions = { rootMargin: '-20% 0px -70% 0px', threshold: 0 };
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -270,11 +203,10 @@ const url = URL.createObjectURL(blob);</code></pre>
           });
         }
       });
-    }, observerOptions);
+    }, { rootMargin: '-20% 0px -70% 0px' });
 
     document.querySelectorAll('section').forEach(section => observer.observe(section));
-    
-    initRegistry();
+    syncRegistry();
   </script>
 </body>
 </html>
