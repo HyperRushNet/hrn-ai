@@ -42,20 +42,22 @@
          .lightbox-thumbs { display: flex; gap: 8px; }
          .lightbox-thumb {
             width: 50px; height: 50px;
-            border-radius: 8px;
+            border-radius: 8px; 
             object-fit: cover;
             cursor: pointer; opacity: 0.5; border: 2px solid transparent; transition: all 0.2s;
          }
          .lightbox-thumb.active { opacity: 1; border-color: var(--accent); transform: scale(1.05); }
 
-         /* Universal Clean Pill Style */
+         /* Universal Clean Pill Style - Compact & Perfect */
          .pill-tag {
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
             background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle);
-            padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 500;
+            padding: 0 12px; 
+            height: 28px; 
+            border-radius: 50px; font-size: 11px; font-weight: 500;
             color: var(--accent); cursor: pointer; transition: all 0.15s;
-            min-width: 150px;
             user-select: none;
+            white-space: nowrap;
          }
          .pill-tag:hover { background: rgba(255,255,255,0.1); border-color: var(--accent); }
          .pill-tag svg { width: 14px; height: 14px; flex-shrink: 0; }
@@ -330,26 +332,30 @@ const USER_BROWSER_LANG = navigator.language || navigator.userLanguage || 'en';
 const SYS_PROMPT = `
 You are HyperRush AI. You possess a vast array of knowledge and creative capabilities.
 
-**CRITICAL INSTRUCTION: LANGUAGE DETECTION AND MATCHING**
-1. **PRIMARY RULE - ALWAYS DETECT LANGUAGE:** For EVERY SINGLE response, you MUST actively detect the language used in the user's input and respond in that EXACT SAME language.
-   - If the user writes in Dutch -> You respond in Dutch
-   - If the user writes in French -> You respond in French  
-   - If the user writes in Spanish -> You respond in Spanish
-   - If the user writes in Chinese -> You respond in Chinese
-   - If the user writes in German -> You respond in German
-   - This applies to ALL languages. NO EXCEPTIONS.
+**IDENTITY RULES**
+- You are HyperRush AI.
+- ONLY state your name ("I am HyperRush AI") if the user explicitly asks "Who are you?", "What is your name?", or similar identity questions.
+- DO NOT introduce yourself unprompted. Do not start responses with "I am HyperRush AI" unless asked.
 
-2. **FALLBACK LANGUAGE:** The user's browser language is set to "${USER_BROWSER_LANG}". 
-   - This is ONLY a fallback language for when you ABSOLUTELY CANNOT determine the language from the user's input.
-   - Examples where fallback applies: empty input, random gibberish, pure numbers, or completely ambiguous content.
-   - In ALL other cases, the detected input language takes ABSOLUTE PRECEDENCE over the fallback.
-   - NEVER default to English if the user writes in another language.
+**CRITICAL INSTRUCTION: LANGUAGE DETECTION**
+1. **IMPLICIT LANGUAGE MATCHING:** You MUST strictly detect the language of the user's input and respond in that EXACT language.
+   - User writes in Dutch -> You respond in Dutch.
+   - User writes in English -> You respond in English.
+   - **IMPORTANT:** Do NOT explicitly mention that you are switching languages or detecting the language. Do not say things like "Since you asked in Dutch...". Just answer naturally in the target language.
+   
+2. **FALLBACK:** The user's browser language is "${USER_BROWSER_LANG}". 
+   - Use this ONLY if the user's input is empty, numbers only, or completely indecipherable.
+   - In all other cases, prioritize the language detected in the user's text.
 
-3. **CRITICAL INSTRUCTION: RESPONSE FORMATTING**
-   - NO EMPTY RESPONSES: You are strictly forbidden from returning an empty response, whitespace only, or silence. Every single user input MUST result in a visible text output.
-   - AMBIGUITY HANDLING: If the user input is gibberish, random names, unclear, or seems like a mistake (e.g., "asdgfds", "John Doe"), DO NOT return nothing. Instead, respond playfully or ask for clarification in the detected or fallback language.
-   - FORMATTING: Use Markdown. Use MathJax ($$...$$) for math.
-   - IMAGES: If the user sends an image, analyze it carefully and provide a detailed description or answer questions about it in the user's language.
+**INTERACTION STYLE**
+- Be conversational and match the user's tone.
+- **IMAGES:** 
+  - If the user sends images with a specific question, answer it.
+  - If the user sends images with a greeting or vague text (like "hey", "hi", "look"), DO NOT immediately dump a detailed analysis. Instead, greet them back briefly and ask what they want to know about the images (e.g., "Hey! Nice pictures. What would you like to know about them?"). Keep it casual and helpful.
+  
+**RESPONSE FORMATTING**
+- NO EMPTY RESPONSES: You must always return text.
+- FORMATTING: Use Markdown. Use MathJax ($$...$$) for math.
 `;
 let CURRENT_ID = null, CHATS = [], PK = localStorage.getItem("pk"), isGenerating = !1, abortController = null, lastMathjaxRender = 0;
 const DB_NAME = "HyperRushDB", DB_STORE = "chatHistory";
@@ -520,7 +526,7 @@ function renderMsg(e, t, n, s, images = null) {
    if (a.className = "msg " + (o ? "user" : "ai"), a.id = `msg-${n}`, o) {
       const e = document.createElement("div"); e.className = "bubble";
       
-      // Add the small clean pill if images exist
+      // Add the compact pill if images exist
       if (images && images.length > 0) {
          const pill = document.createElement('div');
          pill.className = 'pill-tag';
@@ -533,7 +539,6 @@ function renderMsg(e, t, n, s, images = null) {
             </svg>
             ${images.length} Image${images.length > 1 ? 's' : ''}
          `;
-         // Make entire pill clickable
          pill.onclick = () => openLightbox(images, 0);
          e.appendChild(pill);
       }
@@ -570,7 +575,6 @@ function editUserMessage(index) {
     const container = document.createElement('div');
     container.className = 'edit-container';
     
-    // Recreate the clean pill for editing context - clickable
     if (currentImages.length > 0) {
         const pill = document.createElement('div');
         pill.className = 'pill-tag';
@@ -582,7 +586,6 @@ function editUserMessage(index) {
             </svg>
             ${currentImages.length} Image${currentImages.length > 1 ? 's' : ''}
         `;
-        // Make entire pill clickable
         pill.onclick = () => openLightbox(currentImages, 0);
         container.appendChild(pill);
     }
@@ -627,7 +630,6 @@ function cancelEdit(index, oldTextEncoded) {
             </svg>
             ${currentImages.length} Image${currentImages.length > 1 ? 's' : ''}
         `;
-        // Make entire pill clickable
         pill.onclick = () => openLightbox(currentImages, 0);
         bubble.appendChild(pill);
     }
