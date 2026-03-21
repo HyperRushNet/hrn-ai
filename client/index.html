@@ -3,107 +3,278 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIClient v1.0.3 | Documentation</title>
+  <title>AIClient Engine | v1.0.3 Documentation</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  
   <style>
     :root {
-      --bg: #ffffff;
-      --fg: #0f172a;
-      --accent: #2563eb;
-      --border: #e2e8f0;
-      --code-bg: #1e293b;
+      --geist-foreground: #000;
+      --geist-background: #fff;
+      --accents-1: #fafafa;
+      --accents-2: #eaeaea;
+      --accents-3: #999;
+      --geist-success: #0070f3;
+      --font-sans: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
-    .code-block { background: var(--code-bg); border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; }
-    .code-header { background: rgba(255, 255, 255, 0.05); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; }
-    pre { margin: 0; padding: 16px 20px; overflow-x: auto; font-size: 14px; color: #e2e8f0; }
-    code { font-family: 'JetBrains Mono', monospace; }
-    .btn-copy { background: rgba(255,255,255,0.1); color: #94a3b8; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; border: none; }
-    .btn-copy:hover { color: #fff; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-    th { background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; }
+
+    body { 
+      font-family: var(--font-sans);
+      background-color: var(--geist-background);
+      color: var(--geist-foreground);
+      -webkit-font-smoothing: antialiased;
+      scroll-behavior: smooth;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: var(--accents-2); border-radius: 10px; }
+
+    .sidebar {
+      width: 300px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      border-right: 1px solid var(--accents-2);
+      padding: 48px 32px;
+      background: var(--accents-1);
+      overflow-y: auto;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 8px 0;
+      font-size: 14px;
+      color: var(--accents-3);
+      transition: color 0.2s;
+      text-decoration: none;
+    }
+    .nav-link:hover { color: var(--geist-foreground); }
+    .nav-link.active { color: var(--geist-success); font-weight: 600; }
+
+    section { padding: 80px 0; border-bottom: 1px solid var(--accents-2); scroll-mt: 20px; }
+    .section-label { font-size: 12px; font-weight: 700; color: var(--geist-success); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 12px; }
+    .section-title { font-size: 38px; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 24px; }
+    .section-text { font-size: 16px; color: #444; line-height: 1.8; margin-bottom: 32px; }
+
+    .code-card {
+      background: #000;
+      border-radius: 12px;
+      margin: 32px 0;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+    .code-nav { background: #111; padding: 12px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #222; }
+    pre { margin: 0 !important; padding: 24px !important; font-size: 13px !important; }
+
+    .data-table { width: 100%; text-align: left; border-collapse: collapse; margin: 32px 0; }
+    .data-table th { padding: 12px; border-bottom: 2px solid var(--accents-2); font-size: 11px; color: var(--accents-3); text-transform: uppercase; letter-spacing: 0.05em; }
+    .data-table td { padding: 16px 12px; border-bottom: 1px solid var(--accents-2); font-size: 13px; }
+    
+    .badge { padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+    .badge-blue { background: #e6f1ff; color: #0070f3; }
+    .badge-gray { background: #f3f4f6; color: #666; }
+    .badge-green { background: #e7f9ed; color: #138535; }
+
+    @media (max-width: 1024px) { .sidebar { display: none; } }
   </style>
 </head>
-<body class="p-6 md:p-12">
+<body class="flex">
 
-  <div class="max-w-4xl mx-auto">
-    <header class="mb-12 border-b pb-8">
-      <h1 class="text-4xl font-bold mb-2">AIClient <span class="text-blue-600">v1.0.3</span></h1>
-      <p class="text-gray-600">Minimalist wrapper for Pollinations AI.</p>
-    </header>
+  <aside class="sidebar">
+    <div class="mb-12 flex items-center gap-2">
+      <svg width="24" height="24" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M38 0L76 76H0L38 0Z" fill="black"/></svg>
+      <span class="font-bold text-xl tracking-tight italic">AIClient <span class="text-blue-600 font-black">v3</span></span>
+    </div>
 
-    <section class="mb-12">
-      <h2 class="text-2xl font-bold mb-4">Installation</h2>
-      <div class="code-block">
-        <div class="code-header"><span class="text-gray-400 text-xs">HTML</span><button class="btn-copy" data-code="c1">Copy</button></div>
-        <pre><code id="c1">&lt;script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js"&gt;&lt;/script&gt;</code></pre>
+    <nav class="space-y-8">
+      <div>
+        <h4 class="text-[11px] font-bold text-black uppercase mb-4 tracking-widest">Introduction</h4>
+        <a href="#welcome" class="nav-link active">Welcome</a>
+        <a href="#quickstart" class="nav-link">Quickstart</a>
       </div>
-    </section>
-
-    <section class="mb-12">
-      <h2 class="text-2xl font-bold mb-4">Text Generation</h2>
-      <div class="code-block">
-        <div class="code-header"><span class="text-gray-400 text-xs">JavaScript</span><button class="btn-copy" data-code="c2">Copy</button></div>
-        <pre><code id="c2">const ai = new AIClient().setApiKey("YOUR_KEY").setModel("openai");
-
-try {
-  const text = await ai.generate("Hello world");
-  console.log(text); 
-} catch (err) {
-  console.error(err.message);
-}</code></pre>
+      <div>
+        <h4 class="text-[11px] font-bold text-black uppercase mb-4 tracking-widest">Core Capabilities</h4>
+        <a href="#text-api" class="nav-link">Text Intelligence</a>
+        <a href="#image-api" class="nav-link">Image Synthesis</a>
       </div>
-    </section>
-
-    <section class="mb-12">
-      <h2 class="text-2xl font-bold mb-4">Image Generation</h2>
-      <div class="code-block">
-        <div class="code-header"><span class="text-gray-400 text-xs">JavaScript</span><button class="btn-copy" data-code="c3">Copy</button></div>
-        <pre><code id="c3">const ai = new AIClient().setApiKey("YOUR_KEY").setType("image");
-
-try {
-  const blob = await ai.generate("A futuristic car");
-  const url = URL.createObjectURL(blob);
-  console.log(url);
-} catch (err) {
-  console.error(err.message);
-}</code></pre>
+      <div>
+        <h4 class="text-[11px] font-bold text-black uppercase mb-4 tracking-widest">SDK Reference</h4>
+        <a href="#live-models" class="nav-link">Live Model Registry</a>
+        <a href="#methods" class="nav-link">Global Methods</a>
+        <a href="#errors" class="nav-link">Error Codes</a>
       </div>
-    </section>
+    </nav>
+  </aside>
 
-    <section class="mb-12">
-      <h2 class="text-2xl font-bold mb-4">Methods</h2>
-      <div class="overflow-x-auto border rounded-lg">
-        <table>
+  <main class="flex-1 overflow-x-hidden">
+    <div class="max-w-4xl mx-auto px-12">
+      
+      <section id="welcome">
+        <div class="section-label">Foundation</div>
+        <h1 class="section-title">The next generation of AI integration.</h1>
+        <p class="section-text text-xl text-balance">
+          AIClient v1.0.3 is a high-performance JavaScript SDK designed for developers who demand simplicity. 
+          By abstracting complex binary transformations, we allow you to focus on the UI.
+        </p>
+        <div class="flex gap-4">
+          <span class="badge badge-blue">ES6 Modules Compatible</span>
+          <span class="badge badge-gray">Size: 4.2kb Gzipped</span>
+        </div>
+      </section>
+
+      <section id="quickstart">
+        <h2 class="section-title">Quickstart</h2>
+        <p class="section-text">Initialize the engine and execute your first generation in under 30 seconds.</p>
+        <div class="code-card">
+          <div class="code-nav"><span class="text-[10px] text-gray-500 font-mono italic uppercase tracking-widest">cdn setup</span></div>
+          <pre class="language-html"><code>&lt;script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const ai = new AIClient().setApiKey("sk-pollinations-...");
+&lt;/script&gt;</code></pre>
+        </div>
+      </section>
+
+      <section id="text-api">
+        <h2 class="section-title">Text Intelligence</h2>
+        <p class="section-text">The SDK handles JSON parsing, choice selection, and system prompt injection automatically.</p>
+        <div class="code-card">
+          <div class="code-nav"><span class="text-[10px] text-gray-500 font-mono uppercase tracking-widest">javascript</span></div>
+          <pre class="language-javascript"><code>const response = await ai
+  .setModel("openai")
+  .setSystemPrompt("You are a senior dev.")
+  .generate("Explain hydration in React.");
+
+console.log(response); // Returns clean string</code></pre>
+        </div>
+      </section>
+
+      <section id="image-api">
+        <h2 class="section-title">Image Synthesis</h2>
+        <p class="section-text">Images are returned as raw Blobs to prevent memory leaks in the browser.</p>
+        <div class="code-card">
+          <div class="code-nav"><span class="text-[10px] text-gray-500 font-mono uppercase tracking-widest">javascript</span></div>
+          <pre class="language-javascript"><code>const blob = await ai
+  .setType("image")
+  .setDimensions(1280, 720)
+  .generate("A neon city in the year 2099.");
+
+const url = URL.createObjectURL(blob);</code></pre>
+        </div>
+      </section>
+
+      <section id="live-models">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="section-title mb-0">Live Model Registry</h2>
+            <span id="status-badge" class="badge badge-gray">Connecting...</span>
+        </div>
+        <p class="section-text">These models are currently active in the Pollinations ecosystem and can be used with <code>.setModel()</code>.</p>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Model ID</th><th>Description</th><th>Context</th><th>Modality</th></tr>
+                </thead>
+                <tbody id="models-body">
+                    <tr><td colspan="4" class="py-12 text-center text-gray-400 italic">Fetching live models...</td></tr>
+                </tbody>
+            </table>
+        </div>
+      </section>
+
+      <section id="methods">
+        <h2 class="section-title">Global Methods</h2>
+        <table class="data-table">
           <thead>
-            <tr><th>Method</th><th>Description</th></tr>
+            <tr><th>Method</th><th>Argument</th><th>Default</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>setApiKey(str)</code></td><td>Required for all requests.</td></tr>
-            <tr><td><code>setModel(str)</code></td><td>Set AI model ID.</td></tr>
-            <tr><td><code>setType(str)</code></td><td>Use 'text' or 'image'.</td></tr>
-            <tr><td><code>setDimensions(w, h)</code></td><td>Set image resolution.</td></tr>
-            <tr><td><code>clearHistory()</code></td><td>Reset conversation history.</td></tr>
-            <tr><td><code>generate(prompt)</code></td><td>Execute async request.</td></tr>
+            <tr><td><code>setApiKey</code></td><td>String</td><td>null</td></tr>
+            <tr><td><code>setModel</code></td><td>String</td><td>'flux'</td></tr>
+            <tr><td><code>setType</code></td><td>'text' | 'image'</td><td>'text'</td></tr>
+            <tr><td><code>setRequestTimeout</code></td><td>Number (ms)</td><td>30000</td></tr>
+            <tr><td><code>setRetry</code></td><td>Bool, Int, Int</td><td>false, 2, 1k</td></tr>
+            <tr><td><code>clearHistory</code></td><td>void</td><td>-</td></tr>
           </tbody>
         </table>
-      </div>
-    </section>
-  </div>
+      </section>
+
+      <section id="errors" class="mb-20">
+        <h2 class="section-title">Error Codes</h2>
+        <div class="grid grid-cols-2 gap-8">
+          <div>
+            <h4 class="font-bold mb-2">Auth Failure</h4>
+            <p class="text-sm text-gray-500 leading-relaxed">Thrown when the API key is rejected (401) or missing from the configuration.</p>
+          </div>
+          <div>
+            <h4 class="font-bold mb-2">AbortError</h4>
+            <p class="text-sm text-gray-500 leading-relaxed">Occurs when the <code>setRequestTimeout</code> limit is hit before the server responds.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="py-20 border-t border-accents-2 text-accents-3 text-[11px] flex justify-between uppercase tracking-widest font-bold">
+        <div>© 2026 AI SDK Foundation.</div>
+        <div class="flex gap-6 text-black">
+          <a href="#" class="hover:text-blue-600">Github</a>
+          <a href="#" class="hover:text-blue-600">NPM</a>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 
   <script>
-    document.querySelectorAll('.btn-copy').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const code = document.getElementById(btn.dataset.code).textContent;
-        await navigator.clipboard.writeText(code);
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 2000);
+    // Live Model Fetcher
+    async function initRegistry() {
+      const tbody = document.getElementById('models-body');
+      const badge = document.getElementById('status-badge');
+      
+      try {
+        const res = await fetch('https://gen.pollinations.ai/models');
+        const data = await res.json();
+        
+        tbody.innerHTML = '';
+        data.forEach(m => {
+          const row = document.createElement('tr');
+          const context = m.context_length ? `${(m.context_length/1000).toFixed(0)}k` : 'N/A';
+          const modalities = m.input_modalities.map(t => `<span class="badge badge-gray text-[9px] uppercase">${t}</span>`).join('');
+          
+          row.innerHTML = `
+            <td class="font-mono font-bold text-blue-600">${m.name}</td>
+            <td class="text-gray-500">${m.description}</td>
+            <td class="font-mono text-xs">${context}</td>
+            <td>${modalities}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        badge.className = 'badge badge-green';
+        badge.innerText = 'Connected';
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500 py-8">Failed to sync registry.</td></tr>';
+      }
+    }
+
+    // Intersection Observer for Sidebar
+    const observerOptions = { rootMargin: '-20% 0px -70% 0px', threshold: 0 };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+          });
+        }
       });
-    });
+    }, observerOptions);
+
+    document.querySelectorAll('section').forEach(section => observer.observe(section));
+    
+    initRegistry();
   </script>
 </body>
 </html>
