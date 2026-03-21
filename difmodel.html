@@ -714,7 +714,7 @@ async function streamAI(isNewChat = false) {
       });
       const response = await fetch(`${API_BASE}/v1/chat/completions`, {
             method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
-            body: JSON.stringify({ model: "claude-airforce", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: !0, seed: Math.floor(1e6 * Math.random()) }),
+            body: JSON.stringify({ model: "step-3.5-flash", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: !0, seed: Math.floor(1e6 * Math.random()) }),
             signal: abortController.signal
          });
       if (response.status === 402) { showQuotaToast(); throw new Error("Quota Exceeded"); }
