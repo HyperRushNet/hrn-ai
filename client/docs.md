@@ -24,9 +24,11 @@ class AIClient { constructor() { this.config = { apiKey: null, model: null, syst
 ```javascript
 const ai = new AIClient()
   .setApiKey("YOUR_API_KEY")
+  .setType("text");
   .setModel("openai");
 
 const response = await ai.generate("Explain quantum physics.");
+
 console.log(response);
 ```
 
@@ -36,13 +38,15 @@ The generator returns a literal **Blob** object for images.
 ```javascript
 const ai = new AIClient()
   .setApiKey("YOUR_API_KEY")
-  .setModel("flux")
   .setType("image")
+  .setModel("flux")
   .setWidth(1280)
   .setHeight(720);
 
 const blob = await ai.generate("A futuristic cityscape");
 const imageUrl = URL.createObjectURL(blob);
+
+console.log(imageUrl);
 ```
 
 ---
