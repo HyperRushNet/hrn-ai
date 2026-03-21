@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIClient Engine | Technical Specification v1.0.3</title>
+  <title>AIClient Engine | v1.0.3 Source Specification</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: var(--accents-2); border-radius: 10px; }
 
-    .sidebar { width: 300px; height: 100vh; position: sticky; top: 0; border-right: 1px solid var(--accents-2); padding: 48px 32px; background: var(--accents-1); overflow-y: auto; }
+    .sidebar { width: 300px; height: 100vh; position: sticky; top: 0; border-right: 1px solid var(--accents-2); padding: 48px 32px; background: var(--accents-1); overflow-y: auto; flex-shrink: 0; }
     .nav-link { display: block; padding: 8px 0; font-size: 14px; color: var(--accents-3); transition: color 0.2s; text-decoration: none; }
     .nav-link:hover { color: var(--geist-foreground); }
     .nav-link.active { color: var(--geist-success); font-weight: 600; }
@@ -34,21 +34,22 @@
     .section-label { font-size: 11px; font-weight: 800; color: var(--geist-success); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 8px; }
     .section-title { font-size: 32px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 16px; }
     
-    .method-card { border: 1px solid var(--accents-2); border-radius: 8px; padding: 24px; margin-bottom: 16px; background: white; transition: border-color 0.2s; }
-    .method-card:hover { border-color: var(--geist-success); }
-    
+    .method-card { border: 1px solid var(--accents-2); border-radius: 8px; padding: 24px; margin-bottom: 16px; background: white; }
     .code-card { background: #000; border-radius: 8px; margin: 24px 0; overflow: hidden; }
-    .code-nav { background: #111; padding: 10px 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
     pre { margin: 0 !important; padding: 20px !important; font-size: 13px !important; }
 
     .data-table { width: 100%; text-align: left; border-collapse: collapse; }
     .data-table th { padding: 12px; border-bottom: 2px solid var(--accents-2); font-size: 10px; color: var(--accents-3); text-transform: uppercase; }
-    .data-table td { padding: 14px 12px; border-bottom: 1px solid var(--accents-2); font-size: 13px; font-family: var(--font-mono); }
+    .data-table td { padding: 14px 12px; border-bottom: 1px solid var(--accents-2); font-size: 13px; font-family: var(--font-mono); vertical-align: top; }
     
-    .badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
     .badge-blue { background: #e6f1ff; color: #0070f3; }
-    .badge-purple { background: #f3ebff; color: #7e22ce; }
-    .badge-green { background: #e7f9ed; color: #138535; }
+    .badge-gray { background: #f3f4f6; color: #666; }
+
+    .credits-box { margin-top: 80px; padding: 40px; background: #fafafa; border: 1px solid #eaeaea; border-radius: 12px; }
+    .credits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .credits-item h5 { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #999; margin-bottom: 8px; }
+    .credits-item p { font-size: 13px; color: #444; }
 
     @media (max-width: 1024px) { .sidebar { display: none; } }
   </style>
@@ -58,22 +59,23 @@
   <aside class="sidebar">
     <div class="mb-12 flex items-center gap-2">
       <div class="w-6 h-6 bg-black rounded flex items-center justify-center text-white text-[10px] font-black">AI</div>
-      <span class="font-bold text-lg tracking-tighter italic">AIClient <span class="text-blue-600">v1.0.3</span></span>
+      <span class="font-bold text-lg tracking-tighter">AIClient <span class="text-blue-600 italic">v1.0.3</span></span>
     </div>
 
     <nav class="space-y-6">
       <div>
         <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Core Action</h4>
-        <a href="#generate" class="nav-link active font-bold">.generate() <span class="text-[9px] border px-1 rounded ml-1">ASYNC</span></a>
+        <a href="#generate" class="nav-link active font-bold">.generate() <span class="badge badge-gray !text-[8px] px-1">Async</span></a>
       </div>
       <div>
         <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Configuration</h4>
-        <a href="#setters" class="nav-link">Chainable Setters</a>
-        <a href="#live-models" class="nav-link">Model Identifiers</a>
+        <a href="#setters" class="nav-link">Fluent Setters</a>
+        <a href="#live-models" class="nav-link">Live Registry</a>
       </div>
       <div>
-        <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Registry</h4>
-        <a href="#errors" class="nav-link">Error Logic</a>
+        <h4 class="text-[10px] font-bold text-black uppercase mb-3 tracking-widest opacity-40">Internal Logic</h4>
+        <a href="#history" class="nav-link">History & Seed</a>
+        <a href="#errors" class="nav-link">Error Handling</a>
       </div>
     </nav>
   </aside>
@@ -81,95 +83,121 @@
   <main class="flex-1 overflow-x-hidden">
     <div class="max-w-4xl mx-auto px-12 py-12">
       
-      <section id="generate" class="pt-0 border-b-4 border-blue-600">
-        <div class="section-label">Execution Engine</div>
-        <h1 class="section-title text-4xl">.generate(prompt)</h1>
-        <p class="text-gray-600 text-lg mb-6 italic">The only asynchronous method that triggers network activity.</p>
+      <section id="generate" class="pt-0 border-b-2 border-black">
+        <div class="section-label">Main Execution</div>
+        <h1 class="section-title">.generate(prompt)</h1>
+        <p class="text-gray-600 text-lg mb-6">Triggers the API request using the current <code>config</code> state.</p>
         
         <div class="method-card">
-          <div class="flex items-center gap-3 mb-4">
-            <span class="badge badge-purple">PROMISE</span>
-            <span class="badge badge-blue">DYNAMIC RETURN</span>
-          </div>
-          <p class="text-sm text-gray-700 leading-relaxed mb-4">
-            This method compiles all previous configurations (model, type, history) and sends a request to the Pollinations API. It is designed to be the final call in your chain.
-          </p>
           <div class="code-card">
             <pre class="language-javascript"><code>/**
- * @param {string} prompt - Non-empty string instruction
- * @returns {Promise<string|Blob>} Text if .setType('text'), Blob if .setType('image')
+ * @param {string} prompt - Instruction for the AI (required)
+ * @returns {Promise<string|Blob>} Text response or Image Blob
+ * @throws {Error} If API Key is missing or prompt is empty
  */
-const output = await ai.generate("Your instruction");</code></pre>
+const result = await ai.generate("What is the speed of light?");</code></pre>
+          </div>
+          <div class="mt-4 space-y-2 text-sm text-gray-600">
+            <p>• <strong>Text Mode:</strong> Appends role <code>user</code> and <code>assistant</code> to history. Auto-trims history to <code>historyLimit</code>.</p>
+            <p>• <strong>Image Mode:</strong> Uses <code>response_format: "b64_json"</code> and converts base64 to a raw <code>image/png</code> Blob.</p>
           </div>
         </div>
       </section>
 
       <section id="setters">
-        <div class="section-label">Configuration</div>
-        <h2 class="section-title">Chainable Setters</h2>
-        <p class="text-gray-500 mb-8">These methods return <code>this</code> (the instance), allowing for a fluent API design. They do <strong>not</strong> perform network requests.</p>
-
-        <div class="space-y-4">
-          <div class="method-card">
-            <code class="text-blue-600 font-bold">.setModel(slug)</code>
-            <p class="text-xs text-gray-500 mt-2">Sets the target model. Expects a <code>string</code> identifier from the registry below.</p>
-          </div>
-          <div class="method-card">
-            <code class="text-blue-600 font-bold">.setType(mode)</code>
-            <p class="text-xs text-gray-500 mt-2">Accepts <code>'text'</code> or <code>'image'</code>. Determines the endpoint and <code>.generate()</code> return type.</p>
-          </div>
-          <div class="method-card">
-            <code class="text-blue-600 font-bold">.setRequestTimeout(ms)</code>
-            <p class="text-xs text-gray-500 mt-2">Expects <code>number</code>. Aborts the request if the server doesn't respond within the window.</p>
-          </div>
-          <div class="method-card">
-            <code class="text-blue-600 font-bold">.setDimensions(w, h)</code>
-            <p class="text-xs text-gray-500 mt-2">Only applicable for <code>'image'</code> type. Sets resolution parameters.</p>
-          </div>
-          <div class="method-card">
-            <code class="text-blue-600 font-bold">.setRetry(bool, count, delay)</code>
-            <p class="text-xs text-gray-500 mt-2">Configures internal retry logic for 429 and 5xx response codes.</p>
-          </div>
-        </div>
+        <div class="section-label">Fluent API</div>
+        <h2 class="section-title">Configuration Methods</h2>
+        <table class="data-table">
+          <thead>
+            <tr><th>Method</th><th>Param Type</th><th>Default</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>setApiKey(t)</code></td><td>String</td><td><code>null</code></td></tr>
+            <tr><td><code>setModel(t)</code></td><td>String</td><td><code>"flux"</code></td></tr>
+            <tr><td><code>setType(t)</code></td><td><code>"text" | "image"</code></td><td><code>"text"</code></td></tr>
+            <tr><td><code>setSystemPrompt(t)</code></td><td>String</td><td><code>"You are a helpful assistant."</code></td></tr>
+            <tr><td><code>setTimeout(t)</code></td><td>Number (ms)</td><td><code>30000</code></td></tr>
+            <tr><td><code>setSeed(t)</code></td><td>Number | null</td><td><code>null (Random)</code></td></tr>
+            <tr><td><code>setDimensions(w, h)</code></td><td>Number, Number</td><td><code>1024, 1024</code></td></tr>
+            <tr><td><code>setRetry(bool, attempts, delay)</code></td><td>Bool, Int, Int</td><td><code>true, 2, 1000</code></td></tr>
+            <tr><td><code>clearHistory()</code></td><td>-</td><td>-</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <section id="live-models">
         <div class="flex items-center justify-between mb-6">
-            <h2 class="section-title mb-0">Live Model Registry</h2>
-            <span id="status-badge" class="badge badge-green">Connected</span>
+            <h2 class="section-title mb-0">Live Registry</h2>
+            <span id="status-badge" class="badge badge-blue">Syncing Registry...</span>
         </div>
         <div class="overflow-x-auto">
             <table class="data-table">
                 <thead>
-                    <tr><th>Identifier (Slug)</th><th>Modality</th><th>Context</th></tr>
+                    <tr><th>Slug</th><th>Modality</th><th>Context</th></tr>
                 </thead>
-                <tbody id="models-body" class="text-[12px]">
-                    </tbody>
+                <tbody id="models-body" class="text-[12px]"></tbody>
             </table>
         </div>
       </section>
 
-      <section id="errors" class="mb-20">
-        <h2 class="section-title">Error Handling</h2>
-        <div class="grid grid-cols-2 gap-8">
-          <div class="p-6 bg-red-50 rounded-lg">
-            <h4 class="font-bold text-red-900 mb-2">AuthError</h4>
-            <p class="text-xs text-red-700 leading-relaxed">Thrown during <code>.generate()</code> if <code>setApiKey</code> was not called with a valid token.</p>
+      <section id="history">
+        <div class="section-label">Deep Dive</div>
+        <h2 class="section-title">Internal State Logic</h2>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="method-card">
+            <h4 class="font-bold text-sm mb-2">History Management</h4>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              In text mode, the engine keeps a sliding window of conversations. When <code>history.length</code> exceeds <code>2 * historyLimit</code>, the oldest pair is spliced out to save tokens.
+            </p>
           </div>
-          <div class="p-6 bg-gray-50 rounded-lg">
-            <h4 class="font-bold text-gray-900 mb-2">AbortError</h4>
-            <p class="text-xs text-gray-600 leading-relaxed">Thrown if <code>setRequestTimeout</code> is exceeded. Use <code>try/catch</code> to recover.</p>
+          <div class="method-card">
+            <h4 class="font-bold text-sm mb-2">Deterministic Seeds</h4>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              If no seed is set via <code>setSeed()</code>, the engine generates a random integer: <code>Math.floor(1e9 * Math.random())</code> for every request.
+            </p>
           </div>
         </div>
       </section>
 
-      <footer class="py-12 border-t border-accents-2 text-accents-3 text-[10px] flex justify-between uppercase tracking-widest font-bold">
-        <div>AIClient Technical Docs • 2026</div>
-        <div class="flex gap-6 text-black">
-          <a href="#" class="hover:text-blue-600">Github</a>
-          <a href="#" class="hover:text-blue-600">npm</a>
+      <section id="errors" class="border-none">
+        <h2 class="section-title">Error Codes</h2>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="p-4 border border-red-100 bg-red-50/30 rounded">
+            <h4 class="text-[10px] font-black text-red-800 uppercase mb-1">Retry Trigger (429/5xx)</h4>
+            <p class="text-xs text-red-600">If enabled, the SDK waits <code>retryDelay</code> before re-executing <code>generate()</code>.</p>
+          </div>
+          <div class="p-4 border border-gray-200 bg-gray-50 rounded">
+            <h4 class="text-[10px] font-black text-gray-800 uppercase mb-1">AbortError</h4>
+            <p class="text-xs text-gray-500">Triggered by the internal <code>AbortController</code> if the <code>timeout</code> limit is reached.</p>
+          </div>
         </div>
-      </footer>
+      </section>
+
+      <div class="credits-box">
+        <h4 class="section-label !text-black mb-8">System Credits</h4>
+        <div class="credits-grid">
+          <div class="credits-item">
+            <h5>Provider</h5>
+            <p>Pollinations.ai Foundation</p>
+          </div>
+          <div class="credits-item">
+            <h5>Engine Build</h5>
+            <p>v1.0.3-minified (Terser v5.39.0)</p>
+          </div>
+          <div class="credits-item">
+            <h5>Architecture</h5>
+            <p>HyperRush Engineering</p>
+          </div>
+          <div class="credits-item">
+            <h5>Environment</h5>
+            <p>Browser / ES6 Compatible</p>
+          </div>
+        </div>
+        <div class="mt-12 text-[9px] text-gray-400 uppercase tracking-widest border-t border-gray-100 pt-6 text-center">
+          AIClient Framework Documentation &copy; 2026
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -185,12 +213,13 @@ const output = await ai.generate("Your instruction");</code></pre>
         tbody.innerHTML = data.map(m => `
           <tr>
             <td class="font-bold text-blue-600">${m.name}</td>
-            <td>${m.input_modalities.join(', ')}</td>
+            <td class="text-gray-400 uppercase">${m.input_modalities.join(' / ')}</td>
             <td class="text-gray-400">${m.context_length ? (m.context_length/1000).toFixed(0) + 'k' : 'N/A'}</td>
           </tr>
         `).join('');
+        document.getElementById('status-badge').innerText = 'System Live';
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="3">Failed to load live data.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="py-4 text-center">Sync Failed</td></tr>';
       }
     }
 
