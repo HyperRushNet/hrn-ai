@@ -1,21 +1,21 @@
 {
   "groups": [
     {
-      "title": "Welcome",
+      "title": "Getting Started",
       "items": [
         {
           "id": "include-script",
           "label": "Include Script",
           "icon": "code",
           "badge": "Step 1",
-          "content": "# 📦 Include AIClient\n\nOm AIClient te gebruiken in je project, moet je eerst de library laden via een CDN.\n\n## 🔧 Installatie\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n## 📖 Wat gebeurt hier?\n\n- Laadt de AIClient library in je browser\n- Maakt de `AIClient` class globaal beschikbaar\n- Vereist **geen bundler of build step**\n\n## ✅ Wanneer gebruiken?\n\n| Scenario | Aanbevolen |\n|--------|----------|\n| Snelle prototype | ✅ Ja |\n| Productie | ✅ Ja |\n| Node.js | ❌ Nee (gebruik package) |"
+          "content": "# Including the AIClient Library\n\nTo begin using AIClient in a browser environment, you must first load the library. This can be done באמצעות a CDN, which allows you to integrate the client without any build tooling or package installation.\n\n## Usage\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n## How It Works\n\nWhen this script is loaded:\n\n- The `AIClient` class becomes globally available in the browser\n- All client methods are accessible without importing modules\n- The library initializes in a lightweight, stateless manner\n\n## When to Use CDN\n\n| Scenario | Recommended |\n|----------|------------|\n| Static websites | Yes |\n| Prototypes and demos | Yes |\n| Production (browser) | Yes |\n| Node.js environments | No |\n\n## Notes\n\n- The CDN version is optimized for browser usage only\n- No additional dependencies are required\n- Ensure the script is loaded before attempting to instantiate the client"
         },
         {
           "id": "init-client",
           "label": "Initialize Client",
           "icon": "play",
           "badge": "Step 2",
-          "content": "# 🚀 Initialize Client\n\nMaak een nieuwe instantie van AIClient en stel je API key in.\n\n## 🔧 Gebruik\n\n```javascript\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY');\n```\n\n## 📖 Uitleg\n\nDe API key wordt gebruikt voor:\n\n- Authenticatie met de AI service\n- Rate limiting en quota\n- Toegang tot modellen\n\n## 📊 Parameters\n\n| Parameter | Type | Required | Beschrijving |\n|----------|------|--------|-------------|\n| apiKey | string | ✅ Ja | Jouw unieke API sleutel |\n\n## ⚠️ Belangrijk\n\n- Zonder API key werken requests **niet**\n- Bewaar je key **niet publiekelijk** in productie\n\n## 💡 Tip\n\nGebruik environment variables voor veiligheid."
+          "content": "# Initializing the AIClient\n\nAfter loading the library, the next step is to create a new client instance and configure authentication.\n\n## Usage\n\n```javascript\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY');\n```\n\n## Description\n\nThe API key is required for all interactions with the AI service. It is used to:\n\n- Authenticate requests\n- Track usage and enforce rate limits\n- Determine access to specific models and features\n\n## Parameters\n\n| Parameter | Type | Required | Description |\n|----------|------|----------|-------------|\n| apiKey | string | Yes | Unique API key issued to the user |\n\n## Behavior\n\n- The client stores the API key internally after initialization\n- All subsequent requests automatically include this key\n- If the key is missing or invalid, all requests will fail\n\n## Security Considerations\n\n- Do not expose your API key in publicly accessible client-side code in production\n- Use environment variables or a proxy server for secure deployments\n\n## Common Errors\n\n| Error | Cause |\n|------|------|\n| Authentication failed | Invalid or missing API key |\n| Unauthorized request | API key does not have required permissions |"
         }
       ]
     },
@@ -24,28 +24,28 @@
       "items": [
         {
           "id": "text-setup",
-          "label": "Setup Text Mode",
+          "label": "Set Type to Text",
           "icon": "file-text",
           "badge": "Step 3",
-          "content": "# 📝 Text Mode\n\nSchakel de client naar tekstgeneratie.\n\n## 🔧 Gebruik\n\n```javascript\nclient.setType('text');\n```\n\n## 📖 Uitleg\n\nDit bepaalt dat:\n\n- Input wordt behandeld als tekst prompt\n- Output een **string** zal zijn\n\n## 📊 Mogelijke types\n\n| Type | Output |\n|------|--------|\n| text | string |\n| image | Blob |\n\n## ⚠️ Let op\n\nAls je geen type instelt, kan de client niet correct werken."
+          "content": "# Configuring Text Generation Mode\n\nBefore generating output, the client must be configured to operate in text mode. This determines how the input is interpreted and what type of response is returned.\n\n## Usage\n\n```javascript\nclient.setType('text');\n```\n\n## Description\n\nSetting the type to `text` configures the client to:\n\n- Accept string-based prompts\n- Route requests to text-capable models\n- Return responses as plain strings\n\n## Supported Types\n\n| Type | Input | Output |\n|------|------|--------|\n| text | string | string |\n| image | string | Blob |\n\n## Internal Behavior\n\n- The client adjusts request formatting based on the selected type\n- Validation rules differ depending on the type\n- Incompatible settings (e.g. image dimensions in text mode) are ignored or may throw errors\n\n## Important Notes\n\n- This step is mandatory before calling `generate()`\n- Changing the type resets certain internal configurations"
         },
         {
           "id": "text-model",
-          "label": "Model Selection",
+          "label": "Select Model",
           "icon": "cpu",
           "badge": "Step 4",
-          "content": "# 🤖 Model (Text)\n\nKies welk AI model je gebruikt voor tekst.\n\n## 🔧 Gebruik\n\n```javascript\nclient.setModel('gemini-fast');\n```\n\n## 📖 Uitleg\n\nHet model bepaalt:\n\n- Snelheid ⚡\n- Kwaliteit 🧠\n- Kosten 💰\n\n## 📊 Beschikbare modellen\n\n| Model | Snelheid | Kwaliteit | Gebruik |\n|------|---------|----------|--------|\n| gemini-fast | ⚡⚡⚡ | ⚡⚡ | Snelle responses |\n\n## 💡 Aanbevolen\n\nGebruik `gemini-fast` voor:\n\n- Chat apps\n- UI interacties\n- Snelle feedback"
+          "content": "# Selecting a Text Model\n\nAfter configuring the client for text generation, you must select a model.\n\n## Usage\n\n```javascript\nclient.setModel('gemini-fast');\n```\n\n## Description\n\nThe model defines how the input prompt is processed and how the output is generated. Different models may vary in:\n\n- Response speed\n- Output quality\n- Cost per request\n\n## Available Models\n\n| Model | Speed | Quality | Use Case |\n|------|------|--------|----------|\n| gemini-fast | High | Moderate | Real-time applications, chat interfaces |\n\n## Behavior\n\n- The selected model is applied to all subsequent requests\n- Changing the model does not reset other configurations\n\n## Considerations\n\n- Use faster models for interactive applications\n- Use higher-quality models (if available) for content generation tasks\n\n## Errors\n\n| Error | Cause |\n|------|------|\n| Model not found | Invalid model name |\n| Unsupported model | Model not compatible with selected type |"
         },
         {
           "id": "text-generate",
           "label": "Generate Text",
           "icon": "play-circle",
           "badge": "Core",
-          "content": "# ✨ Generate Text\n\nGenereer tekst output op basis van een prompt.\n\n## 🔧 Gebruik\n\n```javascript\nconst result = await client.generate('Explain AIClient');\nconsole.log(result);\n```\n\n## 📖 Uitleg\n\nDe `generate()` functie:\n\n1. Stuurt je prompt naar de API\n2. Verwerkt het model antwoord\n3. Geeft een string terug\n\n## 📊 Parameters\n\n| Parameter | Type | Required | Beschrijving |\n|----------|------|--------|-------------|\n| prompt | string | ✅ Ja | Input tekst |\n\n## 📦 Return\n\n| Type | Beschrijving |\n|------|-------------|\n| string | Gegenereerde tekst |\n\n## ⚠️ Errors\n\n- Geen API key → error\n- Lege prompt → error\n\n## 💡 Tip\n\nGebruik duidelijke prompts voor betere output."
+          "content": "# Generating Text Output\n\nOnce the client is fully configured, you can generate text using the `generate()` method.\n\n## Usage\n\n```javascript\nconst result = await client.generate('Explain how AIClient works');\nconsole.log(result);\n```\n\n## Parameters\n\n| Parameter | Type | Required | Description |\n|----------|------|----------|-------------|\n| prompt | string | Yes | Input text prompt |\n\n## Return Value\n\n| Type | Description |\n|------|-------------|\n| string | Generated text output |\n\n## Execution Flow\n\n1. Validate configuration (API key, type, model)\n2. Send request to API\n3. Wait for model response\n4. Parse and return output\n\n## Error Handling\n\n| Error | Cause |\n|------|------|\n| Missing API key | Authentication not configured |\n| Missing model | Model not set |\n| Empty prompt | Invalid input |\n\n## Best Practices\n\n- Use clear and specific prompts\n- Avoid extremely long inputs unless necessary\n- Handle errors using try/catch"
         },
         {
           "id": "text-options",
-          "label": "Optional Settings",
+          "label": "Advanced Configuration",
           "icon": "sliders",
           "badge": "Optional",
           "children": [
@@ -53,31 +53,25 @@
               "id": "system-prompt",
               "label": "System Prompt",
               "icon": "edit-3",
-              "content": "# 🧠 System Prompt\n\nGeeft instructies aan het model.\n\n```javascript\nclient.setSystemPrompt('You are a helpful assistant');\n```\n\n## 📊 Info\n\n| Property | Value |\n|---------|------|\n| Type | string |\n| Required | ❌ |\n| Applies to | text |\n\n## 💡 Gebruik\n\n- Tone bepalen\n- Gedrag sturen\n- Context geven"
+              "content": "# System Prompt\n\nThe system prompt provides high-level instructions that influence how the model responds.\n\n## Usage\n\n```javascript\nclient.setSystemPrompt('You are a technical assistant');\n```\n\n## Description\n\n- Acts as a persistent instruction layer\n- Applied to every request\n- Useful for defining tone, role, or constraints\n\n## Parameters\n\n| Parameter | Type | Required |\n|----------|------|----------|\n| prompt | string | No |\n\n## Use Cases\n\n- Enforcing consistent tone\n- Restricting output format\n- Defining assistant behavior"
             },
             {
               "id": "timeout",
               "label": "Timeout",
               "icon": "clock",
-              "content": "# ⏱ Timeout\n\nMaximale wachttijd.\n\n```javascript\nclient.setTimeout(30000);\n```\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| timeout | number | 30000 ms |"
+              "content": "# Timeout Configuration\n\nDefines the maximum time the client will wait for a response.\n\n## Usage\n\n```javascript\nclient.setTimeout(30000);\n```\n\n## Parameters\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| timeout | number (ms) | 30000 |\n\n## Behavior\n\n- Requests exceeding this time are aborted\n- Useful for preventing hanging requests"
             },
             {
               "id": "seed",
               "label": "Seed",
               "icon": "shuffle",
-              "content": "# 🎲 Seed\n\nVoor reproduceerbare output.\n\n```javascript\nclient.setSeed(12345);\n```\n\n| Type | Default |\n|------|--------|\n| number | null |"
+              "content": "# Seed\n\nThe seed ensures reproducibility of outputs.\n\n## Usage\n\n```javascript\nclient.setSeed(12345);\n```\n\n## Description\n\n- Same seed + same input = similar output\n- Primarily useful for testing and debugging\n\n## Parameters\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| seed | number | null |"
             },
             {
               "id": "retry",
-              "label": "Retry",
+              "label": "Retry Logic",
               "icon": "refresh-cw",
-              "content": "# 🔁 Retry\n\nAutomatisch opnieuw proberen.\n\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n\n| Param | Type |\n|------|------|\n| enabled | boolean |\n| attempts | number |\n| delay | ms |"
-            },
-            {
-              "id": "clear-history",
-              "label": "Clear History",
-              "icon": "trash-2",
-              "content": "# 🗑 Clear History\n\nReset conversatie.\n\n```javascript\nclient.clearHistory();\n```"
+              "content": "# Retry Logic\n\nAutomatically retries failed requests.\n\n## Usage\n\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n\n## Parameters\n\n| Parameter | Type | Description |\n|----------|------|-------------|\n| enabled | boolean | Enable or disable retry |\n| attempts | number | Number of retry attempts |\n| delay | number | Delay between retries (ms) |\n\n## Behavior\n\n- Retries only on failure\n- Helps mitigate temporary network issues"
             }
           ]
         }
@@ -88,31 +82,31 @@
       "items": [
         {
           "id": "image-setup",
-          "label": "Setup Image Mode",
+          "label": "Set Type to Image",
           "icon": "image",
           "badge": "Step 3",
-          "content": "# 🖼 Image Mode\n\nActiveer image generatie.\n\n```javascript\nclient.setType('image');\n```\n\n## 📖 Output\n\n- Geeft een **Blob** terug\n- Meestal PNG formaat"
+          "content": "# Configuring Image Generation Mode\n\nTo generate images, the client must be switched to image mode.\n\n## Usage\n\n```javascript\nclient.setType('image');\n```\n\n## Description\n\nThis configuration:\n\n- Enables image generation endpoints\n- Changes the output format to binary (Blob)\n- Activates image-specific validation rules"
         },
         {
           "id": "image-model",
-          "label": "Model Selection",
+          "label": "Select Model",
           "icon": "cpu",
           "badge": "Step 4",
-          "content": "# 🎨 Model (Image)\n\n```javascript\nclient.setModel('flux');\n```\n\n## 📊 Model Info\n\n| Model | Gebruik |\n|------|--------|\n| flux | Image generation |\n\n## 💡 Goed voor\n\n- Art\n- UI assets\n- Concept visuals"
+          "content": "# Selecting an Image Model\n\n## Usage\n\n```javascript\nclient.setModel('flux');\n```\n\n## Description\n\nThe model determines how images are generated from prompts.\n\n## Available Models\n\n| Model | Description |\n|------|------------|\n| flux | General-purpose image generation |\n\n## Considerations\n\n- Model choice affects style and quality\n- Some models may support additional parameters"
         },
         {
           "id": "image-dimensions",
-          "label": "Dimensions",
+          "label": "Set Dimensions",
           "icon": "maximize-2",
           "badge": "Required",
-          "content": "# 📐 Dimensions\n\n```javascript\nclient.setDimensions(1024, 1024);\n```\n\n## 📊 Parameters\n\n| Param | Type | Default |\n|------|------|--------|\n| width | number | 1024 |\n| height | number | 1024 |\n\n## 💡 Tip\n\nGrotere images = meer detail maar trager."
+          "content": "# Image Dimensions\n\nDefines the output resolution of generated images.\n\n## Usage\n\n```javascript\nclient.setDimensions(1024, 1024);\n```\n\n## Parameters\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| width | number | 1024 |\n| height | number | 1024 |\n\n## Behavior\n\n- Larger dimensions increase detail\n- Larger images require more processing time\n- Some models may enforce limits"
         },
         {
           "id": "image-generate",
           "label": "Generate Image",
           "icon": "play-circle",
           "badge": "Core",
-          "content": "# ✨ Generate Image\n\n```javascript\nconst blob = await client.generate('A futuristic city');\nconst url = URL.createObjectURL(blob);\n```\n\n## 📊 Return\n\n| Type | Beschrijving |\n|------|-------------|\n| Blob | image/png |\n\n## 💡 Gebruik\n\n- `<img>` src zetten\n- Download aanbieden"
+          "content": "# Generating Images\n\n## Usage\n\n```javascript\nconst blob = await client.generate('A futuristic city skyline');\nconst url = URL.createObjectURL(blob);\ndocument.querySelector('img').src = url;\n```\n\n## Return Value\n\n| Type | Description |\n|------|-------------|\n| Blob | Binary image data (PNG) |\n\n## Workflow\n\n1. Generate image as Blob\n2. Convert to URL\n3. Assign to an `<img>` element\n\n## Notes\n\n- Blob must be converted before display\n- Can be used for downloads or previews"
         }
       ]
     }
