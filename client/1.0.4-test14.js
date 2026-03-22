@@ -112,14 +112,32 @@ class AIClient {
         const b64 = data.data[0].b64_json;
         return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
       } else {
+        // **Streaming verbeterd**: parse JSON per chunk/line
         if (this.config.stream && response.body && onStream) {
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
+          let buffer = '';
           let done = false;
+
           while (!done) {
             const { value, done: streamDone } = await reader.read();
             done = streamDone;
-            if (value) onStream(decoder.decode(value));
+            if (value) {
+              buffer += decoder.decode(value, { stream: true });
+              let lines = buffer.split('\n'); // parse per line
+              buffer = lines.pop(); // incomplete line bewaren
+              for (let line of lines) {
+                line = line.trim();
+                if (!line || line === '[DONE]') continue;
+                try {
+                  const data = JSON.parse(line);
+                  const text = data.choices?.[0]?.delta?.content || '';
+                  if (text) onStream(text);
+                } catch(e) {
+                  // wachten op volgende chunk
+                }
+              }
+            }
           }
           return;
         } else {
