@@ -1,114 +1,159 @@
 {
-  "groups": [
-    {
-      "title": "Getting Started",
-      "items": [
-        {
-          "id": "include-script",
-          "label": "Include Script",
-          "icon": "code",
-          "badge": "Step 1",
-          "content": "# Including the AIClient Library\n\nTo begin using AIClient in a browser environment, you must first load the library. This can be done באמצעות a CDN, which allows you to integrate the client without any build tooling or package installation.\n\n## Usage\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n## How It Works\n\nWhen this script is loaded:\n\n- The `AIClient` class becomes globally available in the browser\n- All client methods are accessible without importing modules\n- The library initializes in a lightweight, stateless manner\n\n## When to Use CDN\n\n| Scenario | Recommended |\n|----------|------------|\n| Static websites | Yes |\n| Prototypes and demos | Yes |\n| Production (browser) | Yes |\n| Node.js environments | No |\n\n## Notes\n\n- The CDN version is optimized for browser usage only\n- No additional dependencies are required\n- Ensure the script is loaded before attempting to instantiate the client"
-        },
-        {
-          "id": "init-client",
-          "label": "Initialize Client",
-          "icon": "play",
-          "badge": "Step 2",
-          "content": "# Initializing the AIClient\n\nAfter loading the library, the next step is to create a new client instance and configure authentication.\n\n## Usage\n\n```javascript\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY');\n```\n\n## Description\n\nThe API key is required for all interactions with the AI service. It is used to:\n\n- Authenticate requests\n- Track usage and enforce rate limits\n- Determine access to specific models and features\n\n## Parameters\n\n| Parameter | Type | Required | Description |\n|----------|------|----------|-------------|\n| apiKey | string | Yes | Unique API key issued to the user |\n\n## Behavior\n\n- The client stores the API key internally after initialization\n- All subsequent requests automatically include this key\n- If the key is missing or invalid, all requests will fail\n\n## Security Considerations\n\n- Do not expose your API key in publicly accessible client-side code in production\n- Use environment variables or a proxy server for secure deployments\n\n## Common Errors\n\n| Error | Cause |\n|------|------|\n| Authentication failed | Invalid or missing API key |\n| Unauthorized request | API key does not have required permissions |"
-        }
-      ]
-    },
-    {
-      "title": "Text Generation",
-      "items": [
-        {
-          "id": "text-setup",
-          "label": "Set Type to Text",
-          "icon": "file-text",
-          "badge": "Step 3",
-          "content": "# Configuring Text Generation Mode\n\nBefore generating output, the client must be configured to operate in text mode. This determines how the input is interpreted and what type of response is returned.\n\n## Usage\n\n```javascript\nclient.setType('text');\n```\n\n## Description\n\nSetting the type to `text` configures the client to:\n\n- Accept string-based prompts\n- Route requests to text-capable models\n- Return responses as plain strings\n\n## Supported Types\n\n| Type | Input | Output |\n|------|------|--------|\n| text | string | string |\n| image | string | Blob |\n\n## Internal Behavior\n\n- The client adjusts request formatting based on the selected type\n- Validation rules differ depending on the type\n- Incompatible settings (e.g. image dimensions in text mode) are ignored or may throw errors\n\n## Important Notes\n\n- This step is mandatory before calling `generate()`\n- Changing the type resets certain internal configurations"
-        },
-        {
-          "id": "text-model",
-          "label": "Select Model",
-          "icon": "cpu",
-          "badge": "Step 4",
-          "content": "# Selecting a Text Model\n\nAfter configuring the client for text generation, you must select a model.\n\n## Usage\n\n```javascript\nclient.setModel('gemini-fast');\n```\n\n## Description\n\nThe model defines how the input prompt is processed and how the output is generated. Different models may vary in:\n\n- Response speed\n- Output quality\n- Cost per request\n\n## Available Models\n\n| Model | Speed | Quality | Use Case |\n|------|------|--------|----------|\n| gemini-fast | High | Moderate | Real-time applications, chat interfaces |\n\n## Behavior\n\n- The selected model is applied to all subsequent requests\n- Changing the model does not reset other configurations\n\n## Considerations\n\n- Use faster models for interactive applications\n- Use higher-quality models (if available) for content generation tasks\n\n## Errors\n\n| Error | Cause |\n|------|------|\n| Model not found | Invalid model name |\n| Unsupported model | Model not compatible with selected type |"
-        },
-        {
-          "id": "text-generate",
-          "label": "Generate Text",
-          "icon": "play-circle",
-          "badge": "Core",
-          "content": "# Generating Text Output\n\nOnce the client is fully configured, you can generate text using the `generate()` method.\n\n## Usage\n\n```javascript\nconst result = await client.generate('Explain how AIClient works');\nconsole.log(result);\n```\n\n## Parameters\n\n| Parameter | Type | Required | Description |\n|----------|------|----------|-------------|\n| prompt | string | Yes | Input text prompt |\n\n## Return Value\n\n| Type | Description |\n|------|-------------|\n| string | Generated text output |\n\n## Execution Flow\n\n1. Validate configuration (API key, type, model)\n2. Send request to API\n3. Wait for model response\n4. Parse and return output\n\n## Error Handling\n\n| Error | Cause |\n|------|------|\n| Missing API key | Authentication not configured |\n| Missing model | Model not set |\n| Empty prompt | Invalid input |\n\n## Best Practices\n\n- Use clear and specific prompts\n- Avoid extremely long inputs unless necessary\n- Handle errors using try/catch"
-        },
-        {
-          "id": "text-options",
-          "label": "Advanced Configuration",
-          "icon": "sliders",
-          "badge": "Optional",
-          "children": [
-            {
-              "id": "system-prompt",
-              "label": "System Prompt",
-              "icon": "edit-3",
-              "content": "# System Prompt\n\nThe system prompt provides high-level instructions that influence how the model responds.\n\n## Usage\n\n```javascript\nclient.setSystemPrompt('You are a technical assistant');\n```\n\n## Description\n\n- Acts as a persistent instruction layer\n- Applied to every request\n- Useful for defining tone, role, or constraints\n\n## Parameters\n\n| Parameter | Type | Required |\n|----------|------|----------|\n| prompt | string | No |\n\n## Use Cases\n\n- Enforcing consistent tone\n- Restricting output format\n- Defining assistant behavior"
-            },
-            {
-              "id": "timeout",
-              "label": "Timeout",
-              "icon": "clock",
-              "content": "# Timeout Configuration\n\nDefines the maximum time the client will wait for a response.\n\n## Usage\n\n```javascript\nclient.setTimeout(30000);\n```\n\n## Parameters\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| timeout | number (ms) | 30000 |\n\n## Behavior\n\n- Requests exceeding this time are aborted\n- Useful for preventing hanging requests"
-            },
-            {
-              "id": "seed",
-              "label": "Seed",
-              "icon": "shuffle",
-              "content": "# Seed\n\nThe seed ensures reproducibility of outputs.\n\n## Usage\n\n```javascript\nclient.setSeed(12345);\n```\n\n## Description\n\n- Same seed + same input = similar output\n- Primarily useful for testing and debugging\n\n## Parameters\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| seed | number | null |"
-            },
-            {
-              "id": "retry",
-              "label": "Retry Logic",
-              "icon": "refresh-cw",
-              "content": "# Retry Logic\n\nAutomatically retries failed requests.\n\n## Usage\n\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n\n## Parameters\n\n| Parameter | Type | Description |\n|----------|------|-------------|\n| enabled | boolean | Enable or disable retry |\n| attempts | number | Number of retry attempts |\n| delay | number | Delay between retries (ms) |\n\n## Behavior\n\n- Retries only on failure\n- Helps mitigate temporary network issues"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "title": "Image Generation",
-      "items": [
-        {
-          "id": "image-setup",
-          "label": "Set Type to Image",
-          "icon": "image",
-          "badge": "Step 3",
-          "content": "# Configuring Image Generation Mode\n\nTo generate images, the client must be switched to image mode.\n\n## Usage\n\n```javascript\nclient.setType('image');\n```\n\n## Description\n\nThis configuration:\n\n- Enables image generation endpoints\n- Changes the output format to binary (Blob)\n- Activates image-specific validation rules"
-        },
-        {
-          "id": "image-model",
-          "label": "Select Model",
-          "icon": "cpu",
-          "badge": "Step 4",
-          "content": "# Selecting an Image Model\n\n## Usage\n\n```javascript\nclient.setModel('flux');\n```\n\n## Description\n\nThe model determines how images are generated from prompts.\n\n## Available Models\n\n| Model | Description |\n|------|------------|\n| flux | General-purpose image generation |\n\n## Considerations\n\n- Model choice affects style and quality\n- Some models may support additional parameters"
-        },
-        {
-          "id": "image-dimensions",
-          "label": "Set Dimensions",
-          "icon": "maximize-2",
-          "badge": "Required",
-          "content": "# Image Dimensions\n\nDefines the output resolution of generated images.\n\n## Usage\n\n```javascript\nclient.setDimensions(1024, 1024);\n```\n\n## Parameters\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| width | number | 1024 |\n| height | number | 1024 |\n\n## Behavior\n\n- Larger dimensions increase detail\n- Larger images require more processing time\n- Some models may enforce limits"
-        },
-        {
-          "id": "image-generate",
-          "label": "Generate Image",
-          "icon": "play-circle",
-          "badge": "Core",
-          "content": "# Generating Images\n\n## Usage\n\n```javascript\nconst blob = await client.generate('A futuristic city skyline');\nconst url = URL.createObjectURL(blob);\ndocument.querySelector('img').src = url;\n```\n\n## Return Value\n\n| Type | Description |\n|------|-------------|\n| Blob | Binary image data (PNG) |\n\n## Workflow\n\n1. Generate image as Blob\n2. Convert to URL\n3. Assign to an `<img>` element\n\n## Notes\n\n- Blob must be converted before display\n- Can be used for downloads or previews"
-        }
-      ]
-    }
-  ]
+"groups": [
+{
+"title": "Getting Started",
+"items": [
+{
+"id": "include-script",
+"label": "Include Script",
+"icon": "code",
+"badge": "Step 1",
+"content": "# Include the AIClient Library\n\nUse the following script tag to load the AIClient library in a browser environment.\n\n`html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n`\n\n## Behavior\n- Defines a global `AIClient` class.\n- No module system required.\n- Must be included before any client usage."
+},
+{
+"id": "init-client",
+"label": "Initialize Client",
+"icon": "play",
+"badge": "Step 2",
+"content": "# Initialize AIClient\n\nCreate a new instance and set your API key.\n\n`javascript\nconst client = new AIClient().setApiKey('YOUR_API_KEY');\n`\n\n## Internal Defaults\n| Property | Default |\n|---------|--------|\n| model | flux |\n| type | text |\n| systemPrompt | 'You are a helpful assistant.' |\n| timeout | 30000 |\n| retry | true |\n| retryAttempts | 2 |\n| retryDelay | 1000 |\n| seed | null |\n| width | 1024 |\n| height | 1024 |\n| history | empty array |\n\n## Notes\n- API key is mandatory; requests without it will throw an error."
+}
+]
+},
+{
+"title": "Text Generation",
+"items": [
+{
+"id": "text-setup",
+"label": "Set Text Mode",
+"icon": "file-text",
+"badge": "Step 3",
+"content": "# Set Type to Text\n\n`javascript\nclient.setType('text');\n`\n\n## Behavior\n- Only 'image' is treated differently; all other values resolve to 'text'.\n- Enables chat completion endpoint `/v1/chat/completions`."
+},
+{
+"id": "text-model",
+"label": "Select Text Model",
+"icon": "cpu",
+"badge": "Step 4",
+"content": "# Set Model\n\n`javascript\nclient.setModel('gemini-fast');\n`\n\n## Behavior\n- The model string is sent directly to the API.\n- No validation occurs in the client.\n- Text models must have text output; otherwise, the API returns an error."
+},
+{
+"id": "text-generate",
+"label": "Generate Text",
+"icon": "play-circle",
+"badge": "Core",
+"content": "# Generate Text\n\n`javascript\nconst output = await client.generate('Explain AIClient usage');\nconsole.log(output);\n`\n\n## Behavior\n- Sends `systemPrompt` + history + user prompt.\n- Stores messages in internal history.\n- Trims history if length > 2 * historyLimit.\n\n## Error Conditions\n| Condition | Error |\n|-----------|-------|\n| Missing API key | Throws 'API Key is required' |\n| Empty prompt | Throws 'Input prompt cannot be empty' |\n| API returns 429 or 5xx | Retries if retry=true, up to retryAttempts |"
+},
+{
+"id": "text-advanced",
+"label": "Advanced Options",
+"icon": "sliders",
+"children": [
+{
+"id": "system-prompt",
+"label": "System Prompt",
+"icon": "edit-3",
+"content": "# System Prompt\n\n`javascript\nclient.setSystemPrompt('You are a helpful assistant.');\n`\n\n- Added as first message for every request.\n- Default: 'You are a helpful assistant.'"
+},
+{
+"id": "timeout",
+"label": "Timeout",
+"icon": "clock",
+"content": "# Timeout\n\n`javascript\nclient.setTimeout(30000);\n`\n\n- Maximum wait in milliseconds.\n- Uses AbortController to cancel request.\n- Throws 'AI Request Timeout' on abort."
+},
+{
+"id": "seed",
+"label": "Seed",
+"icon": "shuffle",
+"content": "# Seed\n\n`javascript\nclient.setSeed(12345);\n`\n\n- Numeric value for deterministic outputs.\n- Defaults to random 0–1,000,000,000 if not set."
+},
+{
+"id": "retry",
+"label": "Retry Logic",
+"icon": "refresh-cw",
+"content": "# Retry Logic\n\n`javascript\nclient.setRetry(true, 2, 1000);\n`\n\n- Retries only for 429 or 5xx status codes.\n- Parameters: enabled (bool), attempts (number), delay (ms)."
+},
+{
+"id": "clear-history",
+"label": "Clear History",
+"icon": "trash-2",
+"content": "# Clear History\n\n`javascript\nclient.clearHistory();\n`\n\n- Clears internal chat history array."
+}
+]
+}
+]
+},
+{
+"title": "Image Generation",
+"items": [
+{
+"id": "image-setup",
+"label": "Set Image Mode",
+"icon": "image",
+"badge": "Step 3",
+"content": "# Set Type to Image\n\n`javascript\nclient.setType('image');\n`\n\n- Enables image generation endpoint `/v1/images/generations`."
+},
+{
+"id": "image-model",
+"label": "Select Image Model",
+"icon": "cpu",
+"badge": "Step 4",
+"content": "# Set Model\n\n`javascript\nclient.setModel('flux');\n`\n\n- Only models with image output are compatible."
+},
+{
+"id": "image-dimensions",
+"label": "Image Dimensions",
+"icon": "maximize-2",
+"content": "# Set Dimensions\n\n`javascript\nclient.setDimensions(1024, 1024);\n`\n\n- Width and height in pixels.\n- Defaults: 1024 x 1024.\n- Non-numeric values revert to defaults."
+},
+{
+"id": "image-generate",
+"label": "Generate Image",
+"icon": "play-circle",
+"badge": "Core",
+"content": "# Generate Image\n\n`javascript\nconst blob = await client.generate('A futuristic city skyline');\nconst url = URL.createObjectURL(blob);\ndocument.querySelector('img').src = url;\n`\n\n- Sends prompt, model, width, height, seed to API.\n- Converts returned base64 JSON to Blob (image/png).\n- Returns a Blob object ready for display."
+}
+]
+},
+{
+"title": "Models Reference",
+"items": [
+{
+"id": "model-overview",
+"label": "Overview",
+"icon": "cpu",
+"content": "# Model Overview\n\n- AIClient does not validate models.\n- All strings are passed to the API.\n- Text models must have text output; image models must have image output.\n\n## Usage\n`javascript\nclient.setModel('gemini-fast');\n`\n\n## Compatibility Rules\n| Client Type | Required Model Output |\n|------------|----------------------|\n| text | text |\n| image | image |"
+},
+{
+"id": "text-models",
+"label": "Text Models",
+"icon": "file-text",
+"content": "# Text Models\n- Compatible with `client.setType('text')`\n\n| Model | Input | Output | Context | Notes |\n|------|------|--------|--------|------|\n| openai | text,image | text | 400k | tools |\n| openai-fast | text,image | text | 400k | fast |\n| openai-large | text,image | text | 400k | reasoning |\n| gemini | text,image,audio,video | text | 1M | multimodal |\n| gemini-fast | text,image | text | 1M | speed |\n| gemini-large | text,image,audio,video | text | 1M | reasoning |\n| claude | text,image | text | 200k | tools |\n| claude-fast | text,image | text | 200k | fast |\n| claude-large | text,image | text | 200k | large |\n| mistral | text | text | 131k | general |\n| deepseek | text | text | 163k | reasoning |\n| grok | text | text | 128k | general |\n| kimi | text,image | text | 256k | reasoning |\n| glm | text | text | 198k | reasoning |\n| minimax | text | text | 200k | reasoning |"
+},
+{
+"id": "image-models",
+"label": "Image Models",
+"icon": "image",
+"content": "# Image Models\n- Compatible with `client.setType('image')`\n\n| Model | Input | Output |\n|------|------|--------|\n| flux | text | image |\n| flux-2-dev | text,image | image |\n| gptimage | text,image | image |\n| gptimage-large | text,image | image |\n| nanobanana | text,image | image |\n| nanobanana-2 | text,image | image |\n| nanobanana-pro | text,image | image |\n| seedream5 | text,image | image |\n| zimage | text | image |\n| imagen-4 | text | image |\n| klein | text,image | image |\n| dirtberry | text | image |\n| dirtberry-pro | text | image |\n| grok-imagine | text | image |"
+},
+{
+"id": "audio-models",
+"label": "Audio Models",
+"icon": "volume-2",
+"content": "# Audio Models\n- Output audio or transcribe audio\n\n| Model | Input | Output |\n|------|------|--------|\n| elevenlabs | text | audio |\n| elevenmusic | text | audio |\n| suno | text | audio |\n| qwen3-tts | text | audio |\n| whisper | audio | text |\n| scribe | audio | text |"
+},
+{
+"id": "video-models",
+"label": "Video Models",
+"icon": "video",
+"content": "# Video Models\n- Not supported by AIClient directly\n\n| Model | Input | Output |\n|------|------|--------|\n| veo | text,image | video |\n| seedance | text,image | video |\n| seedance-pro | text,image | video |\n| wan | text,image | video |\n| grok-video | text,image | video |\n| ltx-2 | text | video |\n| p-video | text,image | video |"
+},
+{
+"id": "unsupported",
+"label": "Unsupported / Special Models",
+"icon": "alert-circle",
+"content": "# Unsupported / Special Models\n- Not supported or require special endpoints\n\n| Model | Reason |\n|------|--------|\n| kontext | image editing endpoints |\n| p-image-edit | requires edit endpoint |\n| midijourney | unclear behavior |\n| qwen-safety | moderation specific |"
+}
+]
+}
+]
 }
