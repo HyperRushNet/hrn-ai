@@ -9,7 +9,7 @@ class AIClient {
       height: options.height || 1024,
       history: options.history || [],
       historyLimit: options.historyLimit || 10,
-      timeout: options.timeout || 30000,
+      timeout: options.timeout || 60000,
       seed: options.seed || null,
       retry: options.retry !== undefined ? options.retry : true,
       retryAttempts: options.retryAttempts || 2,
@@ -28,7 +28,6 @@ class AIClient {
   }
 
   async generate(input, attempt = 0) {
-    if (!this.config.apiKey) throw new Error("AIClient: API Key is required.");
     if (!input || typeof input !== 'string' || !input.trim()) throw new Error("AIClient: Input prompt cannot be empty.");
 
     const isImg = this.config.type === 'image';
@@ -39,13 +38,13 @@ class AIClient {
 
     try {
       const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
+
       const payload = isImg ? {
         prompt: input,
         model: this.config.model,
-        width: this.config.width,
-        height: this.config.height,
-        nologo: true,
+        size: `${this.config.width}x${this.config.height}`,
         response_format: "b64_json",
+        nologo: true,
         seed: activeSeed
       } : {
         model: this.config.model,
@@ -57,12 +56,14 @@ class AIClient {
         seed: activeSeed
       };
 
+      const headers = { 'Content-Type': 'application/json' };
+      if (this.config.apiKey) {
+        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+      }
+
       const response = await fetch(url, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${this.config.apiKey}` 
-        },
+        headers: headers,
         signal: controller.signal,
         body: JSON.stringify(payload)
       });
@@ -75,7 +76,14 @@ class AIClient {
           await new Promise(r => setTimeout(r, this.config.retryDelay));
           return this.generate(input, attempt + 1);
         }
-        throw new Error(`AI API Error: ${response.status} ${response.statusText}`);
+        
+        let errMsg = `API Error: ${response.status}`;
+        try {
+          const errJson = await response.json();
+          if (errJson.error?.message) errMsg = errJson.error.message;
+        } catch { /* Ignore */ }
+        
+        throw new Error(errMsg);
       }
 
       const data = await response.json();
@@ -109,4 +117,8 @@ class AIClient {
       throw err;
     }
   }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = AIClient;
 }
