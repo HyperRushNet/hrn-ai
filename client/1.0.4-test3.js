@@ -3,9 +3,14 @@ class AIClient extends EventTarget {
 
   constructor(options = {}) {
     super();
+
+    // Verplicht: apiKey en model
+    if (!options.apiKey) throw new Error("apiKey is verplicht!");
+    if (!options.model) throw new Error("model is verplicht!");
+
     const cfg = Object.freeze({
-      apiKey: options.apiKey || null,
-      model: options.model || 'openai',
+      apiKey: options.apiKey,
+      model: options.model,
       systemPrompt: options.systemPrompt || 'You are a helpful assistant.',
       width: options.width || 1024,
       height: options.height || 1024,
@@ -18,10 +23,12 @@ class AIClient extends EventTarget {
       stream: options.stream ?? false,
       isImage: options.isImage ?? false
     });
+
     if (cfg.chatId) {
       if (AIClient._chatIds.has(cfg.chatId)) throw new Error(`chatId "${cfg.chatId}" already exists`);
       AIClient._chatIds.add(cfg.chatId);
     }
+
     this.config = { ...cfg, history: [] };
   }
 
