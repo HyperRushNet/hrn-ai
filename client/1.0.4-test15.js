@@ -1,5 +1,8 @@
-class AIClient {
+class AIClient extends EventTarget {
+  static _chatIds = new Set();
+
   constructor(options = {}) {
+    super();
     const immutableConfig = Object.freeze({
       apiKey: options.apiKey || null,
       model: options.model || 'openai',
@@ -12,8 +15,17 @@ class AIClient {
       retry: options.retry !== undefined ? options.retry : true,
       retryAttempts: options.retryAttempts || 2,
       retryDelay: options.retryDelay || 1000,
+      chatId: options.chatId ?? null,
       stream: options.stream ?? false
     });
+
+    if (immutableConfig.chatId) {
+      if (AIClient._chatIds.has(immutableConfig.chatId)) {
+        throw new Error(`chatId "${immutableConfig.chatId}" already exists`);
+      }
+      AIClient._chatIds.add(immutableConfig.chatId);
+    }
+
     this.config = { ...immutableConfig, history: [] };
     this._modelCache = null;
   }
@@ -31,9 +43,7 @@ class AIClient {
   async _getModelInfo() {
     if (this._modelCache) return this._modelCache.find(m => m.id === this.config.model);
     try {
-      const res = await fetch('https://gen.pollinations.ai/v1/models', {
-        headers: this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {}
-      });
+      const res = await fetch('https://gen.pollinations.ai/v1/models');
       if (!res.ok) throw new Error("Failed to fetch model list");
       const data = await res.json();
       this._modelCache = data.data || [];
@@ -43,12 +53,12 @@ class AIClient {
     }
   }
 
-  async generate(input, { onStream } = {}, attempt = 0) {
+  async generate(input, attempt = 0) {
     if (!input || typeof input !== 'string' || !input.trim()) throw new Error("Input prompt cannot be empty.");
-
     const modelInfo = await this._getModelInfo();
     let type = 'text';
     let endpoint = 'https://gen.pollinations.ai/v1/chat/completions';
+
     if (modelInfo) {
       const hasImage = modelInfo.output_modalities?.includes('image');
       const hasText = modelInfo.output_modalities?.includes('text');
@@ -59,64 +69,53 @@ class AIClient {
         endpoint = path.startsWith('http') ? path : `https://gen.pollinations.ai${path}`;
       }
     }
+
     if (type === 'image') endpoint = 'https://gen.pollinations.ai/v1/images/generations';
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.config.timeout);
+    const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
 
     try {
-      const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
-      const payload = type === 'image' ? {
-        prompt: input,
-        model: this.config.model,
-        size: `${this.config.width}x${this.config.height}`,
-        response_format: "b64_json",
-        nologo: true,
-        seed: activeSeed
-      } : {
-        model: this.config.model,
-        messages: [
-          { role: 'system', content: this.config.systemPrompt },
-          ...this.config.history,
-          { role: 'user', content: input }
-        ],
-        seed: activeSeed,
-        stream: this.config.stream
-      };
-
-      const headers = { 'Content-Type': 'application/json' };
-      if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
-
-      clearTimeout(timer);
-
-      if (!response.ok) {
-        const retryable = response.status >= 500 || response.status === 429;
-        if (this.config.retry && attempt < this.config.retryAttempts && retryable) {
-          await new Promise(r => setTimeout(r, this.config.retryDelay));
-          return this.generate(input, { onStream }, attempt + 1);
-        }
-        const errJson = await response.json().catch(() => null);
-        throw new Error(errJson?.error?.message || `API Error: ${response.status}`);
-      }
-
       if (type === 'image') {
+        const payload = {
+          prompt: input,
+          model: this.config.model,
+          size: `${this.config.width}x${this.config.height}`,
+          response_format: "b64_json",
+          nologo: true,
+          seed: activeSeed
+        };
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+        const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
+        clearTimeout(timer);
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
         const data = await response.json();
         if (!data?.data?.[0]?.b64_json) throw new Error("Invalid image response.");
         const b64 = data.data[0].b64_json;
         return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
       } else {
-        // **Streaming verbeterd**: parse JSON per chunk/line
-        if (this.config.stream && response.body && onStream) {
-          const reader = response.body.getReader();
+        const payload = {
+          model: this.config.model,
+          messages: [
+            { role: 'system', content: this.config.systemPrompt },
+            ...this.config.history,
+            { role: 'user', content: input }
+          ],
+          stream: this.config.stream,
+          seed: activeSeed,
+          response_format: this.config.stream ? { type: "json_object" } : undefined
+        };
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+        const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+
+        if (this.config.stream && res.body) {
+          const reader = res.body.getReader();
           const decoder = new TextDecoder();
-          let buffer = '';
+          let buffer = "";
           let done = false;
 
           while (!done) {
@@ -124,39 +123,42 @@ class AIClient {
             done = streamDone;
             if (value) {
               buffer += decoder.decode(value, { stream: true });
-              let lines = buffer.split('\n'); // parse per line
+              let lines = buffer.split(/\r?\n/);
               buffer = lines.pop(); // incomplete line bewaren
               for (let line of lines) {
                 line = line.trim();
-                if (!line || line === '[DONE]') continue;
-                try {
-                  const data = JSON.parse(line);
-                  const text = data.choices?.[0]?.delta?.content || '';
-                  if (text) onStream(text);
-                } catch(e) {
-                  // wachten op volgende chunk
+                if (!line) continue;
+                if (line === '[DONE]') {
+                  this.dispatchEvent(new CustomEvent("chunk", { detail: { data: false, chatId: this.config.chatId } }));
+                } else {
+                  try {
+                    const parsed = JSON.parse(line);
+                    const content = parsed?.choices?.[0]?.delta?.content ?? '';
+                    if (content) this.dispatchEvent(new CustomEvent("chunk", { detail: { data: content, chatId: this.config.chatId } }));
+                  } catch {}
                 }
               }
             }
           }
-          return;
+          clearTimeout(timer);
+          return true;
         } else {
-          const data = await response.json();
-          const content = data?.choices?.[0]?.message?.content;
+          const response = await res.json();
+          clearTimeout(timer);
+          const content = response?.choices?.[0]?.message?.content;
           if (!content) throw new Error("Invalid text response.");
           return content;
         }
       }
-
     } catch (err) {
       clearTimeout(timer);
-      if (err.name === 'AbortError') {
-        if (this.config.retry && attempt < this.config.retryAttempts)
-          return this.generate(input, { onStream }, attempt + 1);
-        throw new Error("AI Request Timeout");
-      }
+      if (err.name === 'AbortError') throw new Error("AI Request Timeout");
       throw err;
     }
+  }
+
+  destroy() {
+    if (this.config.chatId) AIClient._chatIds.delete(this.config.chatId);
   }
 }
 
