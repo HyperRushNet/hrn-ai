@@ -43,10 +43,10 @@ class AIClient {
     }
   }
 
-  async generate(prompt, { onStream } = {}, attempt = 0) {
-    if (!prompt || !prompt.trim()) throw new Error("Input prompt cannot be empty.");
-    const modelInfo = await this._getModelInfo();
+  async generate(input, { onStream } = {}, attempt = 0) {
+    if (!input || typeof input !== 'string' || !input.trim()) throw new Error("Input prompt cannot be empty.");
 
+    const modelInfo = await this._getModelInfo();
     let type = 'text';
     let endpoint = 'https://gen.pollinations.ai/v1/chat/completions';
     if (modelInfo) {
@@ -67,7 +67,7 @@ class AIClient {
     try {
       const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
       const payload = type === 'image' ? {
-        prompt,
+        prompt: input,
         model: this.config.model,
         size: `${this.config.width}x${this.config.height}`,
         response_format: "b64_json",
@@ -78,7 +78,7 @@ class AIClient {
         messages: [
           { role: 'system', content: this.config.systemPrompt },
           ...this.config.history,
-          { role: 'user', content: prompt }
+          { role: 'user', content: input }
         ],
         seed: activeSeed,
         stream: this.config.stream
@@ -100,7 +100,7 @@ class AIClient {
         const retryable = response.status >= 500 || response.status === 429;
         if (this.config.retry && attempt < this.config.retryAttempts && retryable) {
           await new Promise(r => setTimeout(r, this.config.retryDelay));
-          return this.generate(prompt, { onStream }, attempt + 1);
+          return this.generate(input, { onStream }, attempt + 1);
         }
         const errJson = await response.json().catch(() => null);
         throw new Error(errJson?.error?.message || `API Error: ${response.status}`);
@@ -121,7 +121,6 @@ class AIClient {
             done = streamDone;
             if (value) onStream(decoder.decode(value));
           }
-          // Return final result if needed
           return;
         } else {
           const data = await response.json();
@@ -135,7 +134,7 @@ class AIClient {
       clearTimeout(timer);
       if (err.name === 'AbortError') {
         if (this.config.retry && attempt < this.config.retryAttempts)
-          return this.generate(prompt, { onStream }, attempt + 1);
+          return this.generate(input, { onStream }, attempt + 1);
         throw new Error("AI Request Timeout");
       }
       throw err;
