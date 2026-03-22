@@ -1,8 +1,9 @@
 /**
- * AIClient v1.0
+ * AIClient v1.0.4
  * Robust, zero-dependency JavaScript class for Pollinations AI API.
  * Supports Text, Image, Streaming, History, Auto-Detection, and consistent Seeding.
  */
+
 (function(global) {
 
   const FALLBACK_IMAGE_MODELS = new Set([
