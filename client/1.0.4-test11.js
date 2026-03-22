@@ -17,18 +17,12 @@ class AIClient {
     this._modelCache = null;
   }
 
-  /**
-   * Set the history manually. Overwrites all previous messages.
-   * @param {Array|Object} h Array of messages or single message object
-   */
   setHistory(h) {
     if (!h) {
       this.config.history = [];
     } else if (Array.isArray(h)) {
-      // Take last `historyLimit` messages
       this.config.history = h.slice(-this.config.historyLimit);
     } else if (typeof h === 'object' && h.role && h.content) {
-      // Single message object
       this.config.history = [h];
     } else {
       throw new Error("History must be an array or a message object with {role, content}");
@@ -36,9 +30,6 @@ class AIClient {
     return this;
   }
 
-  /**
-   * Clear all history
-   */
   clearHistory() {
     this.config.history = [];
     return this;
@@ -116,8 +107,8 @@ class AIClient {
           return this.generate(input, attempt + 1);
         }
         let errMsg = `API Error: ${response.status}`;
-        try { 
-          const errJson = await response.json(); 
+        try {
+          const errJson = await response.json();
           if (errJson.error?.message) errMsg = errJson.error.message;
         } catch {}
         throw new Error(errMsg);
