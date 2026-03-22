@@ -8,14 +8,14 @@
           "label": "Include the AIClient Library",
           "icon": "code",
           "badge": "Step 1",
-          "content": "# Including the AIClient Library\n\nTo use AIClient in browser environments, include the following script tag in your HTML. This makes the `AIClient` class available globally.\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n### What Happens When You Load This Script\n- The AIClient library is initialized in the page.\n- `AIClient` becomes globally accessible.\n- No module bundlers or build steps are required.\n\n### Requirements\n- Include this script **before** any code that uses `AIClient`.\n- This version is only for browser environments; it is not a Node.js package.\n\n---\n"
+          "content": "# Including the AIClient Library\\n\\nTo use AIClient in browser environments, include the following script tag in your HTML. This makes the `AIClient` class available globally.\\n\\n```html\\n<script src=\\\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\\\"></script>\\n```\\n\\n### What Happens When You Load This Script\\n- The AIClient library is initialized in the page.\\n- `AIClient` becomes globally accessible.\\n- No module bundlers or build steps are required.\\n\\n### Requirements\\n- Include this script **before** any code that uses `AIClient`.\\n- This version is only for browser environments; it is not a Node.js package."
         },
         {
           "id": "initialize-client",
           "label": "Initialize the Client",
           "icon": "play",
           "badge": "Step 2",
-          "content": "# Initializing the Client\n\nAfter including the script, you must create a new client instance and provide your API key.\n\n## JavaScript Example\n```javascript\n// Create a new instance of AIClient and set the API key\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY');\n```\n\n### What This Does\n- Stores the API key internally.\n- Prepares the client for requests.\n\n### Internal Default Configuration\n| Property | Default Value |\n|----------|----------------|\n| model | \"flux\" |\n| type | \"text\" |\n| systemPrompt | \"You are a helpful assistant.\" |\n| timeout | 30000 |\n| retry | true |\n| retryAttempts | 2 |\n| retryDelay | 1000 |\n| seed | null |\n| width | 1024 |\n| height | 1024 |\n| history | [] |\n\n### Important Notes\n- The API key is required; without it, calls to `generate()` will fail.\n- The client does not validate the API key; validation occurs on the server.\n\n---\n"
+          "content": "# Initializing the Client\\n\\nAfter including the script, you must create a new client instance and provide your API key.\\n\\n## JavaScript Example\\n```javascript\\nconst client = new AIClient()\\n  .setApiKey('YOUR_API_KEY');\\n```\\n\\n### What This Does\\n- Stores the API key internally.\\n- Prepares the client for requests.\\n\\n### Internal Default Configuration\\n| Property | Default Value |\\n|----------|----------------|\\n| model | \\\"flux\\\" |\\n| type | \\\"text\\\" |\\n| systemPrompt | \\\"You are a helpful assistant.\\\" |\\n| timeout | 30000 |\\n| retry | true |\\n| retryAttempts | 2 |\\n| retryDelay | 1000 |\\n| seed | null |\\n| width | 1024 |\\n| height | 1024 |\\n| history | [] |\\n\\n### Important Notes\\n- The API key is required; without it, calls to `generate()` will fail.\\n- The client does not validate the API key; validation occurs on the server."
         }
       ]
     },
@@ -27,21 +27,21 @@
           "label": "Set Text Mode",
           "icon": "file-text",
           "badge": "Step 3",
-          "content": "# Set Text Generation Mode\n\nThe client must be configured for text generation before issuing text requests.\n\n## JavaScript Example\n```javascript\n// Configure client to generate text output\nclient.setType('text');\n```\n\n### What This Does\n- Configures the client to use text endpoints.\n- Internally this affects the request payload and endpoint targeted.\n\n### Endpoint Used\nText generation uses the `POST /v1/chat/completions` endpoint on the API.\n\n---\n"
+          "content": "# Set Text Generation Mode\\n\\nThe client must be configured for text generation before issuing text requests.\\n\\n## JavaScript Example\\n```javascript\\nclient.setType('text');\\n```\\n\\n### What This Does\\n- Configures the client to use text endpoints.\\n- Internally this affects the request payload and endpoint targeted.\\n\\n### Endpoint Used\\nText generation uses the `POST /v1/chat/completions` endpoint on the API."
         },
         {
           "id": "select-text-model",
           "label": "Select a Text Model",
           "icon": "cpu",
           "badge": "Step 4",
-          "content": "# Selecting a Model for Text\n\nAfter setting the mode to text, you must specify which model should handle the request.\n\n## JavaScript Example\n```javascript\nclient.setModel('openai-fast');\n```\n\n### What This Does\n- Assigns the model as a string inside client config.\n- The model name is passed verbatim to the API.\n- The client does **not** verify the model name.\n\n### Model Information and Status\nModels supported by the service may change over time. Visit the official model listing to explore available models and their capabilities:\n\n👉 https://enter.pollinations.ai/#:~:text=Models\n\n### Model Health and Availability\nModel status, latency, and health stats are available here:\n\n👉 https://model-monitor.pollinations.ai/\n\n---\n"
+          "content": "# Selecting a Model for Text\\n\\nAfter setting the mode to text, you must specify which model should handle the request.\\n\\n## JavaScript Example\\n```javascript\\nclient.setModel('openai-fast');\\n```\\n\\n### Model Information and Status\\nModels supported by the service may change over time. Visit the official model listing to explore available models and their capabilities:\\n\\n[Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)\\n\\n### Model Health and Availability\\nModel status, latency, and health stats are available here:\\n\\n[Pollinations Model Monitor](https://model-monitor.pollinations.ai/)"
         },
         {
           "id": "generate-text",
           "label": "Generate Text",
           "icon": "play-circle",
           "badge": "Core",
-          "content": "# Generating Text Output\n\nOnce the client is configured for text and a model is set, you can generate text output.\n\n## JavaScript Example\n```javascript\nconst output = await client.generate('Explain how AIClient works');\nconsole.log(output);\n```\n\n### What Happens Internally\n1. The client prepares a JSON body containing:\n   - `model`\n   - `messages` (including system prompt, history, and user messages)\n   - `seed` (numeric, deterministic or random)\n2. It sends a POST request to the text generation API.\n3. On success, it returns the generated text.\n4. User + assistant messages are appended to the internal history.\n5. If the history becomes longer than `2 * historyLimit`, the oldest messages are removed.\n\n### History Management\nThe client stores the last messages up to the configured `historyLimit`. This supports context preservation across prompts.\n\n### Error Conditions\n| Error Condition | Result |\n|----------------|--------|\n| No API key | Throws Error: \"API Key is required\" |\n| Empty prompt | Throws Error: \"Input prompt cannot be empty\" |\n| Server error (5xx) or 429 | Retries if retry is enabled |\n| Timeout | Throws \"AI Request Timeout\" |\n\n---\n"
+          "content": "# Generating Text Output\\n\\nOnce the client is configured for text and a model is set, you can generate text output.\\n\\n## JavaScript Example\\n```javascript\\nconst output = await client.generate('Explain how AIClient works');\\nconsole.log(output);\\n```\\n\\n### What Happens Internally\\n1. The client prepares a JSON body containing:\\n   - `model`\\n   - `messages` (system prompt, history, user message)\\n   - `seed`\\n2. It sends a POST request to the text generation API.\\n3. On success, it returns the generated text.\\n4. User + assistant messages are appended to the internal history.\\n5. If history exceeds `2 * historyLimit`, the oldest messages are removed.\\n\\n### History Management\\n- Preserves context for multi-turn conversations.\\n\\n### Error Conditions\\n| Error Condition | Result |\\n|----------------|--------|\\n| No API key | Throws Error: \\\"API Key is required\\\" |\\n| Empty prompt | Throws Error: \\\"Input prompt cannot be empty\\\" |\\n| Server error (5xx) or 429 | Retries if retry is enabled |\\n| Timeout | Throws \\\"AI Request Timeout\\\" |"
         },
         {
           "id": "text-options-advanced",
@@ -53,31 +53,31 @@
               "id": "system-prompt",
               "label": "System Prompt",
               "icon": "edit-3",
-              "content": "# System Prompt\n\nYou can change the system prompt, which is included as the first message in every text generation request.\n\n## JavaScript Example\n```javascript\nclient.setSystemPrompt('You are a knowledgeable assistant.');\n```\n\n### Default\n```\nYou are a helpful assistant.\n```\n\n### Purpose\n- Provides a role definition for the model.\n- Useful for defining tone, style, or behavior expectations.\n\n---\n"
+              "content": "# System Prompt\\n\\nChange the system prompt to guide model behavior.\\n\\n## JavaScript Example\\n```javascript\\nclient.setSystemPrompt('You are a knowledgeable assistant.');\\n```\\n\\n### Default\\n`You are a helpful assistant.`\\n\\n### Purpose\\n- Defines tone, style, or role of the assistant."
             },
             {
               "id": "timeout-config",
               "label": "Request Timeout",
               "icon": "clock",
-              "content": "# Timeout Configuration\n\nControls how long the client waits before aborting an active request.\n\n## JavaScript Example\n```javascript\nclient.setTimeout(45000); // 45 seconds\n```\n\n### Behavior\n- Uses the `AbortController` API internally.\n- If the request exceeds the timeout, it is aborted and an error is thrown.\n\n---\n"
+              "content": "# Timeout Configuration\\n\\nSets how long the client waits before aborting a request.\\n\\n## JavaScript Example\\n```javascript\\nclient.setTimeout(45000); // 45 seconds\\n```\\n\\n- Uses `AbortController` internally.\\n- Aborted requests throw an error."
             },
             {
               "id": "seed-option",
               "label": "Seed (Determinism)",
               "icon": "shuffle",
-              "content": "# Seed for Deterministic Output\n\nYou can set a numeric seed to influence pseudo‑random generation. This helps produce repeatable outputs when all other parameters are the same.\n\n## JavaScript Example\n```javascript\nclient.setSeed(123456);\n```\n\n### Notes\n- If `seed` is not provided, the client generates a random seed internally.\n- Seed affects different models in different ways, depending on the service.\n\n---\n"
+              "content": "# Seed for Deterministic Output\\n\\nSet a numeric seed to produce repeatable outputs.\\n\\n## JavaScript Example\\n```javascript\\nclient.setSeed(123456);\\n```\\n\\n- If `null`, a random seed is generated.\\n- Effects depend on model behavior."
             },
             {
               "id": "retry-logic",
               "label": "Retry Logic",
               "icon": "refresh-cw",
-              "content": "# Retry Logic\n\nConfigures how the client handles transient errors.\n\n## JavaScript Example\n```javascript\nclient.setRetry(true, 3, 1500);\n```\n\n### Parameters\n| Name | Type | Description |\n|------|------|-------------|\n| enabled | boolean | Whether retries are enabled |\n| attempts | number | How many retry attempts to make |\n| delay | number (ms) | Delay between attempts |\n\n### Behavior\n- Retries only when the API returns:\n  - HTTP 429 (rate limit)\n  - HTTP 5xx (server error)\n- Retries are not attempted on other error codes.\n\n---\n"
+              "content": "# Retry Logic\\n\\nConfigure retries for transient errors.\\n\\n## JavaScript Example\\n```javascript\\nclient.setRetry(true, 3, 1500);\\n```\\n\\n### Parameters\\n| Name | Type | Description |\\n|------|------|-------------|\\n| enabled | boolean | Enable/disable retries |\\n| attempts | number | Retry attempts |\\n| delay | number | Delay in ms |\\n\\n### Behavior\\n- Retries occur on HTTP 429 or 5xx errors.\\n- Other errors do not retry."
             },
             {
               "id": "clear-history-option",
               "label": "Clear History",
               "icon": "trash-2",
-              "content": "# Clear Conversation History\n\nClears the internal chat history stored by the client.\n\n## JavaScript Example\n```javascript\nclient.clearHistory();\n```\n\n### Behavior\n- Removes all stored historical messages.\n- Does not affect other configuration parameters.\n\n---\n"
+              "content": "# Clear Conversation History\\n\\nRemoves all stored chat history.\\n\\n## JavaScript Example\\n```javascript\\nclient.clearHistory();\\n```\\n\\n- Does not affect other configurations."
             }
           ]
         }
@@ -91,26 +91,27 @@
           "label": "Set Image Mode",
           "icon": "image",
           "badge": "Step 3",
-          "content": "# Set Image Mode\n\nConfigure the client for image generation.\n\n## JavaScript Example\n```javascript\nclient.setType('image');\n```\n\n### Effect\n- Enables usage of the image generation endpoint.\"\n        },
+          "content": "# Set Image Mode\\n\\nConfigure the client for image generation.\\n\\n## JavaScript Example\\n```javascript\\nclient.setType('image');\\n```\\n\\n- Enables image endpoint usage."
+        },
         {
           "id": "select-image-model",
           "label": "Select Image Model",
           "icon": "cpu",
           "badge": "Step 4",
-          "content": "# Selecting an Image Model\n\nAfter specifying image mode, you must choose a model capable of image output.\n\n## JavaScript Example\n```javascript\nclient.setModel('gptimage');\n```\n\n### Model Reference\nConsult the official pollinations model page to see which models support image generation and their capabilities:\n\n👉 https://enter.pollinations.ai/#:~:text=Models\n\n### Model Health\nCheck model health, uptime, and status:\n\n👉 https://model-monitor.pollinations.ai/\n\n---\n"
+          "content": "# Selecting an Image Model\\n\\nChoose a model capable of image generation.\\n\\n## JavaScript Example\\n```javascript\\nclient.setModel('gptimage');\\n```\\n\\n### Model Reference\\n[Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)\\n\\n### Model Health\\n[Pollinations Model Monitor](https://model-monitor.pollinations.ai/)"
         },
         {
           "id": "image-dimensions",
           "label": "Image Dimensions",
           "icon": "maximize-2",
-          "content": "# Image Dimensions\n\nImage generation models require numeric width and height.\n\n## JavaScript Example\n```javascript\nclient.setDimensions(1024, 1024);\n```\n\n### Notes\n- Width and height default to 1024.\n- Non‑numeric values will revert to defaults.\n\n---\n"
+          "content": "# Image Dimensions\\n\\nSet width and height for generated images.\\n\\n## JavaScript Example\\n```javascript\\nclient.setDimensions(1024, 1024);\\n```\\n\\n- Defaults to 1024x1024.\\n- Non-numeric values revert to default."
         },
         {
           "id": "generate-image",
           "label": "Generate Image",
           "icon": "play-circle",
           "badge": "Core",
-          "content": "# Generate Image\n\nOnce configured, you can generate an image based on a text prompt.\n\n## JavaScript Example\n```javascript\nconst blob = await client.generate('A futuristic city skyline');\nconst imageUrl = URL.createObjectURL(blob);\ndocument.querySelector('img').src = imageUrl;\n```\n\n### Internal Process\n1. Sends prompt, model, width, height, seed to the image API.\n2. Receives a base64‑encoded image in JSON.\n3. Decodes base64.\n4. Converts to a `Blob` with MIME type `image/png`.\n5. Returns the `Blob`.\n\n### Usage\n- Use the `Blob` to set an image `src` or to trigger a download.\n\n---\n"
+          "content": "# Generate Image\\n\\nGenerate an image based on a text prompt.\\n\\n## JavaScript Example\\n```javascript\\nconst blob = await client.generate('A futuristic city skyline');\\nconst imageUrl = URL.createObjectURL(blob);\\ndocument.querySelector('img').src = imageUrl;\\n```\\n\\n### Internal Process\\n1. Sends prompt, model, width, height, seed to API.\\n2. Receives base64 image.\\n3. Converts to Blob.\\n4. Returns Blob."
         }
       ]
     },
@@ -121,13 +122,13 @@
           "id": "official-model-list",
           "label": "Official Model List",
           "icon": "link-2",
-          "content": "# Official Model List\n\nFor a complete list of available models, input/output modalities, and capabilities, visit the official Pollinations models page:\n\n👉 https://enter.pollinations.ai/#:~:text=Models\n\nThis provides up‑to‑date details including:\n- Input/output modalities (text, image, audio, etc.)\n- Supported endpoints\n- Context lengths\n\n---\n"
+          "content": "# Official Model List\\n\\nExplore the latest models and capabilities here:\\n\\n[Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)"
         },
         {
           "id": "model-health-dashboard",
           "label": "Model Health Dashboard",
           "icon": "activity",
-          "content": "# Model Health and Status\n\nYou can monitor model health, latency, and availability using the official dashboard:\n\n👉 https://model-monitor.pollinations.ai/\n\nThis is useful for:\n- Checking whether a model is currently experiencing issues.\n- Observing latency and error rates.\n- Making informed decisions about model selection.\n\n---\n"
+          "content": "# Model Health and Status\\n\\nMonitor uptime, latency, and errors here:\\n\\n[Pollinations Model Monitor](https://model-monitor.pollinations.ai/)"
         }
       ]
     }
