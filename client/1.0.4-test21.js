@@ -19,7 +19,6 @@
         retryDelay: options.retryDelay || 1000,
         chatId: options.chatId ?? null,
         stream: options.stream ?? false,
-        // Correct Base URL according to docs
         baseUrl: options.baseUrl || 'https://gen.pollinations.ai' 
       };
 
@@ -55,7 +54,6 @@
         stream: streamOpt,
         seed: this.config.seed,
         temperature: options.temperature ?? 0.7
-        // Removed response_format to allow plain text
       };
 
       const executeRequest = async (attempt = 1) => {
@@ -63,7 +61,6 @@
         const timer = setTimeout(() => controller.abort(), this.config.timeout);
 
         try {
-          // Correct endpoint construction: baseUrl + /v1/chat/completions
           const res = await fetch(`${this.config.baseUrl}/v1/chat/completions`, {
             method: 'POST',
             headers: this._getHeaders(),
@@ -130,7 +127,7 @@
               if (onStream) onStream(chunk);
             }
           } catch (e) {
-            // Ignore incomplete JSON chunks
+            // Ignore incomplete chunks
           }
         }
       }
@@ -146,22 +143,38 @@
         prompt: prompt,
         model: options.model || 'flux',
         size: options.size || `${this.config.width}x${this.config.height}`,
-        response_format: options.response_format || 'url'
+        // FIX: Forceer URL output, dit is veel stabieler voor <img> tags
+        response_format: "url", 
+        seed: options.seed ?? this.config.seed
       };
 
-      const res = await fetch(`${this.config.baseUrl}/v1/images/generations`, {
-        method: 'POST',
-        headers: this._getHeaders(),
-        body: JSON.stringify(payload)
-      });
+      try {
+        const res = await fetch(`${this.config.baseUrl}/v1/images/generations`, {
+          method: 'POST',
+          headers: this._getHeaders(),
+          body: JSON.stringify(payload)
+        });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Image API Error ${res.status}: ${errText}`);
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Image API Error ${res.status}: ${errText}`);
+        }
+
+        const data = await res.json();
+        const imgData = data.data?.[0];
+
+        // FIX: Handle zowel URL als Base64 output correct
+        if (imgData.url) {
+          return imgData.url;
+        } else if (imgData.b64_json) {
+          // Als het toch base64 is, maak er een data URI van
+          return `data:image/jpeg;base64,${imgData.b64_json}`;
+        } else {
+          throw new Error("No image data returned");
+        }
+      } catch (e) {
+        throw e;
       }
-
-      const data = await res.json();
-      return data.data?.[0]?.url || data.data?.[0]?.b64_json;
     }
 
     _updateHistory(userMsg, assistantMsg) {
