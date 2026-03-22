@@ -42,44 +42,6 @@
           "icon": "play-circle",
           "badge": "Core",
           "content": "# Generating Text Output\\n\\nOnce the client is configured for text and a model is set, you can generate text output.\\n\\n## JavaScript Example\\n```javascript\\nconst output = await client.generate('Explain how AIClient works');\\nconsole.log(output);\\n```\\n\\n### What Happens Internally\\n1. The client prepares a JSON body containing:\\n   - `model`\\n   - `messages` (system prompt, history, user message)\\n   - `seed`\\n2. It sends a POST request to the text generation API.\\n3. On success, it returns the generated text.\\n4. User + assistant messages are appended to the internal history.\\n5. If history exceeds `2 * historyLimit`, the oldest messages are removed.\\n\\n### History Management\\n- Preserves context for multi-turn conversations.\\n\\n### Error Conditions\\n| Error Condition | Result |\\n|----------------|--------|\\n| No API key | Throws Error: \\\"API Key is required\\\" |\\n| Empty prompt | Throws Error: \\\"Input prompt cannot be empty\\\" |\\n| Server error (5xx) or 429 | Retries if retry is enabled |\\n| Timeout | Throws \\\"AI Request Timeout\\\" |"
-        },
-        {
-          "id": "text-options-advanced",
-          "label": "Text Advanced Options",
-          "icon": "sliders",
-          "badge": "Optional",
-          "children": [
-            {
-              "id": "system-prompt",
-              "label": "System Prompt",
-              "icon": "edit-3",
-              "content": "# System Prompt\\n\\nChange the system prompt to guide model behavior.\\n\\n## JavaScript Example\\n```javascript\\nclient.setSystemPrompt('You are a knowledgeable assistant.');\\n```\\n\\n### Default\\n`You are a helpful assistant.`\\n\\n### Purpose\\n- Defines tone, style, or role of the assistant."
-            },
-            {
-              "id": "timeout-config",
-              "label": "Request Timeout",
-              "icon": "clock",
-              "content": "# Timeout Configuration\\n\\nSets how long the client waits before aborting a request.\\n\\n## JavaScript Example\\n```javascript\\nclient.setTimeout(45000); // 45 seconds\\n```\\n\\n- Uses `AbortController` internally.\\n- Aborted requests throw an error."
-            },
-            {
-              "id": "seed-option",
-              "label": "Seed (Determinism)",
-              "icon": "shuffle",
-              "content": "# Seed for Deterministic Output\\n\\nSet a numeric seed to produce repeatable outputs.\\n\\n## JavaScript Example\\n```javascript\\nclient.setSeed(123456);\\n```\\n\\n- If `null`, a random seed is generated.\\n- Effects depend on model behavior."
-            },
-            {
-              "id": "retry-logic",
-              "label": "Retry Logic",
-              "icon": "refresh-cw",
-              "content": "# Retry Logic\\n\\nConfigure retries for transient errors.\\n\\n## JavaScript Example\\n```javascript\\nclient.setRetry(true, 3, 1500);\\n```\\n\\n### Parameters\\n| Name | Type | Description |\\n|------|------|-------------|\\n| enabled | boolean | Enable/disable retries |\\n| attempts | number | Retry attempts |\\n| delay | number | Delay in ms |\\n\\n### Behavior\\n- Retries occur on HTTP 429 or 5xx errors.\\n- Other errors do not retry."
-            },
-            {
-              "id": "clear-history-option",
-              "label": "Clear History",
-              "icon": "trash-2",
-              "content": "# Clear Conversation History\\n\\nRemoves all stored chat history.\\n\\n## JavaScript Example\\n```javascript\\nclient.clearHistory();\\n```\\n\\n- Does not affect other configurations."
-            }
-          ]
         }
       ]
     },
@@ -99,19 +61,6 @@
           "icon": "cpu",
           "badge": "Step 4",
           "content": "# Selecting an Image Model\\n\\nChoose a model capable of image generation.\\n\\n## JavaScript Example\\n```javascript\\nclient.setModel('gptimage');\\n```\\n\\n### Model Reference\\n[Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)\\n\\n### Model Health\\n[Pollinations Model Monitor](https://model-monitor.pollinations.ai/)"
-        },
-        {
-          "id": "image-dimensions",
-          "label": "Image Dimensions",
-          "icon": "maximize-2",
-          "content": "# Image Dimensions\\n\\nSet width and height for generated images.\\n\\n## JavaScript Example\\n```javascript\\nclient.setDimensions(1024, 1024);\\n```\\n\\n- Defaults to 1024x1024.\\n- Non-numeric values revert to default."
-        },
-        {
-          "id": "generate-image",
-          "label": "Generate Image",
-          "icon": "play-circle",
-          "badge": "Core",
-          "content": "# Generate Image\\n\\nGenerate an image based on a text prompt.\\n\\n## JavaScript Example\\n```javascript\\nconst blob = await client.generate('A futuristic city skyline');\\nconst imageUrl = URL.createObjectURL(blob);\\ndocument.querySelector('img').src = imageUrl;\\n```\\n\\n### Internal Process\\n1. Sends prompt, model, width, height, seed to API.\\n2. Receives base64 image.\\n3. Converts to Blob.\\n4. Returns Blob."
         }
       ]
     },
