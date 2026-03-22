@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -161,6 +161,7 @@
       .search-result-label { font-weight: 600; color: var(--text-main); }
       .search-result-preview { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 450px; }
       .search-empty-hint { padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 14px; }
+      .search-icon-grey { color: #94a3b8 !important; } /* Mix of grey-lightgrey */
       
       .code-section { margin: 36px 0; background: var(--code-bg); border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
       .code-header { background: var(--code-header-bg); padding: 0 18px; display: flex; align-items: center; justify-content: space-between; height: 48px; border-bottom: 1px solid var(--border-color); }
@@ -210,13 +211,12 @@
       <aside id="sidebar">
         <button id="sidebar-close"><i data-lucide="x" size="18"></i></button>
         <div class="search-container" id="search-trigger">
-          <input type="text" id="search-trigger-input" placeholder="Zoek documentatie..." readonly>
+          <input type="text" id="search-trigger-input" placeholder="Search documentation..." readonly>
           <span class="search-shortcut">Ctrl K</span>
         </div>
         <div class="sidebar-scroll" id="dynamic-nav"></div>
         <div class="sidebar-footer">
           <button class="llm-btn" id="llm-copy-btn">
-            <i data-lucide="bot" size="14"></i>
             <span>Copy for LLMs</span>
           </button>
         </div>
@@ -225,7 +225,7 @@
         <div class="search-modal">
           <div class="search-modal-header">
             <i data-lucide="search" size="20" style="color:var(--text-muted)"></i>
-            <input type="text" id="search-input-real" placeholder="Zoek op titel, tags of inhoud...">
+            <input type="text" id="search-input-real" placeholder="Search by title, tags or content...">
           </div>
           <div id="search-results"></div>
         </div>
@@ -373,11 +373,11 @@
       lucide.createIcons();
     }
 
-    // --- SLIMME SEARCH LOGICA ---
+    // --- SEARCH LOGIC ---
     function openSearch() {
       searchOverlay.classList.add('active');
       searchInput.value = '';
-      performSearch(''); // Toon alles bij openen
+      performSearch('');
       setTimeout(() => searchInput.focus(), 50);
     }
 
@@ -390,7 +390,6 @@
       let results = [];
 
       if (!query.trim()) {
-        // Standaard: toon alle items gesorteerd op volgorde van voorkomen
         results = allItems;
       } else {
         const q = query.toLowerCase();
@@ -399,29 +398,26 @@
           const label = (item.label || "").toLowerCase();
           const content = (item.content || "").toLowerCase();
 
-          if (label === q) score += 100; // Exacte match titel
-          else if (label.startsWith(q)) score += 80; // Begint met titel
-          else if (label.includes(q)) score += 60; // Bevat titel
+          if (label === q) score += 100;
+          else if (label.startsWith(q)) score += 80;
+          else if (label.includes(q)) score += 60;
           
           if (content.includes(q)) {
-            score += 20; // Bevat in tekst
-            // Tel hoe vaak het voorkomt
+            score += 20;
             const count = content.split(q).length - 1;
             score += Math.min(count * 2, 20); 
           }
-
           return { ...item, score };
         })
         .filter(item => item.score > 0)
         .sort((a, b) => b.score - a.score);
       }
-
       renderSearchResults(results, query);
     }
 
     function renderSearchResults(results, query) {
       if (results.length === 0) {
-        searchResults.innerHTML = `<div class="search-empty-hint">Geen resultaten gevonden voor "${query}"</div>`;
+        searchResults.innerHTML = `<div class="search-empty-hint">No results found for "${query}"</div>`;
         return;
       }
 
@@ -429,7 +425,7 @@
         const preview = item.content ? item.content.replace(/[#*`]/g, '').substring(0, 80) + '...' : '';
         return `
           <div class="search-result-item" data-id="${item.id}">
-            <i data-lucide="${item.icon || 'file-text'}" size="18" style="color:var(--accent)"></i>
+            <i data-lucide="${item.icon || 'file-text'}" size="18" class="search-icon-grey"></i>
             <div class="search-result-info">
               <span class="search-result-label">${item.label}</span>
               <span class="search-result-preview">${preview}</span>
@@ -461,7 +457,6 @@
       renderSidebar();
       renderAllContent();
 
-      // Events
       document.getElementById('search-trigger').onclick = openSearch;
       searchOverlay.onclick = (e) => { if(e.target === searchOverlay) closeSearch(); };
       searchInput.oninput = (e) => performSearch(e.target.value);
@@ -494,7 +489,7 @@
           if (!res.ok) throw new Error();
           const text = await res.text();
           await navigator.clipboard.writeText(text);
-          llmBtn.innerHTML = '<i data-lucide="check" size="14"></i><span>Gekopieerd!</span>';
+          llmBtn.innerHTML = '<span>Copied!</span>';
         } catch (err) {
           llmBtn.innerHTML = '<span>Error</span>';
         }
