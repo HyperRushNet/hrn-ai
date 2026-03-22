@@ -1,4 +1,8 @@
+<!DOCTYPE html>
+<html lang="nl">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIClient Documentation</title>
 </head>
 <script>
@@ -90,7 +94,10 @@
       /* SIDEBAR */
       #sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; z-index: var(--z-sidebar); flex-shrink: 0; transition: transform var(--transition); position: relative; }
       .sidebar-scroll { flex: 1; overflow-y: auto; padding: 0 16px; padding-bottom: 40px; }
-      #sidebar-close { display: none; position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; z-index: 10; }
+      
+      /* Close button - Hidden on desktop, visible on mobile */
+      #sidebar-close { display: none; position: absolute; top: 24px; right: 16px; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; z-index: 10; }
+      
       .search-container { position: relative; margin: 0 16px 32px; display: flex; align-items: center; }
       #search-trigger-input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: #fff; font-size: 14px; outline: none; cursor: pointer; font-family: inherit; }
       .search-shortcut { position: absolute; right: 10px; font-size: 10px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #94a3b8; border: 1px solid var(--border-color); pointer-events: none; }
@@ -242,20 +249,42 @@
 
       /* RESPONSIVE */
       @media (max-width: 768px) {
+        /* Show Navbar and Burger */
         #navbar { display: flex; }
-        #sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); box-shadow: none; border-right: none; }
-        #sidebar.open { transform: translateX(0); box-shadow: 20px 0 25px -5px rgba(0,0,0,.1); }
+        
+        /* Sidebar becomes an overlay/drawer */
+        #sidebar { 
+          position: fixed; 
+          left: 0; 
+          top: 0; 
+          bottom: 0; 
+          transform: translateX(-100%); 
+          box-shadow: none; 
+          border-right: none; 
+        }
+        #sidebar.open { 
+          transform: translateX(0); 
+          box-shadow: 20px 0 25px -5px rgba(0,0,0,.1); 
+        }
+
+        /* Show Close button inside sidebar */
         #sidebar-close { display: flex; }
+
+        /* Overlay for closing */
         #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.4); z-index: var(--z-overlay); }
         #sidebar-overlay.active { display: block; }
+
+        /* Main content padding adjustment */
         main { padding-top: 80px; }
         .content-inner { padding: 0 20px 100px 20px; }
         .search-shortcut { display: none; }
         
+        /* Typography scaling */
         h1 { font-size: 26px; }
         h2 { font-size: 22px; margin-top: 40px; padding-top: 24px; }
         h3 { font-size: 18px; }
         
+        /* Full-width code and tables on mobile */
         .code-section { border-radius: 0; margin-left: -20px; margin-right: -20px; border-left: none; border-right: none; }
         pre { padding: 16px !important; font-size: 12.5px !important; }
         
@@ -267,7 +296,9 @@
     // HTML
     document.body.innerHTML = `
       <div id="sidebar-overlay"></div>
-      <nav id="navbar"><button id="burger-btn"><i data-lucide="menu" size="22"></i></button></nav>
+      <nav id="navbar">
+        <button id="burger-btn"><i data-lucide="menu" size="22"></i></button>
+      </nav>
       <aside id="sidebar">
         <button id="sidebar-close"><i data-lucide="x" size="18"></i></button>
         <div class="search-container" id="search-trigger">
@@ -303,24 +334,25 @@
       contentContainer.innerHTML = `<div class="skeleton sk-badge"></div><div class="skeleton sk-h1"></div><div class="skeleton sk-p"></div><div class="skeleton sk-p"></div><div class="skeleton sk-p-last"></div><div class="skeleton sk-code"></div>`;
     }
 
-    const toggleSidebar = (open) => { sidebar.classList.toggle('open', open); overlay.classList.toggle('active', open); };
-    const setActive = (id) => { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); const el=document.getElementById(`nav-${id}`); if(el) el.classList.add('active'); };
+    const toggleSidebar = (open) => { 
+      sidebar.classList.toggle('open', open); 
+      overlay.classList.toggle('active', open); 
+    };
     
-    // 1. Robust Markdown Parser using Post-Processing (Avoids [object Object] issues)
+    const setActive = (id) => { 
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); 
+      const el=document.getElementById(`nav-${id}`); 
+      if(el) el.classList.add('active'); 
+    };
+    
+    // Markdown Parser
     function parseMarkdown(text) {
       if (!text) return '';
-      
-      // Ensure text is a string
       const rawText = String(text);
-      
-      // Parse with default settings (GFM enabled)
       const html = marked.parse(rawText, { breaks: true, gfm: true });
-
-      // Post-process via DOM manipulation to fix links, tables, images safely
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = html;
 
-      // A. Wrap Tables
       tempDiv.querySelectorAll('table').forEach(table => {
         if (table.parentNode.classList.contains('table-wrapper')) return;
         const wrapper = document.createElement('div');
@@ -329,7 +361,6 @@
         wrapper.appendChild(table);
       });
 
-      // B. External Links
       tempDiv.querySelectorAll('a').forEach(a => {
         const href = a.getAttribute('href');
         if (href && (href.startsWith('http') || href.startsWith('//'))) {
@@ -338,10 +369,8 @@
         }
       });
 
-      // C. Images (Lazy load + styling safety)
       tempDiv.querySelectorAll('img').forEach(img => {
         img.setAttribute('loading', 'lazy');
-        // Fix potential broken closing parenthesis in URLs if any
         let src = img.getAttribute('src');
         if (src) img.setAttribute('src', src.replace(/\)/g, "%29"));
       });
@@ -391,13 +420,14 @@
         contentContainer.innerHTML = "<h1>404</h1><p>Content not found.</p>";
         return;
       }
-      // Safe rendering
       const rawHtml = `<span class="badge">${item.badge || 'Docs'}</span>${parseMarkdown(item.content)}`;
       contentContainer.innerHTML = rawHtml;
       processCodeBlocks(contentContainer);
       Prism.highlightAll();
       lucide.createIcons();
       document.querySelector('main').scrollTop = 0;
+      
+      // Close sidebar on mobile after clicking a link
       if (window.innerWidth <= 768) toggleSidebar(false);
     }
 
@@ -475,6 +505,7 @@
 
       renderSidebar();
       
+      // Event Listeners
       document.getElementById('burger-btn').onclick = () => toggleSidebar(true);
       document.getElementById('sidebar-close').onclick = () => toggleSidebar(false);
       overlay.onclick = () => toggleSidebar(false);
@@ -503,3 +534,4 @@
   }
 })();
 </script>
+</html>
