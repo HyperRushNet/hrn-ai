@@ -1,132 +1,66 @@
 {
   "groups": [
     {
-      "title": "Getting Started",
+      "title": "Setup",
       "items": [
         {
-          "id": "including-ai-client",
-          "label": "Including the AIClient Library",
-          "badge": "Setup",
+          "id": "include",
+          "label": "Include",
+          "badge": "Step 1",
           "icon": "download",
-          "content": "To use AIClient in browser environments, include the following script tag in your HTML. This makes the AIClient class available globally.\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n### What Happens When You Load This Script\n- The AIClient library is initialized in the page.\n- AIClient becomes globally accessible.\n- No module bundlers or build steps are required.\n\n### Requirements\n- Include this script before any code that uses AIClient.\n- This version is only for browser environments; it is not a Node.js package."
+          "content": "# Including the AIClient Library\n\nTo use AIClient in the browser, include this script in your HTML:\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n**What Happens:**\n- AIClient becomes globally available.\n- No module bundlers are required.\n\n**Step Visualization:**\n![Include Script](https://via.placeholder.com/400x200?text=Include+Script)\n\nThis is the first step to get started."
         },
         {
-          "id": "basic-usage",
-          "label": "Basic Usage",
-          "badge": "Usage",
-          "icon": "play-circle",
-          "content": "After including the AIClient script, you can create an instance and generate text or images:\n\n```javascript\nconst client = new AIClient();\nclient.setApiKey('YOUR_API_KEY');\n\n// Generate a text response\nclient.setType('text');\nconst response = await client.generate('Hello AI!');\nconsole.log(response);\n\n// Generate an image\nclient.setType('image');\nconst imageBlob = await client.generate('A futuristic city at sunset');\n```\n\nThe `generate` method returns a string for text or a Blob for images."
-        }
-      ]
-    },
-    {
-      "title": "Configuration",
-      "items": [
-        {
-          "id": "api-key",
+          "id": "apikey",
           "label": "API Key",
-          "badge": "Config",
+          "badge": "Step 2",
           "icon": "key",
-          "content": "Set your API key using:\n\n```javascript\nclient.setApiKey('YOUR_API_KEY');\n```\n\nThis key is required to authenticate requests. Without it, `generate` will throw an error."
+          "content": "# Setting Your API Key\n\nYou must authenticate with your key:\n\n```javascript\nclient.setApiKey('YOUR_API_KEY');\n```\n\n**Step Visualization:**\n![API Key](https://via.placeholder.com/400x200?text=Set+API+Key)"
         },
         {
-          "id": "model-selection",
-          "label": "Model Selection",
-          "badge": "Config",
+          "id": "model",
+          "label": "Model",
+          "badge": "Step 3",
           "icon": "cpu",
-          "content": "Select the model you want to use:\n\n```javascript\nclient.setModel('flux'); // default is 'flux'\n```\n\nSupported text & image models can be found on the [Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)."
+          "content": "# Selecting a Model\n\nChoose a text or image model for generation:\n\n```javascript\nclient.setModel('flux'); // default is 'flux'\n```\n\nCheck official pages for supported models:\n- [Pollinations Models](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\n**Step Visualization:**\n![Model Selection](https://via.placeholder.com/400x200?text=Select+Model)"
         },
         {
-          "id": "type-selection",
-          "label": "Type (Text/Image)",
-          "badge": "Config",
+          "id": "type",
+          "label": "Type",
+          "badge": "Step 4",
           "icon": "layers",
-          "content": "Define whether you want a text response or an image:\n\n```javascript\nclient.setType('text'); // 'text' or 'image'\n```\n\nThis determines the endpoint and the return type of `generate`."
-        },
-        {
-          "id": "system-prompt",
-          "label": "System Prompt",
-          "badge": "Config",
-          "icon": "terminal",
-          "content": "Set a system prompt for context (applies to text models):\n\n```javascript\nclient.setSystemPrompt('You are a helpful assistant.');\n```\n\nThis prompt is prepended to every text generation request."
-        },
-        {
-          "id": "dimensions",
-          "label": "Image Dimensions",
-          "badge": "Config",
-          "icon": "image",
-          "content": "Set width and height for image generation:\n\n```javascript\nclient.setDimensions(1024, 1024);\n```\n\nDefaults to 1024x1024 if not set."
-        },
-        {
-          "id": "timeout",
-          "label": "Request Timeout",
-          "badge": "Config",
-          "icon": "clock",
-          "content": "Set the timeout (in milliseconds) for API requests:\n\n```javascript\nclient.setTimeout(30000); // 30 seconds\n```\n\nThe default is 30000ms (30s)."
-        },
-        {
-          "id": "retry-settings",
-          "label": "Retry Settings",
-          "badge": "Config",
-          "icon": "refresh-cw",
-          "content": "Configure automatic retry behavior for failed requests:\n\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n- First argument: enable retry (true/false)\n- Second: number of retry attempts\n- Third: delay between retries in milliseconds"
-        },
-        {
-          "id": "seed",
-          "label": "Random Seed",
-          "badge": "Config",
-          "icon": "shuffle",
-          "content": "Optional seed for reproducible image generations:\n\n```javascript\nclient.setSeed(12345);\n```\n\nIf not set, a random seed is used each time."
-        },
-        {
-          "id": "history",
-          "label": "Message History",
-          "badge": "Config",
-          "icon": "book-open",
-          "content": "AIClient automatically keeps a history of text messages. You can clear it with:\n\n```javascript\nclient.clearHistory();\n```\n\nUseful for starting fresh conversations."
+          "content": "# Choosing Type\n\nDecide if you want **text** or **image** output:\n\n```javascript\nclient.setType('text'); // 'text' or 'image'\n```\n\n**Step Visualization:**\n![Select Type](https://via.placeholder.com/400x200?text=Select+Type)"
         }
       ]
     },
     {
-      "title": "Methods",
+      "title": "Usage",
       "items": [
         {
-          "id": "generate-method",
-          "label": "generate(prompt)",
-          "badge": "Method",
+          "id": "generate",
+          "label": "Generate",
+          "badge": "Step 5",
           "icon": "zap",
-          "content": "Generates a response from the AI model.\n\n```javascript\nconst output = await client.generate('Your prompt here');\n```\n\n**Parameters:**\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| prompt    | string | The text prompt to send to the model |\n\n**Returns:**\n- `string` for text\n- `Blob` for images\n\n**Errors:**\n- Throws if API key is missing\n- Throws if prompt is empty\n- Throws if request times out and retries are exhausted"
-        }
-      ]
-    },
-    {
-      "title": "Examples",
-      "items": [
-        {
-          "id": "text-example",
-          "label": "Text Generation Example",
-          "badge": "Example",
-          "icon": "message-square",
-          "content": "```javascript\nconst client = new AIClient();\nclient.setApiKey('YOUR_API_KEY');\nclient.setType('text');\nconst response = await client.generate('Write a short story about a robot.');\nconsole.log(response);\n```"
+          "content": "# Generating Content\n\nCall `generate` to get output from the AI:\n\n```javascript\nconst response = await client.generate('Write a short story about a robot.');\nconsole.log(response);\n```\n\nFor image generation:\n\n```javascript\nclient.setType('image');\nconst imageBlob = await client.generate('A futuristic city at sunset');\nconst url = URL.createObjectURL(imageBlob);\ndocument.querySelector('#output-image').src = url;\n```\n\n**Step Visualization:**\n![Generate Content](https://via.placeholder.com/400x200?text=Generate+Content)"
         },
         {
-          "id": "image-example",
-          "label": "Image Generation Example",
-          "badge": "Example",
-          "icon": "image",
-          "content": "```javascript\nconst client = new AIClient();\nclient.setApiKey('YOUR_API_KEY');\nclient.setType('image');\nconst imageBlob = await client.generate('A cyberpunk cityscape at night');\n// You can create a URL to display the image\nconst url = URL.createObjectURL(imageBlob);\ndocument.querySelector('#output-image').src = url;\n```"
+          "id": "options",
+          "label": "Options",
+          "badge": "Step 6",
+          "icon": "settings",
+          "content": "# Optional Configurations\n\nYou can customize the client further:\n\n```javascript\nclient.setDimensions(1024,1024); // Image size\nclient.setSystemPrompt('You are a helpful assistant.');\nclient.setTimeout(30000);\nclient.setRetry(true,2,1000);\n```\n\n**Step Visualization:**\n![Options](https://via.placeholder.com/400x200?text=Optional+Config)"
         }
       ]
     },
     {
-      "title": "Models",
+      "title": "Reference",
       "items": [
         {
-          "id": "models-page",
-          "label": "Available Models",
-          "badge": "Reference",
+          "id": "models",
+          "label": "Models",
+          "badge": "Info",
           "icon": "layers",
-          "content": "AIClient supports multiple text and image models.\n\nYou can find a complete list of supported models here:\n- [Pollinations Models](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\nEach model may have different context length, supported modalities, and tools availability. Visit the links above for official documentation."
+          "content": "# Available Models\n\nCheck the official list of supported models:\n- [Pollinations Models](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\nEach model has its own limits and specialties.\n\n**Step Visualization:**\n![Models](https://via.placeholder.com/400x200?text=Models+Reference)"
         }
       ]
     }
