@@ -34,20 +34,14 @@
     }
 
     async _getModelInfo() {
-      if (this._modelCache) {
-        return this._modelCache.find(m => m.id === this.config.model);
-      }
+      if (this._modelCache) return this._modelCache.find(m => m.id === this.config.model);
       try {
-        const res = await fetch(`${this.config.baseUrl}/models`, {
-          headers: this._getHeaders(true)
-        });
+        const res = await fetch(`${this.config.baseUrl}/models`, { headers: this._getHeaders(true) });
         if (!res.ok) return null;
         const data = await res.json();
         this._modelCache = data.data || [];
         return this._modelCache.find(m => m.id === this.config.model) || null;
-      } catch (e) {
-        return null;
-      }
+      } catch (e) { return null; }
     }
 
     _getHeaders(isGet = false) {
@@ -63,7 +57,6 @@
       const streamOpt = options.stream !== undefined ? options.stream : this.config.stream;
       const onStream = typeof options.onStream === 'function' ? options.onStream : null;
 
-      // We bewaren de messages lokaal om ze later aan de history toe te voegen
       const messagesPayload = [
         { role: 'system', content: this.config.systemPrompt },
         ...this.config.history,
@@ -74,9 +67,7 @@
         model: this.config.model,
         messages: messagesPayload,
         stream: streamOpt,
-        seed: this.config.seed ?? Math.floor(Math.random() * 1e9),
-        // JSON mode is optioneel en kan problemen geven bij simpele teksten, we laten het standaard weg tenzij expliciet gevraagd
-        response_format: options.response_format 
+        seed: this.config.seed ?? Math.floor(Math.random() * 1e9)
       };
 
       const executeRequest = async (attempt = 1) => {
@@ -99,7 +90,6 @@
           }
 
           if (streamOpt && res.body) {
-            // We geven de originele prompt en messages mee voor de history update
             return await this._handleStreamResponse(res.body, onStream, prompt);
           } else {
             const data = await res.json();
@@ -111,7 +101,6 @@
         } catch (e) {
           clearTimeout(timer);
           if (e.name === 'AbortError') throw new Error('Request timed out');
-          
           if (this.config.retry && attempt < this.config.retryAttempts) {
             await new Promise(r => setTimeout(r, this.config.retryDelay));
             return executeRequest(attempt + 1);
@@ -123,44 +112,59 @@
       return executeRequest();
     }
 
-    // FIX: prompt parameter toegevoegd om history correct te updaten
     async _handleStreamResponse(body, onStream, prompt) {
       const reader = body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
       let fullText = '';
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-
-        for (let line of lines) {
-          line = line.trim();
-          if (!line || !line.startsWith('data: ')) continue;
+          buffer += decoder.decode(value, { stream: true });
           
-          const jsonStr = line.slice(6);
-          if (jsonStr === '[DONE]') continue;
+          // Process buffer lines
+          let lines = buffer.split('\n');
+          // Keep the last incomplete chunk in the buffer
+          buffer = lines.pop(); 
 
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const chunk = parsed?.choices?.[0]?.delta?.content;
-            if (chunk) {
-              fullText += chunk;
-              if (onStream) onStream(chunk);
+          for (let line of lines) {
+            line = line.trim();
+            if (!line) continue;
+            
+            // Check for SSE data prefix
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === '[DONE]') continue;
+
+              try {
+                // Strict parse
+                const parsed = JSON.parse(jsonStr);
+                const chunk = parsed?.choices?.[0]?.delta?.content;
+                
+                if (chunk) {
+                  fullText += chunk;
+                  if (onStream) onStream(chunk);
+                }
+              } catch (parseError) {
+                // If standard JSON parse fails, check for concatenated JSON objects (rare but possible)
+                // Or just log/debug if needed. For now, we skip malformed lines to prevent crashes.
+                // console.warn('Stream parse skip:', parseError.message, jsonStr);
+              }
             }
-          } catch (parseError) {
-             // Ignore incomplete JSON chunks
           }
         }
+      } catch (err) {
+        console.error('Stream reading error:', err);
+        throw err;
       }
-      
-      // Update history met de volledige tekst en originele prompt
-      this._updateHistory(prompt, fullText);
-      return null; 
+
+      if (fullText) {
+        this._updateHistory(prompt, fullText);
+      }
+      return null;
     }
 
     async generateImage(prompt, options = {}) {
@@ -195,9 +199,7 @@
 
     async listModels() {
       try {
-        const res = await fetch(`${this.config.baseUrl}/models`, {
-          headers: this._getHeaders(true)
-        });
+        const res = await fetch(`${this.config.baseUrl}/models`, { headers: this._getHeaders(true) });
         if (!res.ok) throw new Error('Failed to fetch models');
         const data = await res.json();
         return data.data || [];
@@ -207,11 +209,14 @@
     }
 
     _updateHistory(userMsg, assistantMsg) {
+      if (!userMsg || !assistantMsg) return;
       this.config.history.push({ role: 'user', content: userMsg });
       this.config.history.push({ role: 'assistant', content: assistantMsg });
-      if (this.config.history.length > this.config.historyLimit * 2) {
-        const excess = this.config.history.length - (this.config.historyLimit * 2);
-        this.config.history.splice(0, excess);
+      
+      // Maintain history limit
+      while (this.config.history.length > this.config.historyLimit * 2) {
+        this.config.history.shift();
+        this.config.history.shift();
       }
     }
 
