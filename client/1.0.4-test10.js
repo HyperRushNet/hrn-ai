@@ -6,7 +6,6 @@ class AIClient {
       systemPrompt: options.systemPrompt || 'You are a helpful assistant.',
       width: options.width || 1024,
       height: options.height || 1024,
-      history: [],
       historyLimit: options.historyLimit || 10,
       timeout: options.timeout || 60000,
       seed: options.seed ?? null,
@@ -14,6 +13,7 @@ class AIClient {
       retryAttempts: options.retryAttempts || 2,
       retryDelay: options.retryDelay || 1000
     });
+    this.config.history = [];
     this._modelCache = null;
   }
 
@@ -36,9 +36,7 @@ class AIClient {
       if (!res.ok) throw new Error("Failed to fetch model list");
       const data = await res.json();
       this._modelCache = data.data || [];
-      const modelInfo = this._modelCache.find(m => m.id === this.config.model);
-      if (!modelInfo) return null;
-      return modelInfo;
+      return this._modelCache.find(m => m.id === this.config.model) || null;
     } catch {
       return null;
     }
