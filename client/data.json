@@ -6,9 +6,9 @@
         {
           "id": "introduction",
           "label": "Introduction",
-          "badge": "1",
+          "badge": "Step 0 – Library",
           "icon": "info",
-          "content": "# Introduction\n\n**Essence:**\nThe AIClient library lets you generate AI text and images directly from your browser. No build step or module bundler required.\n\n**Include the library:**\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\nThis script makes `client` globally accessible. Always include it **before any AIClient code**.\n\n**Tips:**\n- Only for browser usage, not Node.js.\n- Works out-of-the-box, minimal setup.\n- Keeps your project lightweight."
+          "content": "# Introduction\n\n**Overview:**\nAIClient allows browser-based AI text and image generation. No build step required; simple script inclusion is enough.\n\n**Include the library:**\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n**Notes:**\n- `client` is globally accessible.\n- Only for browser use.\n- Lightweight and dependency-free."
         }
       ]
     },
@@ -17,76 +17,76 @@
       "items": [
         {
           "id": "initialize",
-          "label": "Initialize",
-          "badge": "2",
+          "label": "Initialize Client",
+          "badge": "Step 1 – Init",
           "icon": "key",
-          "content": "# Initialize\n\n**Essence:**\nYou must authenticate with your unique API key before using AIClient.\n\n**Code:**\n```javascript\nclient.setApiKey('YOUR_API_KEY');\n```\n\n**Tips:**\n- Store your API key securely.\n- Only set once per session.\n- All subsequent calls use this key."
+          "content": "# Initialize\n\n**Essence:**\nAuthenticate with your API key before using AIClient.\n\n**Code:**\n```javascript\nclient.setApiKey('YOUR_API_KEY');\n```\n\n**Tips:**\n- Store your API key securely.\n- Only call once per session.\n- All future calls automatically use this key."
         }
       ]
     },
     {
-      "title": "Text",
+      "title": "Text Generation",
       "items": [
         {
           "id": "text-type",
-          "label": "Set Type",
-          "badge": "3",
+          "label": "Set Text Type",
+          "badge": "Step 2 – Type",
           "icon": "layers",
-          "content": "# Step 1: Set Type\n\n**Essence:**\nFor text generation, set the type to 'text'. This tells AIClient what kind of output to generate.\n\n**Code:**\n```javascript\nclient.setType('text');\n```\n\n**Tips:**\n- Always set type before model or generate.\n- 'text' is required for text generation functions."
+          "content": "# Set Type\n\n**Essence:**\nConfigure AIClient to generate text.\n\n**Code:**\n```javascript\nclient.setType('text');\n```\n\n**Tips:**\n- Always call before model or generate.\n- 'text' is required for all text generation operations."
         },
         {
           "id": "text-model",
-          "label": "Set Model",
-          "badge": "4",
+          "label": "Choose Text Model",
+          "badge": "Step 3 – Model",
           "icon": "cpu",
-          "content": "# Step 2: Set Model\n\n**Essence:**\nSelect the model you want to use for text generation. Models differ in speed, creativity, and cost.\n\n**Code:**\n```javascript\nclient.setModel('flux'); // default model\n```\n\n**Check available models:**\n- [Models Page](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\n**Tips:**\n- Pick models suitable for your text type (story, assistant, code, etc.)."
+          "content": "# Set Model\n\n**Essence:**\nPick a model for your text output. Models vary in speed, style, and creativity.\n\n**Code:**\n```javascript\nclient.setModel('flux');\n```\n\n**Links:**\n- [Models Page](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\n**Tips:**\n- Select based on your text type (story, assistant, code, etc.)."
         },
         {
           "id": "text-generate",
-          "label": "Generate",
-          "badge": "5",
+          "label": "Generate Text",
+          "badge": "Step 4 – Generate",
           "icon": "zap",
-          "content": "# Step 3: Generate Text\n\n**Essence:**\nSend a prompt to the AI and get text output.\n\n**Code:**\n```javascript\nconst prompt = 'Write a motivational quote about AI.';\nconst output = await client.generate(prompt);\nconsole.log(output);\n```\n\n**Tips:**\n- Await the result for async behavior.\n- Prompt quality strongly affects results."
+          "content": "# Generate\n\n**Essence:**\nSend a prompt to generate text and handle the output.\n\n**Code:**\n```javascript\nconst prompt = 'Write a motivational quote about AI.';\nconst output = await client.generate(prompt);\nconsole.log(output);\n```\n\n**Tips:**\n- Await the result for async behavior.\n- Prompt quality strongly affects results."
         },
         {
           "id": "text-options",
-          "label": "Options",
-          "badge": "6",
+          "label": "Optional Functions",
+          "badge": "Step 5 – Options",
           "icon": "settings",
-          "content": "# Step 4: Optional Functions\n\n**Essence:**\nEnhance text generation with system prompts, retry, and timeout options.\n\n**Code:**\n```javascript\nclient.setSystemPrompt('You are a helpful assistant.');\nclient.setTimeout(30000);\nclient.setRetry(true, 2, 1000);\n```\n\n**Tips:**\n- System prompt sets the AI's persona.\n- Timeout prevents long-hanging requests.\n- Retry can help with intermittent network errors."
+          "content": "# Optional Functions\n\n**Essence:**\nEnhance text generation using additional functions. Each option is a sub-step:\n\n## setSystemPrompt\n```javascript\nclient.setSystemPrompt('You are a helpful assistant.');\n```\n- Sets the AI’s persona.\n\n## setTimeout\n```javascript\nclient.setTimeout(30000);\n```\n- Maximum request time in ms.\n\n## setRetry\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n- Retry failed requests with count and delay."
         }
       ]
     },
     {
-      "title": "Image",
+      "title": "Image Generation",
       "items": [
         {
           "id": "image-type",
-          "label": "Set Type",
-          "badge": "3",
+          "label": "Set Image Type",
+          "badge": "Step 2 – Type",
           "icon": "layers",
-          "content": "# Step 1: Set Type\n\n**Essence:**\nFor image generation, set the type to 'image'.\n\n**Code:**\n```javascript\nclient.setType('image');\n```\n\n**Tips:**\n- Always set type first.\n- 'image' enables image output functions."
+          "content": "# Set Type\n\n**Essence:**\nConfigure AIClient to generate images.\n\n**Code:**\n```javascript\nclient.setType('image');\n```\n\n**Tips:**\n- Always set type before any image calls."
         },
         {
           "id": "image-model",
-          "label": "Set Model",
-          "badge": "4",
+          "label": "Choose Image Model",
+          "badge": "Step 3 – Model",
           "icon": "cpu",
-          "content": "# Step 2: Set Model\n\n**Essence:**\nChoose the model for image generation. Some models specialize in photorealistic, stylized, or abstract outputs.\n\n**Code:**\n```javascript\nclient.setModel('flux');\n```\n\n**Check available models:**\n- [Models Page](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\n**Tips:**\n- Select a model that fits your image style needs."
+          "content": "# Set Model\n\n**Essence:**\nSelect a model specialized for images. Some models focus on photorealistic, stylized, or abstract outputs.\n\n**Code:**\n```javascript\nclient.setModel('flux');\n```\n\n**Links:**\n- [Models Page](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\n**Tips:**\n- Pick a model that fits your image style needs."
         },
         {
           "id": "image-generate",
-          "label": "Generate",
-          "badge": "5",
+          "label": "Generate Image",
+          "badge": "Step 4 – Generate",
           "icon": "zap",
-          "content": "# Step 3: Generate Image\n\n**Essence:**\nSend a prompt to generate an image blob, then display it.\n\n**Code:**\n```javascript\nconst prompt = 'A futuristic cityscape at sunset';\nconst imageBlob = await client.generate(prompt);\nconst url = URL.createObjectURL(imageBlob);\ndocument.querySelector('#output-image').src = url;\n```\n\n**Tips:**\n- Use `<img id='output-image'>` in HTML.\n- Blob URL allows in-browser display without saving files."
+          "content": "# Generate Image\n\n**Essence:**\nSend a prompt to create an image.\n\n**Code:**\n```javascript\nconst prompt = 'A futuristic cityscape at sunset';\nconst imageBlob = await client.generate(prompt);\nconst url = URL.createObjectURL(imageBlob);\ndocument.querySelector('#output-image').src = url;\n```\n\n**Tips:**\n- Use `<img id='output-image'>` in HTML.\n- Blob URL allows in-browser display without saving files."
         },
         {
           "id": "image-options",
-          "label": "Options",
-          "badge": "6",
+          "label": "Optional Functions",
+          "badge": "Step 5 – Options",
           "icon": "settings",
-          "content": "# Step 4: Optional Functions\n\n**Essence:**\nSet dimensions, retry, and other options to customize image output.\n\n**Code:**\n```javascript\nclient.setDimensions(1024, 1024);\nclient.setTimeout(30000);\nclient.setRetry(true, 2, 1000);\n```\n\n**Tips:**\n- Dimensions affect resolution and processing time.\n- Optional functions help you fine-tune results."
+          "content": "# Optional Functions\n\n**Essence:**\nEnhance image generation with fine-tuned options. Each function is a sub-tab:\n\n## setDimensions\n```javascript\nclient.setDimensions(1024, 1024);\n```\n- Width and height in pixels.\n\n## setTimeout\n```javascript\nclient.setTimeout(30000);\n```\n- Maximum generation time.\n\n## setRetry\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n- Retry failed requests automatically."
         }
       ]
     }
