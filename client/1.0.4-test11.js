@@ -1,6 +1,6 @@
 class AIClient {
   constructor(options = {}) {
-    this.config = Object.freeze({
+    const immutableConfig = Object.freeze({
       apiKey: options.apiKey || null,
       model: options.model || 'openai',
       systemPrompt: options.systemPrompt || 'You are a helpful assistant.',
@@ -13,7 +13,7 @@ class AIClient {
       retryAttempts: options.retryAttempts || 2,
       retryDelay: options.retryDelay || 1000
     });
-    this.config.history = [];
+    this.config = { ...immutableConfig, history: [] };
     this._modelCache = null;
   }
 
