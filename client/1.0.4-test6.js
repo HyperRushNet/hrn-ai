@@ -22,7 +22,8 @@ class AIClient extends EventTarget {
       chatId: options.chatId ?? null,
       stream: options.stream ?? false,
       isImage: options.isImage ?? false,
-      history: []
+      history: [],
+      seed: options.seed ?? null  // ✅ seed toegevoegd
     };
 
     if (this.config.chatId) {
@@ -65,6 +66,7 @@ class AIClient extends EventTarget {
             response_format: "b64_json",
             nologo: true
           };
+          if (this.config.seed !== null) payload.seed = this.config.seed; // ✅ seed gebruiken
 
           const res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(payload), signal: controller.signal });
           clearTimeout(timer);
@@ -88,6 +90,7 @@ class AIClient extends EventTarget {
             ],
             stream: this.config.stream
           };
+          if (this.config.seed !== null) payload.seed = this.config.seed; // ✅ seed toevoegen voor text als API ondersteunt
 
           const res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(payload), signal: controller.signal });
           if (!res.ok) throw new Error(`API fout: ${res.status} ${res.statusText}`);
