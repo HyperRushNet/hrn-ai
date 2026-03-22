@@ -19,7 +19,8 @@
         retryDelay: options.retryDelay || 1000,
         chatId: options.chatId ?? null,
         stream: options.stream ?? false,
-        baseUrl: options.baseUrl || 'https://gen.pollinations.ai/v1'
+        // Correct Base URL according to docs
+        baseUrl: options.baseUrl || 'https://gen.pollinations.ai' 
       };
 
       if (cfg.chatId) {
@@ -30,12 +31,10 @@
       }
 
       this.config = { ...cfg, history: [] };
-      this._modelCache = null;
     }
 
-    _getHeaders(isGet = false) {
-      const headers = {};
-      if (!isGet) headers['Content-Type'] = 'application/json';
+    _getHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
       if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
       return headers;
     }
@@ -46,18 +45,17 @@
       const streamOpt = options.stream !== undefined ? options.stream : this.config.stream;
       const onStream = typeof options.onStream === 'function' ? options.onStream : null;
 
-      const messagesPayload = [
-        { role: 'system', content: this.config.systemPrompt },
-        ...this.config.history,
-        { role: 'user', content: prompt }
-      ];
-
       const payload = {
         model: this.config.model,
-        messages: messagesPayload,
+        messages: [
+          { role: 'system', content: this.config.systemPrompt },
+          ...this.config.history,
+          { role: 'user', content: prompt }
+        ],
         stream: streamOpt,
-        seed: this.config.seed ?? Math.floor(Math.random() * 1e9)
-        // Removed 'response_format' to allow plain text responses in non-stream mode
+        seed: this.config.seed,
+        temperature: options.temperature ?? 0.7
+        // Removed response_format to allow plain text
       };
 
       const executeRequest = async (attempt = 1) => {
@@ -65,7 +63,8 @@
         const timer = setTimeout(() => controller.abort(), this.config.timeout);
 
         try {
-          const res = await fetch(`${this.config.baseUrl}/chat/completions`, {
+          // Correct endpoint construction: baseUrl + /v1/chat/completions
+          const res = await fetch(`${this.config.baseUrl}/v1/chat/completions`, {
             method: 'POST',
             headers: this._getHeaders(),
             body: JSON.stringify(payload),
@@ -82,10 +81,9 @@
           if (streamOpt && res.body) {
             return await this._handleStreamResponse(res.body, onStream, prompt);
           } else {
-            // Non-streaming path: returns text directly
             const data = await res.json();
             const text = data?.choices?.[0]?.message?.content;
-            if (!text) throw new Error('Invalid response: No content found');
+            if (!text) throw new Error('Invalid response');
             this._updateHistory(prompt, text);
             return text;
           }
@@ -109,95 +107,67 @@
       let buffer = '';
       let fullText = '';
 
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true });
+        let lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (let line of lines) {
+          line = line.trim();
+          if (!line || !line.startsWith('data: ')) continue;
           
-          let lines = buffer.split('\n');
-          buffer = lines.pop(); 
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
 
-          for (let line of lines) {
-            line = line.trim();
-            if (!line) continue;
-            
-            if (line.startsWith('data: ')) {
-              const jsonStr = line.slice(6).trim();
-              if (jsonStr === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(jsonStr);
-                const chunk = parsed?.choices?.[0]?.delta?.content;
-                
-                if (chunk) {
-                  fullText += chunk;
-                  if (onStream) onStream(chunk);
-                }
-              } catch (parseError) {
-                // Ignore parse errors for incomplete chunks
-              }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const chunk = parsed?.choices?.[0]?.delta?.content;
+            if (chunk) {
+              fullText += chunk;
+              if (onStream) onStream(chunk);
             }
+          } catch (e) {
+            // Ignore incomplete JSON chunks
           }
         }
-      } catch (err) {
-        console.error('Stream reading error:', err);
-        throw err;
       }
-
-      if (fullText) {
-        this._updateHistory(prompt, fullText);
-      }
+      
+      this._updateHistory(prompt, fullText);
       return null;
     }
 
     async generateImage(prompt, options = {}) {
-      if (!prompt) throw new Error('Prompt required for image generation');
+      if (!prompt) throw new Error('Prompt required');
       
       const payload = {
         prompt: prompt,
-        model: options.model || this.config.model,
+        model: options.model || 'flux',
         size: options.size || `${this.config.width}x${this.config.height}`,
-        response_format: options.response_format || 'url',
-        seed: options.seed ?? this.config.seed
+        response_format: options.response_format || 'url'
       };
 
-      try {
-        const res = await fetch(`${this.config.baseUrl}/images/generations`, {
-          method: 'POST',
-          headers: this._getHeaders(),
-          body: JSON.stringify(payload)
-        });
+      const res = await fetch(`${this.config.baseUrl}/v1/images/generations`, {
+        method: 'POST',
+        headers: this._getHeaders(),
+        body: JSON.stringify(payload)
+      });
 
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Image API Error ${res.status}: ${errText}`);
-        }
-
-        const data = await res.json();
-        return data.data?.[0]?.url || data.data?.[0]?.b64_json;
-      } catch (e) {
-        throw e;
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Image API Error ${res.status}: ${errText}`);
       }
-    }
 
-    async listModels() {
-      try {
-        const res = await fetch(`${this.config.baseUrl}/models`, { headers: this._getHeaders(true) });
-        if (!res.ok) throw new Error('Failed to fetch models');
-        const data = await res.json();
-        return data.data || [];
-      } catch (e) {
-        throw e;
-      }
+      const data = await res.json();
+      return data.data?.[0]?.url || data.data?.[0]?.b64_json;
     }
 
     _updateHistory(userMsg, assistantMsg) {
       if (!userMsg || !assistantMsg) return;
       this.config.history.push({ role: 'user', content: userMsg });
       this.config.history.push({ role: 'assistant', content: assistantMsg });
-      
       while (this.config.history.length > this.config.historyLimit * 2) {
         this.config.history.shift();
         this.config.history.shift();
@@ -209,9 +179,7 @@
     }
 
     destroy() {
-      if (this.config.chatId) {
-        AIClient._chatIds.delete(this.config.chatId);
-      }
+      if (this.config.chatId) AIClient._chatIds.delete(this.config.chatId);
     }
   }
 
