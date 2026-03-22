@@ -10,7 +10,7 @@ class AIClient extends EventTarget {
   constructor(options = {}) {
     super();
     this.models = null;
-    this.config = { chatId: null, history: [], systemPrompt: 'You are a helpful assistant.', modelAlias: 'openai', apiKey: null, width: 1024, height: 1024, timeout: 60000, retry: true, retryAttempts: 2, retryDelay: 1000, stream: false, ...options };
+    this.config = { chatId: null, history: [], systemPrompt: 'You are a helpful assistant.', model: 'openai', apiKey: null, width: 1024, height: 1024, timeout: 60000, retry: true, retryAttempts: 2, retryDelay: 1000, stream: false, ...options };
     if (this.config.chatId) {
       if (AIClient._chatIds.has(this.config.chatId)) throw new Error(`chatId "${this.config.chatId}" already exists`);
       AIClient._chatIds.add(this.config.chatId);
@@ -19,8 +19,8 @@ class AIClient extends EventTarget {
 
   async _resolveModel() {
     if (!this.models) this.models = await AIClient.getModels();
-    const model = this.models.find(m => m.id === this.config.modelAlias);
-    if (!model) throw new Error(`Model alias "${this.config.modelAlias}" not found`);
+    const model = this.models.find(m => m.id === this.config.model);
+    if (!model) throw new Error(`Model alias "${this.config.model}" not found`);
     if (model.input_modalities.includes('image')) return 'image';
     return 'text';
   }
@@ -42,7 +42,7 @@ class AIClient extends EventTarget {
       const headers = { 'Content-Type': 'application/json' };
       if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
       if (type === 'image') {
-        const payload = { prompt: input, model: this.config.modelAlias, size: `${this.config.width}x${this.config.height}`, response_format: "b64_json", nologo: true };
+        const payload = { prompt: input, model: this.config.model, size: `${this.config.width}x${this.config.height}`, response_format: "b64_json", nologo: true };
         const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
         clearTimeout(timer);
         if (!res.ok) throw new Error(`API Error: ${res.status}`);
@@ -52,7 +52,7 @@ class AIClient extends EventTarget {
         const blob = new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
         this.dispatchEvent(new CustomEvent("message", { detail: { data: blob, chatId: this.config.chatId, stream: false } }));
       } else {
-        const payload = { model: this.config.modelAlias, messages: [{ role: 'system', content: this.config.systemPrompt }, ...this.config.history, { role: 'user', content: input }], stream: this.config.stream };
+        const payload = { model: this.config.model, messages: [{ role: 'system', content: this.config.systemPrompt }, ...this.config.history, { role: 'user', content: input }], stream: this.config.stream };
         const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
         if (!res.ok) throw new Error(`API Error: ${res.status}`);
         if (this.config.stream) {
