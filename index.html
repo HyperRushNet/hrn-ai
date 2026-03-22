@@ -86,14 +86,16 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 .edit-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
 .edit-save-btn{background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
 .edit-cancel-btn{background:var(--bg-elevated);color:var(--text-main);border:1px solid var(--border-subtle);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer}
+
+/* Markdown Body Styling - Integrated Parser Styles */
 .md-body{font-size:15px;line-height:1.65;color:#e4e4e7;width:100%;overflow-wrap:break-word}
 .md-body p{margin-bottom:12px}
 .md-body strong{color:#fff;font-weight:600}
 .md-body a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:all 0.2s}
 .md-body a:hover{border-bottom-color:var(--accent)}
-.md-body h1,.md-body h2,.md-body h3{color:#fff;margin-top:24px;margin-bottom:12px;font-weight:600}
-.md-body h1{font-size:1.6em;border-bottom:1px solid var(--border-subtle);padding-bottom:8px}
-.md-body h2{font-size:1.3em}
+.md-body h1,.md-body h2,.md-body h3,.md-body h4,.md-body h5,.md-body h6{color:#fff;margin-top:24px;margin-bottom:12px;font-weight:600}
+.md-body h1{font-size:1.6em;border-bottom:1px solid var(--border-subtle);padding-bottom:8px;margin-top:0}
+.md-body h2{font-size:1.3em;border-bottom:1px solid var(--border-subtle);padding-bottom:6px}
 .md-body h3{font-size:1.1em}
 .md-body ul,.md-body ol{padding-left:24px;margin-bottom:12px}
 .md-body li{margin-bottom:6px}
@@ -102,8 +104,10 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 .md-body input[type="checkbox"]{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1px solid var(--border-hover);border-radius:4px;margin-right:8px;vertical-align:middle;cursor:pointer;position:relative;background:transparent}
 .md-body input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent)}
 .md-body input[type="checkbox"]:checked::after{content:'✔';color:#000;font-size:10px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
-.md-body blockquote{border-left:3px solid var(--accent);padding-left:16px;margin:16px 0;color:var(--text-muted)}
+.md-body blockquote{border-left:3px solid var(--accent);padding-left:16px;margin:16px 0;color:var(--text-muted);font-style:italic}
 .md-body blockquote blockquote{border-left-color:var(--text-muted);margin:8px 0}
+.md-body hr{border:none;height:1px;background:var(--border-subtle);margin:32px 0}
+.md-body hr + *{margin-top:24px !important} /* Ensure space after HR */
 .table-wrapper{width:100%;overflow-x:auto;margin:16px 0;border:1px solid var(--border-subtle);border-radius:8px}
 table{width:100%;border-collapse:collapse;font-size:14px;text-align:left}
 th,td{padding:10px 14px;border-bottom:1px solid var(--border-subtle)}
@@ -263,6 +267,7 @@ class MarkdownParser {
         const codeBlocks = [];
         const inlineCodes = [];
 
+        // Math blocks
         t = t.replace(/\$\$([\s\S]*?)\$\$/g, (_, p1) => {
             mathBlocks.push(`\\[${p1}\\]`);
             return `%%MATH${mathBlocks.length - 1}%%`;
@@ -272,18 +277,22 @@ class MarkdownParser {
             return `%%MATH${mathBlocks.length - 1}%%`;
         });
 
+        // Code blocks
         t = t.replace(/```(\w*)\n([\s\S]*?)(?:```|$)/g, (_, lang, code) => {
             codeBlocks.push(this._renderCodeBlock(code, lang));
             return `%%CODE${codeBlocks.length - 1}%%`;
         });
 
+        // Inline code
         t = t.replace(/`([^`\n]+?)`/g, (_, p1) => {
             inlineCodes.push(`<code>${this._escapeHtml(p1)}</code>`);
             return `%%INLICODE${inlineCodes.length - 1}%%`;
         });
 
+        // Escape HTML
         t = this._escapeHtml(t);
 
+        // Parse structures
         t = this._parseTables(t);
         t = this._parseHR(t);
         t = this._parseHeaders(t);
@@ -292,6 +301,7 @@ class MarkdownParser {
         t = this._parseInline(t);
         t = this._parseParagraphs(t);
 
+        // Restore placeholders
         inlineCodes.forEach((v, i) => { t = t.replace(`%%INLICODE${i}%%`, v); });
         mathBlocks.forEach((v, i) => { t = t.replace(`%%MATH${i}%%`, v); });
         codeBlocks.forEach((v, i) => { t = t.replace(`%%CODE${i}%%`, v); });
@@ -334,6 +344,7 @@ class MarkdownParser {
     }
     
     _parseHR(t) {
+        // HR parsing with spacing logic handled by CSS
         return t.replace(/^ {0,3}[-*_]{3,} *$/gm, "<hr>");
     }
 
@@ -458,9 +469,11 @@ class MarkdownParser {
         return t.split(/\n\n+/).map(block => {
             block = block.trim();
             if (!block) return "";
+            // Check if it's already a block element
             if (block.match(/^<(h[1-6]|ul|ol|li|blockquote|hr|div|p|pre|code|table)/)) {
                 return block;
             }
+            // Check if it's a placeholder for code/math
             if (block.match(/^%%(CODE|MATH|INLICODE)\d+%%$/)) {
                 return block;
             }
