@@ -243,9 +243,17 @@ New Chat
 <script>
 class MarkdownParser {
     _escapeHtml(t) {
-        if (!t) return "";
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return t.replace(/[&<>"']/g, m => map[m]);
+        return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    _sanitizeUrl(url) {
+        try {
+            const parsed = new URL(url);
+            if (["http:", "https:", "mailto:", "tel:", "data:"].includes(parsed.protocol)) return url;
+        } catch (e) {
+            if (url.startsWith("/") || url.startsWith("#")) return url;
+        }
+        return "";
     }
 
     parse(text) {
@@ -253,33 +261,40 @@ class MarkdownParser {
         let t = text;
         const mathBlocks = [];
         const codeBlocks = [];
-        
-        t = t.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => {
-            const id = mathBlocks.length;
+        const inlineCodes = [];
+
+        t = t.replace(/\$\$([\s\S]*?)\$\$/g, (_, p1) => {
             mathBlocks.push(`\\[${p1}\\]`);
-            return `[[MATHBLOCK${id}]]`;
+            return `%%MATH${mathBlocks.length - 1}%%`;
         });
-        t = t.replace(/\$([^\$\n]+?)\$/g, (match, p1) => {
-            const id = mathBlocks.length;
+        t = t.replace(/\$([^\$\n]+?)\$/g, (_, p1) => {
             mathBlocks.push(`\\(${p1}\\)`);
-            return `[[MATHBLOCK${id}]]`;
+            return `%%MATH${mathBlocks.length - 1}%%`;
         });
 
-        t = t.replace(/```(\w*)\n([\s\S]*?)(?:```|$)/g, (match, lang, code) => {
-            const id = codeBlocks.length;
-            codeBlocks.push(this._renderCodeBlock(code || "", lang));
-            return `[[CODEBLOCK${id}]]`;
+        t = t.replace(/```(\w*)\n([\s\S]*?)(?:```|$)/g, (_, lang, code) => {
+            codeBlocks.push(this._renderCodeBlock(code, lang));
+            return `%%CODE${codeBlocks.length - 1}%%`;
         });
+
+        t = t.replace(/`([^`\n]+?)`/g, (_, p1) => {
+            inlineCodes.push(`<code>${this._escapeHtml(p1)}</code>`);
+            return `%%INLICODE${inlineCodes.length - 1}%%`;
+        });
+
+        t = this._escapeHtml(t);
 
         t = this._parseTables(t);
+        t = this._parseHR(t);
         t = this._parseHeaders(t);
         t = this._parseBlockquotes(t);
         t = this._parseLists(t);
         t = this._parseInline(t);
         t = this._parseParagraphs(t);
 
-        mathBlocks.forEach((val, i) => { t = t.replace(`[[MATHBLOCK${i}]]`, val); });
-        codeBlocks.forEach((val, i) => { t = t.replace(`[[CODEBLOCK${i}]]`, val); });
+        inlineCodes.forEach((v, i) => { t = t.replace(`%%INLICODE${i}%%`, v); });
+        mathBlocks.forEach((v, i) => { t = t.replace(`%%MATH${i}%%`, v); });
+        codeBlocks.forEach((v, i) => { t = t.replace(`%%CODE${i}%%`, v); });
 
         return t;
     }
@@ -298,19 +313,9 @@ class MarkdownParser {
         return `<div class="code-block"><div class="code-header"><span class="code-lang">${language}</span><button class="act-btn" onclick="copyText(this, \`${encodeURIComponent(safeCode)}\`)" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><div class="code-content"><pre><code class="hljs">${highlighted}</code></pre></div></div>`;
     }
 
-    _parseHeaders(t) {
-        return t.replace(/^###### (.+)$/gm, "<h6>$1</h6>")
-                .replace(/^##### (.+)$/gm, "<h5>$1</h5>")
-                .replace(/^#### (.+)$/gm, "<h4>$1</h4>")
-                .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-                .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-                .replace(/^# (.+)$/gm, "<h1>$1</h1>");
-    }
-
     _parseTables(t) {
         return t.replace(/^\|(.+)\|\s*\n\|([-:\s|]+)\|\s*\n((?:\|.+\|\s*\n?)+)/gm, (match, headerRow, separator, bodyRows) => {
-            if (!headerRow || !separator || !bodyRows) return match;
-            const headers = headerRow.split("|").map(h => h.trim()).filter(h => h);
+            const headers = headerRow.split("|").map(h => h.trim()).filter(h => h.length);
             const aligns = separator.split("|").map(s => {
                 s = s.trim();
                 if (s.startsWith(":") && s.endsWith(":")) return "text-center";
@@ -320,98 +325,132 @@ class MarkdownParser {
             
             const thead = "<thead><tr>" + headers.map((h, i) => `<th class="${aligns[i] || ""}">${h}</th>`).join("") + "</tr></thead>";
             const tbody = "<tbody>" + bodyRows.trim().split("\n").map(row => {
-                const cells = row.split("|").map(c => c.trim()).filter(c => c);
+                const cells = row.split("|").map(c => c.trim()).filter(c => c.length);
                 return "<tr>" + cells.map((c, i) => `<td class="${aligns[i] || ""}">${c}</td>`).join("") + "</tr>";
             }).join("") + "</tbody>";
             
             return `<div class="table-wrapper"><table>${thead}${tbody}</table></div>`;
         });
     }
+    
+    _parseHR(t) {
+        return t.replace(/^ {0,3}[-*_]{3,} *$/gm, "<hr>");
+    }
 
+    _parseHeaders(t) {
+        return t.replace(/^ {0,3}(#{1,6}) +(.*)$/gm, (m, h, c) => `<h${h.length}>${c}</h${h.length}>`);
+    }
+    
     _parseBlockquotes(t) {
         const lines = t.split('\n');
-        let result = [];
+        let res = [];
         let stack = [];
-        
         for (let line of lines) {
-            let match = line.match(/^(>+)\s?(.*)$/);
+            let match = line.match(/^( {0,3}(&gt;) ?)(.*)$/);
             if (match) {
-                let depth = match[1].length;
-                let content = match[2];
+                let content = match[3];
+                let depth = (line.match(/&gt;/g) || []).length;
                 
                 while (stack.length < depth) {
-                    result.push('<blockquote>');
+                    res.push("<blockquote>");
                     stack.push(true);
                 }
                 while (stack.length > depth) {
-                    result.push('</blockquote>');
+                    res.push("</blockquote>");
                     stack.pop();
                 }
-                result.push(`${content}<br>`);
+                res.push(content + "<br>");
             } else {
                 while (stack.length > 0) {
-                    result.push('</blockquote>');
+                    res.push("</blockquote>");
                     stack.pop();
                 }
-                result.push(line);
+                res.push(line);
             }
         }
         while (stack.length > 0) {
-            result.push('</blockquote>');
+            res.push("</blockquote>");
             stack.pop();
         }
-        return result.join('\n');
+        return res.join('\n');
     }
 
     _parseLists(t) {
         const lines = t.split('\n');
-        let result = [];
+        let res = [];
         let stack = [];
-        let lastIndent = -1;
         
-        for (let line of lines) {
-            const match = line.match(/^(\s*)([-*+]|\d+\.)\s+(.*)$/);
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            let match = line.match(/^(\s*)([-*+]|\d+\.)\s+(.*)$/);
+            
             if (match) {
                 let indent = match[1].length;
                 let type = match[2].match(/\d/) ? 'ol' : 'ul';
                 let content = match[3];
+                let checked = null;
                 
-                if (indent > lastIndent) {
-                    result.push(`<${type}>`);
-                    stack.push(type);
-                } else if (indent < lastIndent) {
-                    while (stack.length > 0 && lastIndent > indent) {
-                        result.push(`</${stack.pop()}>`);
-                        lastIndent -= 2; 
+                if (type === 'ul') {
+                    let taskMatch = content.match(/^\[([ xX])\]\s+(.*)$/);
+                    if (taskMatch) {
+                        checked = taskMatch[1].toLowerCase() === 'x';
+                        content = taskMatch[2];
+                    }
+                }
+
+                if (stack.length === 0) {
+                    res.push(`<${type}>`);
+                    stack.push({type, indent});
+                } else {
+                    let last = stack[stack.length - 1];
+                    if (indent > last.indent) {
+                        res.push(`<${type}>`);
+                        stack.push({type, indent});
+                    } else if (indent < last.indent) {
+                        while(stack.length > 0 && stack[stack.length - 1].indent > indent) {
+                            let popped = stack.pop();
+                            res.push(`</${popped.type}>`);
+                        }
+                        if (stack.length === 0 || stack[stack.length - 1].indent < indent) {
+                             res.push(`<${type}>`);
+                             stack.push({type, indent});
+                        }
                     }
                 }
                 
-                result.push(`<li>${content}</li>`);
-                lastIndent = indent;
+                let liClass = checked !== null ? ' class="task-list-item"' : '';
+                let checkbox = checked !== null ? `<input type="checkbox" ${checked ? 'checked' : ''} disabled>` : '';
+                res.push(`<li${liClass}>${checkbox}${content}</li>`);
             } else {
-                while (stack.length > 0) {
-                    result.push(`</${stack.pop()}>`);
+                while(stack.length > 0) {
+                    let popped = stack.pop();
+                    res.push(`</${popped.type}>`);
                 }
-                lastIndent = -1;
-                result.push(line);
+                res.push(line);
             }
         }
-        while (stack.length > 0) {
-            result.push(`</${stack.pop()}>`);
+        while(stack.length > 0) {
+            let popped = stack.pop();
+            res.push(`</${popped.type}>`);
         }
-        return result.join('\n');
+        return res.join('\n');
     }
 
     _parseInline(t) {
-        t = t.replace(/`([^`\n]+)`/g, `<code class="inline-code" style="background:rgba(255,255,255,0.15);padding:2px 5px;border-radius:4px;font-size:0.9em;">$1</code>`);
+        t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, url) => {
+            const safeUrl = this._sanitizeUrl(url);
+            return `<img src="${safeUrl}" alt="${alt}" style="max-width:100%;border-radius:8px;margin:8px 0;">`;
+        });
+        t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, url) => {
+            const safeUrl = this._sanitizeUrl(url);
+            return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+        });
         t = t.replace(/\*\*\*([^*\n]+)\*\*\*/g, "<strong><em>$1</em></strong>");
         t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
         t = t.replace(/__([^_\n]+)__/g, "<strong>$1</strong>");
         t = t.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
         t = t.replace(/_([^_\n]+)_/g, "<em>$1</em>");
         t = t.replace(/~~([^~\n]+)~~/g, "<del>$1</del>");
-        t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:8px;margin:8px 0;">');
-        t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
         return t;
     }
 
@@ -419,7 +458,10 @@ class MarkdownParser {
         return t.split(/\n\n+/).map(block => {
             block = block.trim();
             if (!block) return "";
-            if (block.match(/^<(h[1-6]|ul|ol|li|blockquote|hr|div|p|pre|code|table)/) || block.match(/^\[\[CODEBLOCK\d+\]\]$/)) {
+            if (block.match(/^<(h[1-6]|ul|ol|li|blockquote|hr|div|p|pre|code|table)/)) {
+                return block;
+            }
+            if (block.match(/^%%(CODE|MATH|INLICODE)\d+%%$/)) {
                 return block;
             }
             return `<p>${block.replace(/\n/g, "<br>")}</p>`;
