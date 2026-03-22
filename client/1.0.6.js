@@ -20,7 +20,7 @@
         width: options.width ?? 1024,
         height: options.height ?? 1024,
         retry: options.retry ?? true,
-        retryAttempts: options.retryAttempts ?? 2, 
+        retryAttempts: options.retryAttempts ?? 2,
         retryDelay: options.retryDelay ?? 1000,
         debug: options.debug ?? false
       };
@@ -38,6 +38,7 @@
 
     clearHistory() {
       this.history = [];
+      this._log("History cleared");
     }
 
     _log(...args) {
@@ -56,14 +57,17 @@
     async _fetchModelList() {
       if (this._modelCache) return this._modelCache;
 
+      this._log("Fetching model list...");
       try {
         const res = await fetch('https://gen.pollinations.ai/v1/models');
         if (!res.ok) throw new Error();
 
         const data = await res.json();
         this._modelCache = data.data || [];
+        this._log(`Model list cached (${this._modelCache.length} models)`);
         return this._modelCache;
-      } catch {
+      } catch (e) {
+        this._log("Failed to fetch model list, using fallback.");
         return [];
       }
     }
@@ -73,10 +77,14 @@
       const found = models.find(m => m.id === modelId);
 
       if (found?.output_modalities) {
-        return found.output_modalities.includes('image');
+        const isImage = found.output_modalities.includes('image');
+        this._log(`Model ${modelId} detected via API as ${isImage ? 'image' : 'text'}`);
+        return isImage;
       }
 
-      return FALLBACK_IMAGE_MODELS.has(modelId.toLowerCase());
+      const isFallback = FALLBACK_IMAGE_MODELS.has(modelId.toLowerCase());
+      this._log(`Model ${modelId} detected via Fallback as ${isFallback ? 'image' : 'text'}`);
+      return isFallback;
     }
 
     async generate(prompt, options = {}) {
@@ -85,6 +93,7 @@
       const cfg = { ...this._config, ...options };
       this._validate(cfg);
 
+      this._log(`Generating with model: ${cfg.model}`);
       const isImage = await this._isImageModel(cfg.model);
 
       return isImage
@@ -109,6 +118,8 @@
         payload.seed = cfg.seed;
       }
 
+      this._log("Sending text request...", payload);
+
       return this._retry(cfg, async () => {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), cfg.timeout);
@@ -131,6 +142,7 @@
         }
 
         if (cfg.stream) {
+          this._log("Handling stream...");
           return this._handleStream(res, prompt, cfg);
         }
 
@@ -139,6 +151,7 @@
 
         if (!text) throw new Error("Invalid response");
 
+        this._log("Text response received");
         this._addToHistory(prompt, text, cfg.historyLimit);
         return text;
       });
@@ -182,6 +195,7 @@
         }
       }
 
+      this._log("Stream complete");
       this._addToHistory(prompt, full, cfg.historyLimit);
       return full;
     }
@@ -197,6 +211,8 @@
       if (cfg.seed !== null && cfg.seed !== undefined) {
         payload.seed = cfg.seed;
       }
+
+      this._log("Sending image request...", { prompt, size: payload.size });
 
       return this._retry(cfg, async () => {
         const ctrl = new AbortController();
@@ -223,10 +239,12 @@
         const img = data.data?.[0];
 
         if (img?.b64_json) {
+          this._log("Image received (base64)");
           return this._b64ToBlob(img.b64_json);
         }
 
         if (img?.url) {
+          this._log("Image received (URL), fetching blob...");
           const r = await fetch(img.url);
           return r.blob();
         }
@@ -267,6 +285,8 @@
           return await fn();
         } catch (e) {
           lastErr = e;
+          
+          this._log(`Attempt ${i + 1}/${attempts} failed:`, e.message);
 
           if (e.name === 'AbortError') {
             throw new Error("AI Request Timeout");
