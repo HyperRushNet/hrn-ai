@@ -1,61 +1,61 @@
 {
   "groups": [
     {
-      "title": "Introductie",
+      "title": "Introduction",
       "items": [
         {
           "id": "home",
-          "label": "Over AIClient",
+          "label": "About AIClient",
           "icon": "home",
           "badge": "v1.0",
-          "content": "# AIClient\n\nDe `AIClient` is een ultra-snelle, 'zero-dependency' JavaScript klasse om te communiceren met de **Pollinations AI API**. Het ondersteunt tekstgeneratie, streaming, afbeeldingsgeneratie en heeft een ingebouwd geheugen (history) voor gesprekken.\n\n### Kenmerken\n\n*   **Automatische Model Detectie**: Herkent automatisch of een model tekst of afbeeldingen genereert.\n*   **Streaming Support**: Real-time tekstweergave met `onStream` callbacks.\n*   **History Management**: Ingebouwd geheugen dat eenvoudig uit te schakelen is.\n*   **Robuuste Images**: Genereert afbeeldingen direct als `Blob` objecten.\n*   **Chaining**: Configureer de client met vloeiende method chains.\n\n```html\n<!-- Voeg toe aan je HTML -->\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.4-test24.js\"></script>\n```"
+          "content": "# AIClient\n\nThe `AIClient` is an ultra-fast, 'zero-dependency' JavaScript class to communicate with the **Pollinations AI API**. It supports text generation, streaming, image generation, and has built-in memory (history) for conversations.\n\n### Features\n\n*   **Auto Model Detection**: Automatically detects if a model generates text or images.\n*   **Streaming Support**: Real-time text display with `onStream` callbacks.\n*   **History Management**: Built-in memory that is easily disabled.\n*   **Robust Images**: Generates images directly as `Blob` objects.\n*   **Consistent Config**: Pass options directly to `generate()` or set globally in the constructor.\n\n```html\n<!-- Add to your HTML -->\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.4-test24.js\"></script>\n```"
         },
         {
           "id": "quickstart",
           "label": "Quick Start",
           "icon": "play-circle",
-          "badge": "Start hier",
-          "content": "# Quick Start\n\nBegin in minder dan 5 regels code.\n\n### 1. Initialiseer\n\nMaak een nieuwe instantie aan met je API sleutel.\n\n```javascript\nconst ai = new AIClient({ \n  apiKey: \"JOUW_API_KEY\",\n  model: \"openai\" \n});\n```\n\n### 2. Genereer Tekst\n\nStel een vraag en wacht op het antwoord.\n\n```javascript\nconst antwoord = await ai.generate(\"Wat is de hoofdstad van Nederland?\");\nconsole.log(antwoord);\n```\n\n### 3. Genereer een Afbeelding\n\nVerander het model naar een image model (zoals `flux`) en de client doet de rest.\n\n```javascript\nconst aiImg = new AIClient({ \n  apiKey: \"JOUW_API_KEY\", \n  model: \"flux\" \n});\n\nconst blob = await aiImg.generate(\"Een futuristische stad\");\n// Gebruik de blob in een <img> tag\n```"
+          "badge": "Start here",
+          "content": "# Quick Start\n\nStart in less than 5 lines of code.\n\n### 1. Initialize\n\nCreate a new instance with your API key.\n\n```javascript\nconst ai = new AIClient({ \n  apiKey: \"YOUR_API_KEY\",\n  model: \"openai\" \n});\n```\n\n### 2. Generate Text\n\nAsk a question and wait for the answer.\n\n```javascript\nconst answer = await ai.generate(\"What is the capital of the Netherlands?\");\nconsole.log(answer);\n```\n\n### 3. Generate an Image\n\nChange the model to an image model (like `flux`) and the client does the rest.\n\n```javascript\nconst blob = await ai.generate(\"A futuristic city\", {\n  model: \"flux\"\n});\n// Use the blob in an <img> tag\n```"
         }
       ]
     },
     {
-      "title": "Configuratie",
+      "title": "Configuration",
       "items": [
         {
           "id": "options",
           "label": "Constructor Options",
           "icon": "settings",
-          "content": "# Constructor Options\n\nBij het aanmaken van een `new AIClient()` kun je een object met opties meegeven.\n\n### Overzicht\n\n| Optie | Type | Standaardwaarde | Beschrijving |\n|---|---|---|---|\n| `apiKey` | `string` | `null` | **Verplicht**. Je Pollinations API sleutel. |\n| `model` | `string` | `\"openai\"` | Het te gebruiken model ID (bijv. `openai`, `flux`, `gemini-fast`). |\n| `systemPrompt` | `string` | `\"You are a helpful...\"` | De systeem-instructie voor tekst modellen. |\n| `historyLimit` | `number` | `10` | Aantal gesprekken dat onthouden wordt. Zet op `0` om uit te schakelen. |\n| `stream` | `boolean` | `false` | Standaard streaming aan/uit voor alle requests. |\n| `timeout` | `number` | `60000` | Time-out in milliseconden. |\n| `seed` | `number` | `null` | Seed voor reproduceerbare resultaten. |\n| `width` / `height` | `number` | `1024` | Standaard afmetingen voor afbeeldingen. |\n\n### Voorbeeld\n\n```javascript\nconst ai = new AIClient({\n  apiKey: \"sk_...\",\n  model: \"gemini-fast\",\n  historyLimit: 5,\n  systemPrompt: \"Je bent een behulpzame Nederlandse assistent.\"\n});\n```"
+          "content": "# Constructor Options\n\nWhen creating a `new AIClient()`, you can pass an options object to set global defaults.\n\n### Overview\n\n| Option | Type | Default | Description |\n|---|---|---|---|\n| `apiKey` | `string` | `null` | **Required**. Your Pollinations API key. |\n| `model` | `string` | `\"openai\"` | The model ID to use (e.g., `openai`, `flux`, `gemini-fast`). |\n| `systemPrompt` | `string` | `\"You are a helpful...\"` | The system instruction for text models. |\n| `historyLimit` | `number` | `10` | Number of conversations to remember. Set to `0` to disable. |\n| `stream` | `boolean` | `false` | Default streaming on/off for all requests. |\n| `timeout` | `number` | `60000` | Timeout in milliseconds. |\n| `seed` | `number` | `null` | Seed for reproducible results. |\n| `width` / `height` | `number` | `1024` | Default dimensions for images. |\n\n### Example\n\n```javascript\nconst ai = new AIClient({\n  apiKey: \"sk_...\",\n  model: \"gemini-fast\",\n  historyLimit: 5,\n  systemPrompt: \"You are a helpful assistant.\"\n});\n```"
         },
         {
           "id": "chaining",
           "label": "Method Chaining",
           "icon": "link",
-          "content": "# Method Chaining\n\nJe kunt configuraties ook aanpassen via chaining methods. Dit is handig als je één instantie hergebruikt met verschillende instellingen.\n\n### Beschikbare Methods\n\n*   `.key(string)` - Stel API key in.\n*   `.model(string)` - Wijzig het model.\n*   `.prompt(string)` - Wijzig de system prompt.\n*   `.timeout(number)` - Wijzig de time-out.\n*   `.seed(number)` - Stel een seed in.\n*   `.dimensions(w, h)` - Stel afbeeldingsgrootte in.\n\n### Voorbeeld\n\n```javascript\nconst ai = new AIClient();\n\n// Configureer voor tekst\ntextResponse = await ai\n  .key(\"JOUW_KEY\")\n  .model(\"openai-fast\")\n  .generate(\"Vertel een grap\");\n\n// Herconfigureer voor afbeelding op dezelfde instantie\nimgBlob = await ai\n  .model(\"flux\")\n  .dimensions(512, 512)\n  .generate(\"Een mooie auto\");\n```"
+          "content": "# Method Chaining\n\nYou can modify configuration using chaining methods. This is useful for changing settings on a single instance before calling generate.\n\n### Available Methods\n\n*   `.key(string)` - Set API key.\n*   `.model(string)` - Change the model.\n*   `.prompt(string)` - Change the system prompt.\n*   `.timeout(number)` - Change the timeout.\n*   `.seed(number)` - Set a seed.\n*   `.dimensions(w, h)` - Set image dimensions.\n\n### Example\n\n```javascript\nconst ai = new AIClient();\n\n// Configure for text\ntextResponse = await ai\n  .key(\"YOUR_KEY\")\n  .model(\"openai-fast\")\n  .generate(\"Tell me a joke\");\n\n// Reconfigure for image on the same instance\nimgBlob = await ai\n  .model(\"flux\")\n  .dimensions(512, 512)\n  .generate(\"A beautiful car\");\n```"
         }
       ]
     },
     {
-      "title": "Functionaliteit",
+      "title": "Functionality",
       "items": [
         {
           "id": "generate-text",
-          "label": "Tekst Generatie",
+          "label": "Text Generation",
           "icon": "message-square",
-          "content": "# Tekst Generatie\n\nGebruik de `generate` methode voor tekst. De client beheert automatisch de geschiedenis (`history`).\n\n### Basis Request\n\n```javascript\nconst ai = new AIClient({ apiKey: \"...\", model: \"openai\" });\nconst text = await ai.generate(\"Wat is AI?\");\nconsole.log(text);\n```\n\n### Streaming (Live tekst)\n\nOntvang het antwoord woord voor woord. Ideaal voor chat-interfaces.\n\n```javascript\nawait ai.generate(\"Schrijf een kort verhaal\", {\n  stream: true,\n  onStream: (chunk) => {\n    document.body.innerText += chunk; // Toon live tekst\n  }\n});\n```\n\n### Extra Opties per Request\n\nJe kunt opties ook per request meegeven, deze overschrijven de constructor instellingen.\n\n```javascript\nawait ai.generate(\"Hoi\", { \n  model: \"gemini-fast\", // gebruikt dit model alleen nu\n  seed: 12345          // vaste seed voor dit request\n});\n```"
+          "content": "# Text Generation\n\nUse the `generate` method for text. The client automatically manages history.\n\n### Basic Request\n\n```javascript\nconst ai = new AIClient({ apiKey: \"...\", model: \"openai\" });\nconst text = await ai.generate(\"What is AI?\");\nconsole.log(text);\n```\n\n### Streaming (Live text)\n\nReceive the answer word by word. Ideal for chat interfaces.\n\n```javascript\nawait ai.generate(\"Write a short story\", {\n  stream: true,\n  onStream: (chunk) => {\n    document.body.innerText += chunk; // Display live text\n  }\n});\n```\n\n### Extra Options per Request\n\nYou can pass options directly to `generate()`. These override constructor settings for this specific request.\n\n```javascript\nawait ai.generate(\"Hi\", { \n  model: \"gemini-fast\", // Uses this model only for now\n  seed: 12345          // Fixed seed for this request\n});\n```"
         },
         {
           "id": "generate-image",
-          "label": "Afbeelding Generatie",
+          "label": "Image Generation",
           "icon": "image",
-          "content": "# Afbeelding Generatie\n\nDe client detecteert automatisch of je een afbeeldingsmodel (zoals `flux`, `kontext`, `zimage`) hebt geselecteerd en schakelt over naar de image API.\n\n### Resultaat: Blob\n\nDe `generate` functie retourneert een `Blob` object. Dit is veilig en werkt direct in de browser zonder CORS problemen.\n\n### Voorbeeld\n\n```javascript\nconst ai = new AIClient({ \n  apiKey: \"...\", \n  model: \"flux\" // Dit activeert image mode\n});\n\nconst blob = await ai.generate(\"Een kat in een ruimtepak\");\n\n// Maak een URL en toon het\nconst img = document.createElement('img');\nimg.src = URL.createObjectURL(blob);\ndocument.body.appendChild(img);\n```\n\n### Dimensies aanpassen\n\nGebruik de constructor opties of chaining om de grootte te bepalen.\n\n```javascript\nconst blob = await ai.generate(\"Landschap\", {\n  width: 1920,\n  height: 1080\n});\n```"
+          "content": "# Image Generation\n\nThe client automatically detects if you selected an image model (like `flux`, `kontext`, `zimage`) and switches to the Image API.\n\n### Result: Blob\n\nThe `generate` function returns a `Blob` object. This is safe and works directly in the browser without CORS issues.\n\n### Example\n\n```javascript\nconst blob = await ai.generate(\"A cat in a spacesuit\", {\n  model: \"flux\" // This activates image mode\n});\n\n// Create a URL and display it\nconst img = document.createElement('img');\nimg.src = URL.createObjectURL(blob);\ndocument.body.appendChild(img);\n```\n\n### Adjusting Dimensions\n\nPass `width` and `height` directly in the options to determine the size.\n\n```javascript\nconst blob = await ai.generate(\"Landscape\", {\n  model: \"flux\",\n  width: 1920,\n  height: 1080\n});\n```"
         },
         {
           "id": "history",
-          "label": "Geschiedenis & Geheugen",
+          "label": "History & Memory",
           "icon": "clock",
-          "content": "# Geschiedenis Beheer\n\nStandaard onthoudt de `AIClient` de laatste 10 gesprekken (history limit) zodat het model context begrijpt.\n\n### Gesprek met Context\n\n```javascript\nawait ai.generate(\"Ik heet Jan.\");\nconst r2 = await ai.generate(\"Hoe heet ik?\");\n// Output: \"Je heet Jan.\"\n```\n\n### Geschiedenis Wissen\n\nBegin een nieuw gesprek met `clearHistory()`.\n\n```javascript\nawait ai.generate(\"Ik heet Jan.\");\nai.clearHistory(); // Wissen!\nconst r2 = await ai.generate(\"Hoe heet ik?\");\n// Output: \"Dat weet ik niet.\"\n```\n\n### Geschiedenis Uitschakelen\n\nStel `historyLimit` in op `0` om geen enkele geschiedenis bij te houden. Dit bespaart tokens en kosten.\n\n```javascript\nconst ai = new AIClient({ \n  apiKey: \"...\", \n  historyLimit: 0 // Geheugen uit\n});\n```"
+          "content": "# History Management\n\nBy default, `AIClient` remembers the last 10 conversations (history limit) so the model understands context.\n\n### Conversation with Context\n\n```javascript\nawait ai.generate(\"My name is John.\");\nconst r2 = await ai.generate(\"What is my name?\");\n// Output: \"Your name is John.\"\n```\n\n### Clear History\n\nStart a new conversation with `clearHistory()`.\n\n```javascript\nawait ai.generate(\"My name is John.\");\nai.clearHistory(); // Cleared!\nconst r2 = await ai.generate(\"What is my name?\");\n// Output: \"I do not know.\"\n```\n\n### Disable History\n\nSet `historyLimit` to `0` to stop keeping history. This saves tokens and costs.\n\n```javascript\nconst ai = new AIClient({ \n  apiKey: \"...\", \n  historyLimit: 0 // Memory off\n});\n```"
         }
       ]
     },
@@ -64,15 +64,15 @@
       "items": [
         {
           "id": "auto-detect",
-          "label": "Auto Model Detectie",
+          "label": "Auto Model Detection",
           "icon": "cpu",
-          "content": "# Model Detectie Logica\n\nDe client haalt bij het opstarten de lijst met beschikbare modellen op van `https://gen.pollinations.ai/v1/models`.\n\n### Hoe het werkt\n\n1. De client bekijkt de `output_modalities` van het gekozen model ID.\n2. Als de output modality `\"image\"` bevat, wordt de **Image API** gebruikt.\n3. Anders wordt de **Chat Completions API** gebruikt.\n\n### Fallback\n\nAls de modellijst niet opgehaald kan worden, gebruikt de client een interne lijst met bekende image-modellen (`flux`, `zimage`, `kontext`, `gptimage`, `seedream5`).\n\nDit zorgt ervoor dat je je geen zorgen hoeft te maken over endpoints; je kiest gewoon een model en de client doet de rest.\n\n```javascript\n// Dit gaat automatisch naar /v1/images/generations\nawait ai.model(\"flux\").generate(\"...\"); \n\n// Dit gaat automatisch naar /v1/chat/completions\nawait ai.model(\"openai\").generate(\"...\"); \n```"
+          "content": "# Model Detection Logic\n\nThe client fetches the list of available models from `https://gen.pollinations.ai/v1/models` upon first use.\n\n### How it works\n\n1. The client checks the `output_modalities` of the selected model ID.\n2. If the output modality contains `\"image\"`, the **Image API** is used.\n3. Otherwise, the **Chat Completions API** is used.\n\n### Fallback\n\nIf the model list cannot be fetched, the client uses an internal list of known image models (`flux`, `zimage`, `kontext`, `gptimage`, `seedream5`).\n\nThis ensures you don't have to worry about endpoints; just choose a model and the client handles the rest.\n\n```javascript\n// This automatically goes to /v1/images/generations\nawait ai.generate(\"...\", { model: \"flux\" }); \n\n// This automatically goes to /v1/chat/completions\nawait ai.generate(\"...\", { model: \"openai\" }); \n```"
         },
         {
           "id": "error-handling",
-          "label": "Foutafhandeling",
+          "label": "Error Handling",
           "icon": "alert-triangle",
-          "content": "# Foutafhandeling & Retry\n\nDe client heeft een ingebouwd retry-mechanisme voor netwerkfouten.\n\n### Retry Configuratie\n\n*   `retry`: Aantal pogingen (standaard 2).\n*   `retryDelay`: Wachttijd tussen pogingen in ms (standaard 1000).\n\n### Try/Catch Voorbeeld\n\n```javascript\ntry {\n  const res = await ai.generate(\"Test\");\n} catch (error) {\n  console.error(\"Generatie mislukt:\", error.message);\n}\n```\n\n### Veelvoorkomende Fouten\n\n*   `Key required`: Je bent vergeten de `apiKey` in te stellen.\n*   `Text Error 401`: Ongeldige API key.\n*   `Image Error 400`: Ongeldige parameters (bijv. verkeerde dimensies).\n*   `AI Request Timeout`: Het request duurde langer dan `timeout` ms."
+          "content": "# Error Handling & Retry\n\nThe client has a built-in retry mechanism for network errors.\n\n### Retry Configuration\n\n*   `retry`: Number of attempts (default: true / 2).\n*   `retryDelay`: Wait time between attempts in ms (default: 1000).\n\n### Try/Catch Example\n\n```javascript\ntry {\n  const res = await ai.generate(\"Test\");\n} catch (error) {\n  console.error(\"Generation failed:\", error.message);\n}\n```\n\n### Common Errors\n\n*   `Key required`: You forgot to set the `apiKey`.\n*   `Text Error 401`: Invalid API key.\n*   `Image Error 400`: Invalid parameters (e.g., wrong dimensions).\n*   `AI Request Timeout`: The request took longer than `timeout` ms."
         }
       ]
     }
