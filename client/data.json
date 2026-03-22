@@ -8,59 +8,52 @@
           "label": "Include",
           "badge": "Step 1",
           "icon": "download",
-          "content": "# Including the AIClient Library\n\nTo use AIClient in the browser, include this script in your HTML:\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n**What Happens:**\n- AIClient becomes globally available.\n- No module bundlers are required.\n\n**Step Visualization:**\n![Include Script](https://via.placeholder.com/400x200?text=Include+Script)\n\nThis is the first step to get started."
+          "content": "# Step 1: Include the AIClient Library\n\n**Essence:**\nInclude the AIClient script in your HTML to make the library available globally.\n\n**Code:**\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n"
         },
         {
           "id": "apikey",
           "label": "API Key",
           "badge": "Step 2",
           "icon": "key",
-          "content": "# Setting Your API Key\n\nYou must authenticate with your key:\n\n```javascript\nclient.setApiKey('YOUR_API_KEY');\n```\n\n**Step Visualization:**\n![API Key](https://via.placeholder.com/400x200?text=Set+API+Key)"
-        },
-        {
-          "id": "model",
-          "label": "Model",
-          "badge": "Step 3",
-          "icon": "cpu",
-          "content": "# Selecting a Model\n\nChoose a text or image model for generation:\n\n```javascript\nclient.setModel('flux'); // default is 'flux'\n```\n\nCheck official pages for supported models:\n- [Pollinations Models](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\n**Step Visualization:**\n![Model Selection](https://via.placeholder.com/400x200?text=Select+Model)"
-        },
-        {
-          "id": "type",
-          "label": "Type",
-          "badge": "Step 4",
-          "icon": "layers",
-          "content": "# Choosing Type\n\nDecide if you want **text** or **image** output:\n\n```javascript\nclient.setType('text'); // 'text' or 'image'\n```\n\n**Step Visualization:**\n![Select Type](https://via.placeholder.com/400x200?text=Select+Type)"
+          "content": "# Step 2: Set Your API Key\n\n**Essence:**\nAuthenticate your client using your unique API key.\n\n**Code:**\n```javascript\nclient.setApiKey('YOUR_API_KEY');\n```\n"
         }
       ]
     },
     {
-      "title": "Usage",
+      "title": "Configuration",
+      "items": [
+        {
+          "id": "type",
+          "label": "Type",
+          "badge": "Step 3",
+          "icon": "layers",
+          "content": "# Step 3: Choose Type\n\n**Essence:**\nDecide whether you want text or image output.\n\n**Text Example:**\n```javascript\nclient.setType('text');\n```\n\n**Image Example:**\n```javascript\nclient.setType('image');\n```\n"
+        },
+        {
+          "id": "model",
+          "label": "Model",
+          "badge": "Step 4",
+          "icon": "cpu",
+          "content": "# Step 4: Set Model\n\n**Essence:**\nChoose the model best suited for your task. You can check model options and health:\n- [Models](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\n**Code Example:**\n```javascript\nclient.setModel('flux'); // default is 'flux'\n```\n"
+        }
+      ]
+    },
+    {
+      "title": "Generate",
       "items": [
         {
           "id": "generate",
           "label": "Generate",
           "badge": "Step 5",
           "icon": "zap",
-          "content": "# Generating Content\n\nCall `generate` to get output from the AI:\n\n```javascript\nconst response = await client.generate('Write a short story about a robot.');\nconsole.log(response);\n```\n\nFor image generation:\n\n```javascript\nclient.setType('image');\nconst imageBlob = await client.generate('A futuristic city at sunset');\nconst url = URL.createObjectURL(imageBlob);\ndocument.querySelector('#output-image').src = url;\n```\n\n**Step Visualization:**\n![Generate Content](https://via.placeholder.com/400x200?text=Generate+Content)"
+          "content": "# Step 5: Generate Content\n\n**Essence:**\nSend a prompt to get the output from the AI.\n\n**Text Example:**\n```javascript\nclient.setType('text');\nconst text = await client.generate('Write a short story about a robot.');\nconsole.log(text);\n```\n\n**Image Example:**\n```javascript\nclient.setType('image');\nconst imageBlob = await client.generate('A futuristic city at sunset');\nconst url = URL.createObjectURL(imageBlob);\ndocument.querySelector('#output-image').src = url;\n```\n"
         },
         {
           "id": "options",
           "label": "Options",
           "badge": "Step 6",
           "icon": "settings",
-          "content": "# Optional Configurations\n\nYou can customize the client further:\n\n```javascript\nclient.setDimensions(1024,1024); // Image size\nclient.setSystemPrompt('You are a helpful assistant.');\nclient.setTimeout(30000);\nclient.setRetry(true,2,1000);\n```\n\n**Step Visualization:**\n![Options](https://via.placeholder.com/400x200?text=Optional+Config)"
-        }
-      ]
-    },
-    {
-      "title": "Reference",
-      "items": [
-        {
-          "id": "models",
-          "label": "Models",
-          "badge": "Info",
-          "icon": "layers",
-          "content": "# Available Models\n\nCheck the official list of supported models:\n- [Pollinations Models](https://enter.pollinations.ai/#:~:text=Models)\n- [Model Health](https://model-monitor.pollinations.ai/)\n\nEach model has its own limits and specialties.\n\n**Step Visualization:**\n![Models](https://via.placeholder.com/400x200?text=Models+Reference)"
+          "content": "# Step 6: Optional Functions\n\n**Essence:**\nCustomize your AIClient with additional options for both text and image generation.\n\n**Code Examples:**\n```javascript\n// Image size\nclient.setDimensions(1024, 1024);\n\n// System prompt for text\nclient.setSystemPrompt('You are a helpful assistant.');\n\n// Timeout and retry settings\nclient.setTimeout(30000);\nclient.setRetry(true, 2, 1000);\n```\n"
         }
       ]
     }
