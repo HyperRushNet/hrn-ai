@@ -8,7 +8,7 @@
           "label": "Config",
           "badge": "AI Configuration",
           "icon": "code",
-          "content": "# AI Instance - Configuration\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'openai',\n  stream: true,\n  isImage: false,\n  seed: 12345,\n  chatId: 't1',\n  systemPrompt('You are...')\n});\n```\n- Creates a new text AI client instance.\n- `apiKey` – your API key.\n- `model` – AI model to use.\n- `stream` – enable streaming responses.\n- `isImage` – false, text only.\n- `seed` – reproducible outputs.\n- `chatId` – unique session ID.\n- `systemPrompt()` – instructions for the AI.\n- History can be set manually via `client.setHistory([...])` or cleared with `client.clearHistory()`."
+          "content": "# AI Instance - Configuration\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'openai',\n  stream: true,\n  isImage: false,\n  seed: 12345,\n  chatId: 't1',\n  systemPrompt('You are...')\n});\n```\n- Creates a new text AI client instance.\n- `apiKey` – your API key.\n- `model` – AI model to use.\n- `stream` – enable streaming responses.\n- `isImage` – false, text only.\n- `seed` – reproducible outputs.\n- `chatId` – unique session ID.\n- `systemPrompt()` – instructions for the AI.\n- History can be manually set via `client.setHistory([...])`."
         },
         {
           "id": "text-stream",
@@ -41,7 +41,7 @@
           "label": "Init",
           "badge": "Image Configuration",
           "icon": "info",
-          "content": "# Init Image Client\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'i1'\n});\n```\n- Creates a new image AI client.\n- `apiKey` – your API key.\n- `model` – image model alias.\n- `isImage` – true.\n- `width` & `height` – output size.\n- `seed` – reproducible images.\n- `chatId` – unique session ID.\n- History can be set manually via `client.setHistory([...])` for text contexts."
+          "content": "# Init Image Client\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'i1'\n});\n```\n- Creates a new image AI client.\n- `apiKey` – your API key.\n- `model` – image model alias.\n- `isImage` – true.\n- `width` & `height` – output size.\n- `seed` – reproducible images.\n- `chatId` – unique session ID.\n- History can be manually set for text context via `client.setHistory([...])`."
         },
         {
           "id": "img-config",
