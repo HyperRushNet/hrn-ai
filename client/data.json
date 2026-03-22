@@ -4,39 +4,11 @@
       "title": "Text",
       "items": [
         {
-          "id": "text-init",
-          "label": "Init",
+          "id": "text-all",
+          "label": "Text – All-in-One",
           "badge": "1",
-          "icon": "info",
-          "content": "# Init Text Client\n\n**Page:** Setup client for text generation.\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  stream: true,\n  isImage: false,\n  seed: 12345,\n  chatId: 't1'\n});\n```\n- `stream: true` for live updates\n- `seed` for repeatable output"
-        },
-        {
-          "id": "text-config",
-          "label": "Config",
-          "badge": "2",
-          "icon": "settings",
-          "content": "# Config Text Client\n\n**Page:** Optional settings.\n\n```javascript\nclient.config.systemPrompt = 'Helpful assistant';\nclient.clearHistory();\n```\n- `systemPrompt` sets AI persona\n- `clearHistory()` resets past conversation"
-        },
-        {
-          "id": "text-stream",
-          "label": "Stream",
-          "badge": "3",
-          "icon": "wifi",
-          "content": "# Text Streaming\n\n**Page:** Listen for live chunks.\n\n```javascript\nclient.addEventListener('message', e => {\n  const { data, stream } = e.detail;\n  if(stream) console.log('Chunk:', data);\n  else console.log('Final:', data);\n});\n```\n- Only for text\n- Auto cleanup after `[DONE]`"
-        },
-        {
-          "id": "text-gen",
-          "label": "Generate",
-          "badge": "4",
           "icon": "zap",
-          "content": "# Generate Text\n\n**Page:** Send prompt to AI.\n\n```javascript\nawait client.generate('Write a short motivational quote about AI.');\n```\n- Uses streaming if enabled\n- Seed ensures repeatable output"
-        },
-        {
-          "id": "text-clean",
-          "label": "Cleanup",
-          "badge": "5",
-          "icon": "trash",
-          "content": "# Cleanup Text Client\n\n**Page:** Ensure proper cleanup.\n\n- Auto cleanup removes `chatId` after generate/stream\n- Manual: `client.destroy();`"
+          "content": "# Text Generation – All-in-One\n\n```javascript\n// Init client\nconst client = new AIClient({\n  apiKey:'YOUR_API_KEY',\n  model:'flux',\n  stream:true,     // live chunks\n  isImage:false,   // text mode\n  seed:12345,      // repeatable output\n  chatId:'t1',\n  timeout:60000,\n  retry:true,\n  retryAttempts:2,\n  retryDelay:1000\n});\n\n// Optional configs\nclient.config.systemPrompt='Helpful assistant';\nclient.clearHistory();\n\n// Streaming events\nclient.addEventListener('message', e => {\n  const { data, stream } = e.detail;\n  if(stream) console.log('Chunk:', data);\n  else console.log('Final:', data);\n});\n\n// Generate text\nawait client.generate('Write a short motivational quote about AI.');\n\n// Cleanup\nclient.destroy();\n```\n\n**Notes:**\n- `stream:true` gives live chunks\n- `seed` makes output repeatable\n- Auto cleanup removes `chatId` after generate/stream\n- `clearHistory()` resets conversation"
         }
       ]
     },
@@ -44,32 +16,11 @@
       "title": "Image",
       "items": [
         {
-          "id": "img-init",
-          "label": "Init",
+          "id": "img-all",
+          "label": "Image – All-in-One",
           "badge": "1",
-          "icon": "info",
-          "content": "# Init Image Client\n\n**Page:** Setup client for image generation.\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'i1'\n});\n```\n- `seed` for reproducible images\n- `width` & `height` for size"
-        },
-        {
-          "id": "img-config",
-          "label": "Config",
-          "badge": "2",
-          "icon": "settings",
-          "content": "# Config Image Client\n\n**Page:** Optional settings.\n\n```javascript\nclient.setTimeout(30000);\nclient.setRetry(true,2,1000);\nclient.setSeed(12345);\n```\n- Timeout limits request\n- Retry auto-retries failed calls\n- Seed ensures consistent results"
-        },
-        {
-          "id": "img-gen",
-          "label": "Generate",
-          "badge": "3",
           "icon": "image",
-          "content": "# Generate Image\n\n**Page:** Send prompt and get image.\n\n```javascript\nconst blob = await client.generate('Futuristic city at sunset');\ndocument.querySelector('#output-image').src = URL.createObjectURL(blob);\n```\n- Auto cleanup removes `chatId`\n- Seed ensures reproducibility"
-        },
-        {
-          "id": "img-clean",
-          "label": "Cleanup",
-          "badge": "4",
-          "icon": "trash",
-          "content": "# Cleanup Image Client\n\n**Page:** Ensure proper cleanup.\n\n- Auto cleanup after generate\n- Manual: `client.destroy();`"
+          "content": "# Image Generation – All-in-One\n\n```javascript\n// Init client\nconst client = new AIClient({\n  apiKey:'YOUR_API_KEY',\n  model:'flux',\n  isImage:true,   // image mode\n  width:1024,\n  height:1024,\n  seed:12345,     // reproducible image\n  chatId:'i1',\n  timeout:60000,\n  retry:true,\n  retryAttempts:2,\n  retryDelay:1000\n});\n\n// Optional configs\nclient.setTimeout(30000);\nclient.setRetry(true,2,1000);\nclient.setSeed(12345);\n\n// Generate image\nconst blob = await client.generate('Futuristic city at sunset');\ndocument.querySelector('#output-image').src = URL.createObjectURL(blob);\n\n// Cleanup\nclient.destroy();\n```\n\n**Notes:**\n- `seed` ensures same image if repeated\n- Auto cleanup removes `chatId` after generate\n- Set `width`/`height` for image size"
         }
       ]
     }
