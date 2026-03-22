@@ -1,7 +1,7 @@
 /**
  * AIClient v1.0
  * Robust, zero-dependency JavaScript class for Pollinations AI API.
- * Supports Text, Image, Streaming, History, and Auto-Detection.
+ * Supports Text, Image, Streaming, History, Auto-Detection, and consistent Seeding.
  */
 (function(global) {
 
@@ -39,7 +39,12 @@
     model(m) { this._config.model = m; return this; }
     prompt(p) { this._config.systemPrompt = p; return this; }
     timeout(t) { this._config.timeout = t; return this; }
-    seed(s) { this._config.seed = s; return this; }
+    
+    seed(s) { 
+      this._config.seed = s; 
+      return this; 
+    }
+
     dimensions(w, h) { this._config.width = w; this._config.height = h; return this; }
 
     clearHistory() {
@@ -94,11 +99,16 @@
         { role: 'user', content: prompt }
       ];
 
+      // Seed logic: Use provided seed, or generate a random one if null/undefined
+      const seedValue = cfg.seed !== null && cfg.seed !== undefined 
+        ? cfg.seed 
+        : Math.floor(Math.random() * 1e9);
+
       const payload = {
         model: cfg.model,
         messages: messages,
         stream: cfg.stream,
-        seed: cfg.seed ?? Math.floor(Math.random() * 1e9)
+        seed: seedValue
       };
 
       const endpoint = 'https://gen.pollinations.ai/v1/chat/completions';
@@ -175,12 +185,17 @@
     }
 
     async _generateImage(prompt, cfg) {
+      // Seed logic: Use provided seed, or generate a random one if null/undefined
+      const seedValue = cfg.seed !== null && cfg.seed !== undefined 
+        ? cfg.seed 
+        : Math.floor(Math.random() * 1e9);
+
       const payload = {
         model: cfg.model,
         prompt: prompt,
         size: `${cfg.width}x${cfg.height}`,
         response_format: 'b64_json',
-        seed: cfg.seed ?? Math.floor(Math.random() * 1e9)
+        seed: seedValue
       };
 
       const endpoint = 'https://gen.pollinations.ai/v1/images/generations';
