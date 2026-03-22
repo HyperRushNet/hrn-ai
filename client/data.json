@@ -7,8 +7,8 @@
           "id": "home",
           "label": "About AIClient",
           "icon": "home",
-          "badge": "v1.0.5",
-          "content": "# AIClient\n\n`AIClient` is a robust, zero-dependency JavaScript class for interacting with the **Pollinations AI API**.\n\nIt provides a clean, unified interface for both text and image generation, with automatic routing, streaming, retries, and more.\n\n### Core Capabilities\n\n* **Unified API** – One `.generate()` method for everything\n* **Auto Model Detection** – Text vs Image handled automatically\n* **Streaming Support** – Real-time responses via callback or events\n* **Reproducibility** – Optional deterministic outputs using `seed`\n* **Retry System** – Built-in fault tolerance\n* **History Management** – Context-aware conversations\n* **Event System** – Emits streaming events\n\n### Installation\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.5.min.js\"></script>\n```"
+          "badge": "v1.0.6",
+          "content": "# AIClient\n\n`AIClient` is a robust, zero-dependency JavaScript class for interacting with the **Pollinations AI API**.\n\nIt provides a clean, unified interface for both text and image generation, with automatic routing, streaming, retries, and more.\n\n### Core Capabilities\n\n* **Unified API** – One `.generate()` method for everything\n* **Auto Model Detection** – Text vs Image handled automatically\n* **Streaming Support** – Real-time responses via callback or events\n* **Reproducibility** – Optional deterministic outputs using `seed`\n* **Retry System** – Built-in fault tolerance\n* **History Management** – Context-aware conversations\n* **Event System** – Emits streaming events\n\n### Installation\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.6.min.js\"></script>\n```"
         },
         {
           "id": "quickstart",
@@ -32,7 +32,7 @@
           "id": "chaining-methods",
           "label": "Method Chaining",
           "icon": "link",
-          "content": "# Method Chaining\n\n### Methods\n\n* `.key(string)`\n* `.model(string)`\n* `.prompt(string)`\n* `.timeout(number)`\n* `.seed(number)`\n* `.dimensions(width, height)`\n\n### Example\n\n```javascript\nawait ai\n  .key(\"KEY\")\n  .model(\"flux\")\n  .dimensions(512, 512)\n  .generate(\"A test image\");\n```\n\nOptions passed into `.generate()` override chained values."
+          "content": "# Method Chaining\n\n### Methods\n\n* `.key(string)` – Set API key\n* `.model(string)` – Set model\n* `.system(string)` – Set system prompt\n* `.timeout(number)` – Set timeout\n* `.seed(number)` – Set seed\n* `.dimensions(width, height)` – Set image dimensions\n\n### Example\n\n```javascript\nawait ai\n  .key(\"KEY\")\n  .model(\"flux\")\n  .dimensions(512, 512)\n  .generate(\"A test image\");\n```\n\nOptions passed into `.generate()` override chained values."
         }
       ]
     },
