@@ -4,108 +4,139 @@
       "title": "Welcome",
       "items": [
         {
-          "id": "starter",
-          "label": "Getting Started",
-          "icon": "smile",
-          "badge": "Intro",
-          "content": "# Starter Integration\n\nTo quickly start using AIClient in your web page, include the library via a `<script>` tag from jsDelivr and initialize it with basic configuration.\n\n### Include AIClient\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n### Initialize AIClient\n```javascript\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY') // REQUIRED\n```\n\nThis minimal setup allows you to immediately generate text or image outputs using AIClient."
+          "id": "include-script",
+          "label": "Include Script",
+          "icon": "code",
+          "badge": "Step 1",
+          "content": "# Include AIClient\n\nVoeg eerst de AIClient library toe via jsDelivr:\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```"
+        },
+        {
+          "id": "init-client",
+          "label": "Initialize Client",
+          "icon": "play",
+          "badge": "Step 2",
+          "content": "# Initialize AIClient\n\nInitialiseer de client met je API key:\n\n```javascript\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY');\n```"
         }
       ]
     },
     {
-      "title": "AI Client",
+      "title": "Text Generation",
       "items": [
         {
-          "id": "ai-client-core",
-          "label": "Core Configuration",
-          "icon": "settings",
-          "badge": "Required",
+          "id": "text-setup",
+          "label": "Setup Text Mode",
+          "icon": "file-text",
+          "badge": "Step 3",
+          "content": "# Text Mode\n\nKies dat je tekst wil genereren:\n\n```javascript\nclient.setType('text');\n```"
+        },
+        {
+          "id": "text-model",
+          "label": "Model Selection",
+          "icon": "cpu",
+          "badge": "Step 4",
+          "content": "# Model (Text)\n\nGebruik een snelle text model:\n\n```javascript\nclient.setModel('gemini-fast');\n```"
+        },
+        {
+          "id": "text-generate",
+          "label": "Generate Text",
+          "icon": "play-circle",
+          "badge": "Core",
+          "content": "# Generate Text\n\nGenereer output:\n\n```javascript\nconst result = await client.generate('Explain AIClient');\nconsole.log(result);\n```"
+        },
+        {
+          "id": "text-options",
+          "label": "Optional Settings",
+          "icon": "sliders",
+          "badge": "Optional",
           "children": [
-            {
-              "id": "api-key",
-              "label": "API Key",
-              "icon": "key",
-              "badge": "Required",
-              "content": "# API Key\n\n**Description:** Your personal API key for authentication. Must be set before any request.\n\n**Usage:**\n```javascript\nclient.setApiKey('YOUR_API_KEY');\n```\n**Type:** string\n**Required:** Yes\n**Default:** null"
-            },
-            {
-              "id": "model",
-              "label": "Model",
-              "icon": "cpu",
-              "badge": "Required",
-              "content": "# Model\n\n**Description:** AI model to use for generation. Required for all operations.\n\n**Usage:**\n```javascript\nclient.setModel('flux');\n```\n**Type:** string\n**Required:** Yes\n**Default:** none"
-            },
             {
               "id": "system-prompt",
               "label": "System Prompt",
               "icon": "edit-3",
-              "badge": "Text Only",
-              "content": "# System Prompt\n\n**Description:** Optional instruction to guide text model outputs.\n\n**Usage:**\n```javascript\nclient.setSystemPrompt('You are a helpful assistant.');\n```\n**Type:** string\n**Applicable Only For:** text"
+              "content": "```javascript\nclient.setSystemPrompt('You are a helpful assistant');\n```"
             },
             {
               "id": "timeout",
               "label": "Timeout",
               "icon": "clock",
-              "badge": "Optional",
-              "content": "# Timeout\n\n**Description:** Maximum time (ms) to wait for a response before aborting.\n\n**Usage:**\n```javascript\nclient.setTimeout(30000);\n```\n**Type:** number\n**Default:** 30000"
-            }
-          ]
-        },
-        {
-          "id": "ai-client-advanced",
-          "label": "Advanced Settings",
-          "icon": "sliders",
-          "badge": "Optional",
-          "children": [
+              "content": "```javascript\nclient.setTimeout(30000);\n```"
+            },
             {
               "id": "seed",
               "label": "Seed",
               "icon": "shuffle",
-              "badge": "Optional",
-              "content": "# Seed\n\n**Description:** Numeric seed for reproducible outputs.\n\n**Usage:**\n```javascript\nclient.setSeed(12345);\n```\n**Type:** number | null\n**Default:** null"
+              "content": "```javascript\nclient.setSeed(12345);\n```"
             },
             {
               "id": "retry",
-              "label": "Retry Logic",
+              "label": "Retry",
               "icon": "refresh-cw",
-              "badge": "Optional",
-              "content": "# Retry Logic\n\n**Description:** Automatically retry failed requests.\n\n**Usage:**\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n**Parameters:** enabled (boolean), attempts (number), delay (ms)\n**Default:** enabled=true, attempts=2, delay=1000"
-            },
-            {
-              "id": "dimensions",
-              "label": "Image Dimensions",
-              "icon": "maximize-2",
-              "badge": "Image Only",
-              "content": "# Image Dimensions\n\n**Description:** Width & height for image generation. Only applies to type='image'.\n\n**Usage:**\n```javascript\nclient.setDimensions(1024, 1024);\n```\n**Type:** number\n**Default:** 1024 x 1024"
+              "content": "```javascript\nclient.setRetry(true, 2, 1000);\n```"
             },
             {
               "id": "clear-history",
               "label": "Clear History",
               "icon": "trash-2",
-              "badge": "Optional",
-              "content": "# Clear History\n\n**Description:** Clears stored conversation history. Only applies for text.\n\n**Usage:**\n```javascript\nclient.clearHistory();\n```\n**Type:** none"
+              "content": "```javascript\nclient.clearHistory();\n```"
             }
           ]
+        }
+      ]
+    },
+    {
+      "title": "Image Generation",
+      "items": [
+        {
+          "id": "image-setup",
+          "label": "Setup Image Mode",
+          "icon": "image",
+          "badge": "Step 3",
+          "content": "# Image Mode\n\nKies dat je een image wil genereren:\n\n```javascript\nclient.setType('image');\n```"
         },
         {
-          "id": "ai-client-generate",
-          "label": "Generate Output",
+          "id": "image-model",
+          "label": "Model Selection",
+          "icon": "cpu",
+          "badge": "Step 4",
+          "content": "# Model (Image)\n\nGebruik het image model:\n\n```javascript\nclient.setModel('flux');\n```"
+        },
+        {
+          "id": "image-dimensions",
+          "label": "Dimensions",
+          "icon": "maximize-2",
+          "badge": "Required",
+          "content": "# Image Dimensions\n\n```javascript\nclient.setDimensions(1024, 1024);\n```"
+        },
+        {
+          "id": "image-generate",
+          "label": "Generate Image",
           "icon": "play-circle",
           "badge": "Core",
+          "content": "# Generate Image\n\n```javascript\nconst blob = await client.generate('A futuristic city');\nconst url = URL.createObjectURL(blob);\ndocument.querySelector('img').src = url;\n```"
+        },
+        {
+          "id": "image-options",
+          "label": "Optional Settings",
+          "icon": "sliders",
+          "badge": "Optional",
           "children": [
             {
-              "id": "generate-text",
-              "label": "Generate Text",
-              "icon": "file-text",
-              "badge": "Text",
-              "content": "# Generate Text\n\n**Description:** Generates a text response for a given prompt. Requires API key and model.\n\n**Usage:**\n```javascript\nclient.setType('text');\nconst text = await client.generate('Explain AIClient usage');\nconsole.log(text);\n```\n**Returns:** string\n**Throws:** if API key missing or prompt empty"
+              "id": "seed-img",
+              "label": "Seed",
+              "icon": "shuffle",
+              "content": "```javascript\nclient.setSeed(12345);\n```"
             },
             {
-              "id": "generate-image",
-              "label": "Generate Image",
-              "icon": "image",
-              "badge": "Image",
-              "content": "# Generate Image\n\n**Description:** Generates an image based on a prompt. Requires API key, model, and dimensions.\n\n**Usage:**\n```javascript\nclient.setType('image');\nconst blob = await client.generate('A futuristic city skyline');\nconst url = URL.createObjectURL(blob);\ndocument.querySelector('img').src = url;\n```\n**Returns:** Blob (image/png)\n**Notes:** Set width and height before generating."
+              "id": "timeout-img",
+              "label": "Timeout",
+              "icon": "clock",
+              "content": "```javascript\nclient.setTimeout(30000);\n```"
+            },
+            {
+              "id": "retry-img",
+              "label": "Retry",
+              "icon": "refresh-cw",
+              "content": "```javascript\nclient.setRetry(true, 2, 1000);\n```"
             }
           ]
         }
