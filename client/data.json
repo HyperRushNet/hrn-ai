@@ -8,28 +8,28 @@
           "label": "Config",
           "badge": "AI Configuration",
           "icon": "code",
-          "content": "## AI Instance - Configuration\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',   // sk_...\n  model: 'openai',          // AI model alias\n  stream: true,             // Enable streaming responses\n  isImage: false,           // Generate text (not images)\n  seed: 12345,              // Seed for repeatable results\n  chatId: 't1',             // Chat session ID\n  systemPrompt('You are...') // System instructions for AI\n});\n```\n\n---\n\n**Parameters:**\n- **apiKey**: Your Pollinations.ai API key (starts with \"sk_\")\n- **model**: The AI model you want to use. [Available models](https://enter.pollinations.ai/#:~:text=Models)\n- **stream**: Enable streaming output\n- **isImage**: false → text mode\n- **seed**: Ensures reproducible outputs\n- **chatId**: Unique ID for this chat session\n- **systemPrompt()**: Instructions for AI behavior"
+          "content": "## AIClient Configuration\n\nInitializes a new AI client instance for text generation.\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',   // Your Pollinations.ai key (sk_...)\n  model: 'openai',          // AI model alias\n  stream: true,             // Stream responses\n  isImage: false,           // Text mode\n  seed: 12345,              // For repeatable outputs\n  chatId: 't1',             // Unique session ID\n  systemPrompt('You are...') // System instructions for AI\n});\n```\n\n### Parameters\n- **apiKey**: String – Required API key.\n- **model**: String – Model alias. [See models](https://enter.pollinations.ai/#:~:text=Models)\n- **stream**: Boolean – Enable live chunked responses.\n- **isImage**: Boolean – `false` for text.\n- **seed**: Number – Ensures reproducible outputs.\n- **chatId**: String – Unique chat session identifier.\n- **systemPrompt()**: Function – System-level instructions for the AI."
         },
         {
           "id": "text-stream",
           "label": "Stream",
           "badge": "Text Streaming",
           "icon": "wifi",
-          "content": "## Text Streaming\n\n```javascript\nclient.addEventListener('message', e => {\n  const { data, stream } = e.detail;\n  if (stream) console.log('Chunk:', data);\n  else console.log('Final:', data);\n});\n```\n\n**Notes:**\n- Only for text generation\n- Automatically handles `[DONE]` signals and cleans up"
+          "content": "## Listening to Streamed Text\n\nUse this to handle chunked text as it arrives from the server.\n\n```javascript\nclient.addEventListener('message', e => {\n  const { data, stream } = e.detail;\n  if (stream) console.log('Chunk:', data);\n  else console.log('Final:', data);\n});\n```\n\n### Notes\n- Only works for text mode.\n- Automatic cleanup occurs when `[DONE]` is received."
         },
         {
           "id": "text-gen",
           "label": ".generate()",
           "badge": "Text Generation",
           "icon": "zap",
-          "content": "## Generate Text\n\n```javascript\nawait client.generate('Write a short motivational quote about AI.');\n```\n\n**Notes:**\n- Uses streaming if enabled\n- Seed ensures repeatable outputs"
+          "content": "## Generating Text\n\n```javascript\nawait client.generate('Write a short motivational quote about AI.');\n```\n\n### Notes\n- Streaming enabled if `stream: true`.\n- Use `seed` for consistent repeatable output."
         },
         {
           "id": "text-clean",
           "label": ".destroy()",
           "badge": "Cleanup - Text",
           "icon": "trash",
-          "content": "## Cleanup Text Client\n\n*Automatic Cleanup:* Chat sessions are automatically removed after generation to prevent memory leaks.\n\n*Manual Cleanup:* Call the following to completely reset the client:\n\n```javascript\nclient.destroy();\n```\n\n**Use Case:** Before shutting down your app or when you need a fresh client session."
+          "content": "## Cleanup Text Client\n\nFrees resources and removes the chat session.\n\n### Automatic Cleanup\n- After each generation, the client removes session data to prevent memory leaks.\n\n### Manual Cleanup\n```javascript\nclient.destroy();\n```\n- Use this before shutting down or when starting a fresh session."
         }
       ]
     },
@@ -41,28 +41,28 @@
           "label": "Init",
           "badge": "Image Configuration",
           "icon": "info",
-          "content": "## Init Image Client\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'i1'\n});\n```\n\n**Notes:**\n- `seed` ensures repeatable images\n- `width` & `height` define the output size"
+          "content": "## Init Image Client\n\nInitializes a client for image generation.\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'i1'\n});\n```\n\n### Notes\n- `seed` ensures repeatable images.\n- `width` and `height` define image size."
         },
         {
           "id": "img-config",
           "label": "Config",
           "badge": "Image Settings",
           "icon": "settings",
-          "content": "## Config Image Client\n\n```javascript\nclient.setTimeout(30000);\nclient.setRetry(true, 2, 1000);\nclient.setSeed(12345);\n```\n\n**Notes:**\n- Timeout limits request duration\n- Retry auto-retries failed calls\n- Seed ensures consistent output"
+          "content": "## Configure Image Client\n\n```javascript\nclient.setTimeout(30000);\nclient.setRetry(true, 2, 1000);\nclient.setSeed(12345);\n```\n\n### Notes\n- Timeout limits request duration.\n- Retry auto-retries failed requests.\n- Seed ensures reproducible output."
         },
         {
           "id": "img-gen",
           "label": "Generate",
           "badge": "Image Generation",
           "icon": "image",
-          "content": "## Generate Image\n\n```javascript\nconst blob = await client.generate('Futuristic city at sunset');\ndocument.querySelector('#output-image').src = URL.createObjectURL(blob);\n```\n\n**Notes:**\n- Auto cleanup removes `chatId`\n- Seed ensures reproducible outputs"
+          "content": "## Generate Image\n\n```javascript\nconst blob = await client.generate('Futuristic city at sunset');\ndocument.querySelector('#output-image').src = URL.createObjectURL(blob);\n```\n\n### Notes\n- Auto cleanup removes `chatId`.\n- Seed ensures repeatable images."
         },
         {
           "id": "img-clean",
           "label": "Cleanup",
           "badge": "Cleanup - Image",
           "icon": "trash",
-          "content": "## Cleanup Image Client\n\n*Automatic Cleanup:* Removes chat session after image generation.\n\n*Manual Cleanup:*\n```javascript\nclient.destroy();\n```\n\n**Use Case:** Ensure all resources are freed before shutting down."
+          "content": "## Cleanup Image Client\n\nFrees resources after image generation.\n\n### Automatic Cleanup\n- Done after each image generation.\n\n### Manual Cleanup\n```javascript\nclient.destroy();\n```\n- Use before app shutdown or to reset the client."
         }
       ]
     }
