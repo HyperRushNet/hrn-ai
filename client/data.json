@@ -72,7 +72,7 @@
           "id": "auto-detection",
           "label": "Auto Model Detection",
           "icon": "cpu",
-          "content": "# Auto Model Detection\n\nThe client automatically determines whether a model generates text or images.\n\n### How it works\n\n1. Fetch model list from API\n2. Check `output_modalities`\n3. Fallback to internal list\n\n### Fallback Models\n\nflux, zimage, kontext, nanobanana, seedream5, gptimage, klein, veo, wan"
+          "content": "# Auto Model Detection\n\nThe client automatically determines whether a model generates text or images.\n\n### How it works\n\n1. Fetch model list from API\n2. Check `output_modalities`\n3. Fallback to internal list\n\n### Fallback Models\n\nflux, zimage, kontext, nanobanana, nanobanana-2, nanobanana-pro, seedream5, gptimage, gptimage-large, klein, p-image, p-image-edit, veo, seedance, seedance-pro, wan, p-video"
         },
         {
           "id": "events",
