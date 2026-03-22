@@ -33,17 +33,6 @@
       this._modelCache = null;
     }
 
-    async _getModelInfo() {
-      if (this._modelCache) return this._modelCache.find(m => m.id === this.config.model);
-      try {
-        const res = await fetch(`${this.config.baseUrl}/models`, { headers: this._getHeaders(true) });
-        if (!res.ok) return null;
-        const data = await res.json();
-        this._modelCache = data.data || [];
-        return this._modelCache.find(m => m.id === this.config.model) || null;
-      } catch (e) { return null; }
-    }
-
     _getHeaders(isGet = false) {
       const headers = {};
       if (!isGet) headers['Content-Type'] = 'application/json';
@@ -68,6 +57,7 @@
         messages: messagesPayload,
         stream: streamOpt,
         seed: this.config.seed ?? Math.floor(Math.random() * 1e9)
+        // Removed 'response_format' to allow plain text responses in non-stream mode
       };
 
       const executeRequest = async (attempt = 1) => {
@@ -92,9 +82,10 @@
           if (streamOpt && res.body) {
             return await this._handleStreamResponse(res.body, onStream, prompt);
           } else {
+            // Non-streaming path: returns text directly
             const data = await res.json();
             const text = data?.choices?.[0]?.message?.content;
-            if (!text) throw new Error('Invalid response');
+            if (!text) throw new Error('Invalid response: No content found');
             this._updateHistory(prompt, text);
             return text;
           }
@@ -125,22 +116,18 @@
 
           buffer += decoder.decode(value, { stream: true });
           
-          // Process buffer lines
           let lines = buffer.split('\n');
-          // Keep the last incomplete chunk in the buffer
           buffer = lines.pop(); 
 
           for (let line of lines) {
             line = line.trim();
             if (!line) continue;
             
-            // Check for SSE data prefix
             if (line.startsWith('data: ')) {
               const jsonStr = line.slice(6).trim();
               if (jsonStr === '[DONE]') continue;
 
               try {
-                // Strict parse
                 const parsed = JSON.parse(jsonStr);
                 const chunk = parsed?.choices?.[0]?.delta?.content;
                 
@@ -149,9 +136,7 @@
                   if (onStream) onStream(chunk);
                 }
               } catch (parseError) {
-                // If standard JSON parse fails, check for concatenated JSON objects (rare but possible)
-                // Or just log/debug if needed. For now, we skip malformed lines to prevent crashes.
-                // console.warn('Stream parse skip:', parseError.message, jsonStr);
+                // Ignore parse errors for incomplete chunks
               }
             }
           }
@@ -213,7 +198,6 @@
       this.config.history.push({ role: 'user', content: userMsg });
       this.config.history.push({ role: 'assistant', content: assistantMsg });
       
-      // Maintain history limit
       while (this.config.history.length > this.config.historyLimit * 2) {
         this.config.history.shift();
         this.config.history.shift();
