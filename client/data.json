@@ -8,14 +8,14 @@
           "label": "Include Script",
           "icon": "code",
           "badge": "Step 1",
-          "content": "# Include AIClient\n\nVoeg eerst de AIClient library toe via jsDelivr:\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```"
+          "content": "# 📦 Include AIClient\n\nOm AIClient te gebruiken in je project, moet je eerst de library laden via een CDN.\n\n## 🔧 Installatie\n\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n## 📖 Wat gebeurt hier?\n\n- Laadt de AIClient library in je browser\n- Maakt de `AIClient` class globaal beschikbaar\n- Vereist **geen bundler of build step**\n\n## ✅ Wanneer gebruiken?\n\n| Scenario | Aanbevolen |\n|--------|----------|\n| Snelle prototype | ✅ Ja |\n| Productie | ✅ Ja |\n| Node.js | ❌ Nee (gebruik package) |"
         },
         {
           "id": "init-client",
           "label": "Initialize Client",
           "icon": "play",
           "badge": "Step 2",
-          "content": "# Initialize AIClient\n\nInitialiseer de client met je API key:\n\n```javascript\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY');\n```"
+          "content": "# 🚀 Initialize Client\n\nMaak een nieuwe instantie van AIClient en stel je API key in.\n\n## 🔧 Gebruik\n\n```javascript\nconst client = new AIClient()\n  .setApiKey('YOUR_API_KEY');\n```\n\n## 📖 Uitleg\n\nDe API key wordt gebruikt voor:\n\n- Authenticatie met de AI service\n- Rate limiting en quota\n- Toegang tot modellen\n\n## 📊 Parameters\n\n| Parameter | Type | Required | Beschrijving |\n|----------|------|--------|-------------|\n| apiKey | string | ✅ Ja | Jouw unieke API sleutel |\n\n## ⚠️ Belangrijk\n\n- Zonder API key werken requests **niet**\n- Bewaar je key **niet publiekelijk** in productie\n\n## 💡 Tip\n\nGebruik environment variables voor veiligheid."
         }
       ]
     },
@@ -27,21 +27,21 @@
           "label": "Setup Text Mode",
           "icon": "file-text",
           "badge": "Step 3",
-          "content": "# Text Mode\n\nKies dat je tekst wil genereren:\n\n```javascript\nclient.setType('text');\n```"
+          "content": "# 📝 Text Mode\n\nSchakel de client naar tekstgeneratie.\n\n## 🔧 Gebruik\n\n```javascript\nclient.setType('text');\n```\n\n## 📖 Uitleg\n\nDit bepaalt dat:\n\n- Input wordt behandeld als tekst prompt\n- Output een **string** zal zijn\n\n## 📊 Mogelijke types\n\n| Type | Output |\n|------|--------|\n| text | string |\n| image | Blob |\n\n## ⚠️ Let op\n\nAls je geen type instelt, kan de client niet correct werken."
         },
         {
           "id": "text-model",
           "label": "Model Selection",
           "icon": "cpu",
           "badge": "Step 4",
-          "content": "# Model (Text)\n\nGebruik een snelle text model:\n\n```javascript\nclient.setModel('gemini-fast');\n```"
+          "content": "# 🤖 Model (Text)\n\nKies welk AI model je gebruikt voor tekst.\n\n## 🔧 Gebruik\n\n```javascript\nclient.setModel('gemini-fast');\n```\n\n## 📖 Uitleg\n\nHet model bepaalt:\n\n- Snelheid ⚡\n- Kwaliteit 🧠\n- Kosten 💰\n\n## 📊 Beschikbare modellen\n\n| Model | Snelheid | Kwaliteit | Gebruik |\n|------|---------|----------|--------|\n| gemini-fast | ⚡⚡⚡ | ⚡⚡ | Snelle responses |\n\n## 💡 Aanbevolen\n\nGebruik `gemini-fast` voor:\n\n- Chat apps\n- UI interacties\n- Snelle feedback"
         },
         {
           "id": "text-generate",
           "label": "Generate Text",
           "icon": "play-circle",
           "badge": "Core",
-          "content": "# Generate Text\n\nGenereer output:\n\n```javascript\nconst result = await client.generate('Explain AIClient');\nconsole.log(result);\n```"
+          "content": "# ✨ Generate Text\n\nGenereer tekst output op basis van een prompt.\n\n## 🔧 Gebruik\n\n```javascript\nconst result = await client.generate('Explain AIClient');\nconsole.log(result);\n```\n\n## 📖 Uitleg\n\nDe `generate()` functie:\n\n1. Stuurt je prompt naar de API\n2. Verwerkt het model antwoord\n3. Geeft een string terug\n\n## 📊 Parameters\n\n| Parameter | Type | Required | Beschrijving |\n|----------|------|--------|-------------|\n| prompt | string | ✅ Ja | Input tekst |\n\n## 📦 Return\n\n| Type | Beschrijving |\n|------|-------------|\n| string | Gegenereerde tekst |\n\n## ⚠️ Errors\n\n- Geen API key → error\n- Lege prompt → error\n\n## 💡 Tip\n\nGebruik duidelijke prompts voor betere output."
         },
         {
           "id": "text-options",
@@ -53,31 +53,31 @@
               "id": "system-prompt",
               "label": "System Prompt",
               "icon": "edit-3",
-              "content": "```javascript\nclient.setSystemPrompt('You are a helpful assistant');\n```"
+              "content": "# 🧠 System Prompt\n\nGeeft instructies aan het model.\n\n```javascript\nclient.setSystemPrompt('You are a helpful assistant');\n```\n\n## 📊 Info\n\n| Property | Value |\n|---------|------|\n| Type | string |\n| Required | ❌ |\n| Applies to | text |\n\n## 💡 Gebruik\n\n- Tone bepalen\n- Gedrag sturen\n- Context geven"
             },
             {
               "id": "timeout",
               "label": "Timeout",
               "icon": "clock",
-              "content": "```javascript\nclient.setTimeout(30000);\n```"
+              "content": "# ⏱ Timeout\n\nMaximale wachttijd.\n\n```javascript\nclient.setTimeout(30000);\n```\n\n| Parameter | Type | Default |\n|----------|------|--------|\n| timeout | number | 30000 ms |"
             },
             {
               "id": "seed",
               "label": "Seed",
               "icon": "shuffle",
-              "content": "```javascript\nclient.setSeed(12345);\n```"
+              "content": "# 🎲 Seed\n\nVoor reproduceerbare output.\n\n```javascript\nclient.setSeed(12345);\n```\n\n| Type | Default |\n|------|--------|\n| number | null |"
             },
             {
               "id": "retry",
               "label": "Retry",
               "icon": "refresh-cw",
-              "content": "```javascript\nclient.setRetry(true, 2, 1000);\n```"
+              "content": "# 🔁 Retry\n\nAutomatisch opnieuw proberen.\n\n```javascript\nclient.setRetry(true, 2, 1000);\n```\n\n| Param | Type |\n|------|------|\n| enabled | boolean |\n| attempts | number |\n| delay | ms |"
             },
             {
               "id": "clear-history",
               "label": "Clear History",
               "icon": "trash-2",
-              "content": "```javascript\nclient.clearHistory();\n```"
+              "content": "# 🗑 Clear History\n\nReset conversatie.\n\n```javascript\nclient.clearHistory();\n```"
             }
           ]
         }
@@ -91,54 +91,28 @@
           "label": "Setup Image Mode",
           "icon": "image",
           "badge": "Step 3",
-          "content": "# Image Mode\n\nKies dat je een image wil genereren:\n\n```javascript\nclient.setType('image');\n```"
+          "content": "# 🖼 Image Mode\n\nActiveer image generatie.\n\n```javascript\nclient.setType('image');\n```\n\n## 📖 Output\n\n- Geeft een **Blob** terug\n- Meestal PNG formaat"
         },
         {
           "id": "image-model",
           "label": "Model Selection",
           "icon": "cpu",
           "badge": "Step 4",
-          "content": "# Model (Image)\n\nGebruik het image model:\n\n```javascript\nclient.setModel('flux');\n```"
+          "content": "# 🎨 Model (Image)\n\n```javascript\nclient.setModel('flux');\n```\n\n## 📊 Model Info\n\n| Model | Gebruik |\n|------|--------|\n| flux | Image generation |\n\n## 💡 Goed voor\n\n- Art\n- UI assets\n- Concept visuals"
         },
         {
           "id": "image-dimensions",
           "label": "Dimensions",
           "icon": "maximize-2",
           "badge": "Required",
-          "content": "# Image Dimensions\n\n```javascript\nclient.setDimensions(1024, 1024);\n```"
+          "content": "# 📐 Dimensions\n\n```javascript\nclient.setDimensions(1024, 1024);\n```\n\n## 📊 Parameters\n\n| Param | Type | Default |\n|------|------|--------|\n| width | number | 1024 |\n| height | number | 1024 |\n\n## 💡 Tip\n\nGrotere images = meer detail maar trager."
         },
         {
           "id": "image-generate",
           "label": "Generate Image",
           "icon": "play-circle",
           "badge": "Core",
-          "content": "# Generate Image\n\n```javascript\nconst blob = await client.generate('A futuristic city');\nconst url = URL.createObjectURL(blob);\ndocument.querySelector('img').src = url;\n```"
-        },
-        {
-          "id": "image-options",
-          "label": "Optional Settings",
-          "icon": "sliders",
-          "badge": "Optional",
-          "children": [
-            {
-              "id": "seed-img",
-              "label": "Seed",
-              "icon": "shuffle",
-              "content": "```javascript\nclient.setSeed(12345);\n```"
-            },
-            {
-              "id": "timeout-img",
-              "label": "Timeout",
-              "icon": "clock",
-              "content": "```javascript\nclient.setTimeout(30000);\n```"
-            },
-            {
-              "id": "retry-img",
-              "label": "Retry",
-              "icon": "refresh-cw",
-              "content": "```javascript\nclient.setRetry(true, 2, 1000);\n```"
-            }
-          ]
+          "content": "# ✨ Generate Image\n\n```javascript\nconst blob = await client.generate('A futuristic city');\nconst url = URL.createObjectURL(blob);\n```\n\n## 📊 Return\n\n| Type | Beschrijving |\n|------|-------------|\n| Blob | image/png |\n\n## 💡 Gebruik\n\n- `<img>` src zetten\n- Download aanbieden"
         }
       ]
     }
