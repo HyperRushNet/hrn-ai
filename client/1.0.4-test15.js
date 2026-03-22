@@ -43,7 +43,7 @@ class AIClient extends EventTarget {
   async _getModelInfo() {
     if (this._modelCache) return this._modelCache.find(m => m.id === this.config.model);
     try {
-      const res = await fetch('https://gen.pollinations.ai/v1/models'); // no API key needed
+      const res = await fetch('https://gen.pollinations.ai/v1/models'); // no API key
       if (!res.ok) throw new Error("Failed to fetch model list");
       const data = await res.json();
       this._modelCache = data.data || [];
@@ -58,6 +58,7 @@ class AIClient extends EventTarget {
     const modelInfo = await this._getModelInfo();
     let type = 'text';
     let endpoint = 'https://gen.pollinations.ai/v1/chat/completions';
+
     if (modelInfo) {
       const hasImage = modelInfo.output_modalities?.includes('image');
       const hasText = modelInfo.output_modalities?.includes('text');
@@ -72,10 +73,9 @@ class AIClient extends EventTarget {
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.config.timeout);
+    const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
 
     try {
-      const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
-
       if (type === 'image') {
         const payload = {
           prompt: input,
@@ -93,8 +93,11 @@ class AIClient extends EventTarget {
         const data = await response.json();
         if (!data?.data?.[0]?.b64_json) throw new Error("Invalid image response.");
         const b64 = data.data[0].b64_json;
-        return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
+        const blob = new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
+        this.dispatchEvent(new CustomEvent("message", { detail: { data: blob, chatId: this.config.chatId, stream: false } }));
       } else {
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
         if (this.config.stream) {
           const payload = {
             model: this.config.model,
@@ -107,8 +110,6 @@ class AIClient extends EventTarget {
             seed: activeSeed,
             response_format: { type: "json_object" }
           };
-          const headers = { 'Content-Type': 'application/json' };
-          if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
           const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
           if (!res.ok) throw new Error(`API Error: ${res.status}`);
           const reader = res.body.getReader();
@@ -122,19 +123,17 @@ class AIClient extends EventTarget {
               const lines = chunkText.split(/\r?\n/).filter(Boolean);
               for (const line of lines) {
                 if (line.trim() === '[DONE]') {
-                  this.dispatchEvent(new CustomEvent("chunk", { detail: { data: false, chatId: this.config.chatId } }));
+                  this.dispatchEvent(new CustomEvent("message", { detail: { data: false, chatId: this.config.chatId, stream: true } }));
                 } else {
                   try {
                     const parsed = JSON.parse(line);
                     const content = parsed?.choices?.[0]?.delta?.content ?? '';
-                    if (content) this.dispatchEvent(new CustomEvent("chunk", { detail: { data: content, chatId: this.config.chatId } }));
+                    if (content) this.dispatchEvent(new CustomEvent("message", { detail: { data: content, chatId: this.config.chatId, stream: true } }));
                   } catch {}
                 }
               }
             }
           }
-          clearTimeout(timer);
-          return true;
         } else {
           const payload = {
             model: this.config.model,
@@ -145,21 +144,21 @@ class AIClient extends EventTarget {
             ],
             seed: activeSeed
           };
-          const headers = { 'Content-Type': 'application/json' };
-          if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-          const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
+          const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
           clearTimeout(timer);
-          if (!response.ok) throw new Error(`API Error: ${response.status}`);
-          const data = await response.json();
+          if (!res.ok) throw new Error(`API Error: ${res.status}`);
+          const data = await res.json();
           const content = data?.choices?.[0]?.message?.content;
           if (!content) throw new Error("Invalid text response.");
-          return content;
+          this.dispatchEvent(new CustomEvent("message", { detail: { data: content, chatId: this.config.chatId, stream: false } }));
         }
       }
     } catch (err) {
       clearTimeout(timer);
       if (err.name === 'AbortError') throw new Error("AI Request Timeout");
       throw err;
+    } finally {
+      if (this.config.chatId) AIClient._chatIds.delete(this.config.chatId);
     }
   }
 
