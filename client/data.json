@@ -1,74 +1,75 @@
 {
   "groups": [
     {
-      "title": "Init & Setup",
+      "title": "Text Generation – Stappenplan",
       "items": [
         {
-          "id": "init",
-          "label": "Init & Setup",
-          "badge": "1 – Setup",
+          "id": "text-step1",
+          "label": "Installatie & Init",
+          "badge": "1 – Init",
           "icon": "info",
-          "content": "# Init & Setup\n\n**Wat:** AIClient voor tekst & afbeeldingen (Pollinations.ai wrapper)\n\n**Code:**\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  stream: true, // voor live tekst\n  isImage: false,\n  seed: 12345 // optioneel, reproduceerbare output\n});\n```\n\n**Belangrijk:**\n- `chatId` moet uniek zijn.\n- `stream: true` voor live tekst chunks.\n- Seed werkt voor deterministic images en nuttig voor tekst."
-        }
-      ]
-    },
-    {
-      "title": "Text Generation",
-      "items": [
+          "content": "# Installatie & Init\n\n**Include:**\n```html\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\"></script>\n```\n\n**Init client:**\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  stream: true,\n  isImage: false,\n  seed: 12345,\n  chatId: 'chat1',\n  timeout: 60000,\n  retry: true,\n  retryAttempts: 2,\n  retryDelay: 1000\n});\n```"
+        },
         {
-          "id": "text",
-          "label": "Generate Text",
-          "badge": "2 – Text",
-          "icon": "zap",
-          "content": "# Generate Text\n\n**Code:**\n```javascript\nconst output = await client.generate('Schrijf een korte motiverende quote.');\nconsole.log(output);\n```\n\n**Tips:**\n- `stream: true` → live chunks via `client.addEventListener('message', e => console.log(e.detail.data))`\n- `seed` kan herhaalbare output geven.\n- `clearHistory()` wist oude conversaties."
-        }
-      ]
-    },
-    {
-      "title": "Image Generation",
-      "items": [
-        {
-          "id": "image",
-          "label": "Generate Image",
-          "badge": "3 – Image",
-          "icon": "image",
-          "content": "# Generate Image\n\n**Code:**\n```javascript\nclient.config.isImage = true;\nconst blob = await client.generate('Futuristische stad bij zonsondergang');\ndocument.querySelector('#img').src = URL.createObjectURL(blob);\n```\n\n**Tips:**\n- `width` & `height` instellen in constructor.\n- `seed` voor reproduceerbare afbeeldingen.\n- Auto cleanup van `chatId` na generate."
-        }
-      ]
-    },
-    {
-      "title": "Optional Configs",
-      "items": [
-        {
-          "id": "options",
-          "label": "Optional Configs",
-          "badge": "4 – Options",
+          "id": "text-step2",
+          "label": "Optionele Configs",
+          "badge": "2 – Config",
           "icon": "settings",
-          "content": "# Optional Configs\n\n- **setSystemPrompt:** `client.config.systemPrompt = 'Je bent een helper.'`\n- **setTimeout:** `client.setTimeout(30000)`\n- **setRetry:** `client.setRetry(true, 2, 1000)`\n- **setSeed:** `client.setSeed(12345)`\n- **clearHistory:** `client.clearHistory()`\n\n**Belangrijk:**\n- Alles via de instance, geen `client.config.` nodig voor generate.\n- Streaming events luisteren via `client.addEventListener('message', ...)`."
-        }
-      ]
-    },
-    {
-      "title": "Streaming & Events",
-      "items": [
+          "content": "# Optionele Configs\n```javascript\nclient.config.systemPrompt = 'Je bent een behulpzame assistent.';\nclient.clearHistory();\n```"
+        },
         {
-          "id": "stream",
-          "label": "Streaming",
-          "badge": "5 – Stream",
+          "id": "text-step3",
+          "label": "Streaming Events",
+          "badge": "3 – Stream",
           "icon": "wifi",
-          "content": "# Streaming\n\n**Code:**\n```javascript\nclient.config.stream = true;\nclient.addEventListener('message', event => {\n  const { data, stream } = event.detail;\n  if(stream) console.log('Chunk:', data);\n  else console.log('Final:', data);\n});\n```\n\n**Belangrijk:**\n- Alleen voor tekst.\n- Auto cleanup chatId na `[DONE]`.\n- Geschikt voor live UI updates."
+          "content": "# Streaming Events\n```javascript\nclient.addEventListener('message', event => {\n  const { data, stream } = event.detail;\n  if(stream) console.log('Chunk:', data);\n  else console.log('Final output:', data);\n});\n```"
+        },
+        {
+          "id": "text-step4",
+          "label": "Prompt Genereren",
+          "badge": "4 – Generate",
+          "icon": "zap",
+          "content": "# Prompt Genereren\n```javascript\nconst prompt = 'Schrijf een korte motiverende quote over AI.';\nawait client.generate(prompt);\n```"
+        },
+        {
+          "id": "text-step5",
+          "label": "Cleanup",
+          "badge": "5 – Cleanup",
+          "icon": "trash",
+          "content": "# Cleanup\n- Auto cleanup: chatId verwijderd na generate of streaming.\n- Handmatig destroy: `client.destroy();`"
         }
       ]
     },
     {
-      "title": "Cleanup",
+      "title": "Image Generation – Stappenplan",
       "items": [
         {
-          "id": "cleanup",
-          "label": "Destroy & Auto Cleanup",
-          "badge": "6 – Cleanup",
+          "id": "image-step1",
+          "label": "Init",
+          "badge": "1 – Init",
+          "icon": "info",
+          "content": "# Init client\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'img1',\n  timeout: 60000,\n  retry: true,\n  retryAttempts: 2,\n  retryDelay: 1000\n});\n```"
+        },
+        {
+          "id": "image-step2",
+          "label": "Optionele Configs",
+          "badge": "2 – Config",
+          "icon": "settings",
+          "content": "# Optionele Configs\n```javascript\nclient.setTimeout(30000);\nclient.setRetry(true,2,1000);\nclient.setSeed(12345);\n```"
+        },
+        {
+          "id": "image-step3",
+          "label": "Afbeelding Genereren",
+          "badge": "3 – Generate",
+          "icon": "image",
+          "content": "# Afbeelding Genereren\n```javascript\nconst prompt = 'Een futuristische stad bij zonsondergang';\nconst blob = await client.generate(prompt);\nconst url = URL.createObjectURL(blob);\ndocument.querySelector('#output-image').src = url;\n```"
+        },
+        {
+          "id": "image-step4",
+          "label": "Cleanup",
+          "badge": "4 – Cleanup",
           "icon": "trash",
-          "content": "# Cleanup\n\n- **Auto cleanup:** Na generate of streaming wordt `chatId` verwijderd.\n- **Handmatig destroy:**\n```javascript\nclient.destroy();\n```\n- Voorkomt dubbele chatIds en klaar voor nieuwe sessies."
+          "content": "# Cleanup\n- Auto cleanup: chatId verwijderd na generate.\n- Handmatig destroy: `client.destroy();`"
         }
       ]
     }
