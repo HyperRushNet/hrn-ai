@@ -8,14 +8,14 @@
           "label": "About AIClient",
           "icon": "home",
           "badge": "v1.0",
-          "content": "# AIClient\n\nThe `AIClient` is an ultra-fast, 'zero-dependency' JavaScript class to communicate with the **Pollinations AI API**. It supports text generation, streaming, image generation, and has built-in memory (history) for conversations.\n\n### Features\n\n*   **Auto Model Detection**: Automatically detects if a model generates text or images.\n*   **Streaming Support**: Real-time text display with `onStream` callbacks.\n*   **History Management**: Built-in memory that is easily disabled.\n*   **Robust Images**: Generates images directly as `Blob` objects.\n*   **Consistent Config**: Pass options directly to `generate()` or set globally in the constructor.\n\n```html\n<!-- Add to your HTML -->\n<script src=\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.4-test24.js\"></script>\n```"
+          "content": "# AIClient\n\nThe `AIClient` is a robust, zero-dependency JavaScript class designed to interface seamlessly with the **Pollinations AI API**. It provides a unified interface for both text and image generation, handling the underlying API differences automatically.\n\n### Core Capabilities\n\n*   **Unified Interface**: Use a single `.generate()` method for both text and images.\n*   **Intelligent Routing**: Automatically detects model capabilities (text vs. image) and routes requests to the correct endpoint.\n*   **Reproducibility**: Full support for `seed` across both text and image generation for consistent results.\n*   **Streaming**: Real-time text response handling via callbacks.\n*   **History Management**: Built-in conversation context handling.\n\n### Installation\n\nSimply include the script in your HTML head.\n\n```html\n<script src=\"./path/to/aiclient.js\"></script>\n```"
         },
         {
           "id": "quickstart",
           "label": "Quick Start",
           "icon": "play-circle",
           "badge": "Start here",
-          "content": "# Quick Start\n\nStart in less than 5 lines of code.\n\n### 1. Initialize\n\nCreate a new instance with your API key.\n\n```javascript\nconst ai = new AIClient({ \n  apiKey: \"YOUR_API_KEY\",\n  model: \"openai\" \n});\n```\n\n### 2. Generate Text\n\nAsk a question and wait for the answer.\n\n```javascript\nconst answer = await ai.generate(\"What is the capital of the Netherlands?\");\nconsole.log(answer);\n```\n\n### 3. Generate an Image\n\nChange the model to an image model (like `flux`) and the client does the rest.\n\n```javascript\nconst blob = await ai.generate(\"A futuristic city\", {\n  model: \"flux\"\n});\n// Use the blob in an <img> tag\n```"
+          "content": "# Quick Start\n\nGet started immediately with minimal code.\n\n### 1. Initialize\n\nCreate an instance with your API key.\n\n```javascript\nconst ai = new AIClient({ apiKey: \"YOUR_API_KEY\" });\n```\n\n### 2. Generate Text\n\n```javascript\nconst response = await ai.generate(\"Hello, world!\");\nconsole.log(response);\n```\n\n### 3. Generate Image (with Seed)\n\nSwitch models using options. The client handles the rest.\n\n```javascript\nconst blob = await ai.generate(\"A cyberpunk city\", {\n  model: \"flux\",\n  seed: 12345, // Consistent results\n  width: 1024,\n  height: 1024\n});\n```"
         }
       ]
     },
@@ -23,39 +23,45 @@
       "title": "Configuration",
       "items": [
         {
-          "id": "options",
+          "id": "constructor-options",
           "label": "Constructor Options",
           "icon": "settings",
-          "content": "# Constructor Options\n\nWhen creating a `new AIClient()`, you can pass an options object to set global defaults.\n\n### Overview\n\n| Option | Type | Default | Description |\n|---|---|---|---|\n| `apiKey` | `string` | `null` | **Required**. Your Pollinations API key. |\n| `model` | `string` | `\"openai\"` | The model ID to use (e.g., `openai`, `flux`, `gemini-fast`). |\n| `systemPrompt` | `string` | `\"You are a helpful...\"` | The system instruction for text models. |\n| `historyLimit` | `number` | `10` | Number of conversations to remember. Set to `0` to disable. |\n| `stream` | `boolean` | `false` | Default streaming on/off for all requests. |\n| `timeout` | `number` | `60000` | Timeout in milliseconds. |\n| `seed` | `number` | `null` | Seed for reproducible results. |\n| `width` / `height` | `number` | `1024` | Default dimensions for images. |\n\n### Example\n\n```javascript\nconst ai = new AIClient({\n  apiKey: \"sk_...\",\n  model: \"gemini-fast\",\n  historyLimit: 5,\n  systemPrompt: \"You are a helpful assistant.\"\n});\n```"
+          "content": "# Constructor Options\n\nThese options define the default behavior for the client instance. Pass them as an object when creating `new AIClient()`.\n\n### Global Defaults\n\n| Option | Type | Default | Description |\n|---|---|---|---|\n| `apiKey` | `string` | `null` | **Required**. Your API key for authentication. |\n| `model` | `string` | `\"openai\"` | The default model ID. Can be overridden per request. |\n| `systemPrompt` | `string` | `\"You are a helpful...\"` | The system instruction for text models. |\n| `historyLimit` | `number` | `10` | Max conversation turns to remember. Set to `0` to disable memory. |\n| `stream` | `boolean` | `false` | Enable streaming globally. |\n| `timeout` | `number` | `60000` | Request timeout in milliseconds. |\n| `seed` | `number` | `null` | Default random seed for reproducibility. |\n| `width` | `number` | `1024` | Default image width. |\n| `height` | `number` | `1024` | Default image height. |\n| `retry` | `boolean` | `true` | Enable automatic retry on failure. |\n| `retryAttempts` | `number` | `2` | Number of retry attempts. |\n| `retryDelay` | `number` | `1000` | Delay between retries in ms. |\n\n### Example Configuration\n\n```javascript\nconst ai = new AIClient({\n  apiKey: \"sk_...\",\n  model: \"openai-fast\",\n  systemPrompt: \"You are a Dutch poet.\",\n  historyLimit: 5,\n  seed: 999 // Default seed for all requests\n});\n```"
         },
         {
-          "id": "chaining",
+          "id": "chaining-methods",
           "label": "Method Chaining",
           "icon": "link",
-          "content": "# Method Chaining\n\nYou can modify configuration using chaining methods. This is useful for changing settings on a single instance before calling generate.\n\n### Available Methods\n\n*   `.key(string)` - Set API key.\n*   `.model(string)` - Change the model.\n*   `.prompt(string)` - Change the system prompt.\n*   `.timeout(number)` - Change the timeout.\n*   `.seed(number)` - Set a seed.\n*   `.dimensions(w, h)` - Set image dimensions.\n\n### Example\n\n```javascript\nconst ai = new AIClient();\n\n// Configure for text\ntextResponse = await ai\n  .key(\"YOUR_KEY\")\n  .model(\"openai-fast\")\n  .generate(\"Tell me a joke\");\n\n// Reconfigure for image on the same instance\nimgBlob = await ai\n  .model(\"flux\")\n  .dimensions(512, 512)\n  .generate(\"A beautiful car\");\n```"
+          "content": "# Method Chaining\n\nYou can modify the instance configuration fluently using chainable methods. These methods update the instance's internal state for subsequent calls.\n\n### Available Methods\n\n*   `.key(string)` - Updates the API key.\n*   `.model(string)` - Updates the default model.\n*   `.prompt(string)` - Updates the system prompt.\n*   `.timeout(number)` - Updates the timeout.\n*   `.seed(number)` - Sets the default seed.\n*   `.dimensions(w, h)` - Sets default image dimensions.\n\n### Usage Example\n\n```javascript\nconst ai = new AIClient();\n\n// Chain configuration for a specific task\nawait ai\n  .key(\"YOUR_KEY\")\n  .model(\"flux\")\n  .seed(42)\n  .dimensions(512, 512)\n  .generate(\"A stable diffusion test\");\n```\n\n**Note:** Options passed directly to `.generate()` will always override these chained settings."
         }
       ]
     },
     {
-      "title": "Functionality",
+      "title": "Core Functionality",
       "items": [
         {
-          "id": "generate-text",
-          "label": "Text Generation",
-          "icon": "message-square",
-          "content": "# Text Generation\n\nUse the `generate` method for text. The client automatically manages history.\n\n### Basic Request\n\n```javascript\nconst ai = new AIClient({ apiKey: \"...\", model: \"openai\" });\nconst text = await ai.generate(\"What is AI?\");\nconsole.log(text);\n```\n\n### Streaming (Live text)\n\nReceive the answer word by word. Ideal for chat interfaces.\n\n```javascript\nawait ai.generate(\"Write a short story\", {\n  stream: true,\n  onStream: (chunk) => {\n    document.body.innerText += chunk; // Display live text\n  }\n});\n```\n\n### Extra Options per Request\n\nYou can pass options directly to `generate()`. These override constructor settings for this specific request.\n\n```javascript\nawait ai.generate(\"Hi\", { \n  model: \"gemini-fast\", // Uses this model only for now\n  seed: 12345          // Fixed seed for this request\n});\n```"
+          "id": "generate-method",
+          "label": "The Generate Method",
+          "icon": "cpu",
+          "content": "# The generate() Method\n\nThe primary method for interacting with the AI. It accepts a prompt string and an optional configuration object.\n\n### Signature\n\n```javascript\nai.generate(prompt, options)\n```\n\n### Parameters\n\n**prompt** (`string`): The input text or image description.\n\n**options** (`object`): Overrides for this specific request. Supports all constructor options plus:\n*   `onStream` (`function`): Callback for streaming text chunks.\n\n### Return Value\n\n*   **Text Models**: Returns a `Promise<string>` containing the text.\n*   **Image Models**: Returns a `Promise<Blob>` containing the image data.\n\n### Override Example\n\nThis request overrides the global model and seed just for this call.\n\n```javascript\nconst text = await ai.generate(\"Tell me a joke\", {\n  model: \"gemini-fast\",\n  seed: 123,\n  stream: true,\n  onStream: (chunk) => console.log(chunk)\n});\n```"
         },
         {
-          "id": "generate-image",
+          "id": "text-generation",
+          "label": "Text Generation",
+          "icon": "message-square",
+          "content": "# Text Generation\n\nWhen the selected model is a text model (e.g., `openai`, `gemini-fast`), the client returns a text string.\n\n### Standard Request\n\n```javascript\nconst ai = new AIClient({ apiKey: \"...\", model: \"openai\" });\nconst text = await ai.generate(\"Explain quantum physics.\");\n```\n\n### Reproducible Text (Seeding)\n\nUsing the `seed` parameter ensures the model generates the same output for the same input.\n\n```javascript\nconst text = await ai.generate(\"Write a haiku\", {\n  seed: 42 // Same haiku every time\n});\n```\n\n### Streaming\n\nEnable streaming for real-time responses. The promise resolves when the stream is finished.\n\n```javascript\nawait ai.generate(\"Long story\", {\n  stream: true,\n  onStream: (chunk) => {\n    document.getElementById('output').innerText += chunk;\n  }\n});\n```"
+        },
+        {
+          "id": "image-generation",
           "label": "Image Generation",
           "icon": "image",
-          "content": "# Image Generation\n\nThe client automatically detects if you selected an image model (like `flux`, `kontext`, `zimage`) and switches to the Image API.\n\n### Result: Blob\n\nThe `generate` function returns a `Blob` object. This is safe and works directly in the browser without CORS issues.\n\n### Example\n\n```javascript\nconst blob = await ai.generate(\"A cat in a spacesuit\", {\n  model: \"flux\" // This activates image mode\n});\n\n// Create a URL and display it\nconst img = document.createElement('img');\nimg.src = URL.createObjectURL(blob);\ndocument.body.appendChild(img);\n```\n\n### Adjusting Dimensions\n\nPass `width` and `height` directly in the options to determine the size.\n\n```javascript\nconst blob = await ai.generate(\"Landscape\", {\n  model: \"flux\",\n  width: 1920,\n  height: 1080\n});\n```"
+          "content": "# Image Generation\n\nWhen an image model (e.g., `flux`, `kontext`) is detected, the client returns a `Blob`.\n\n### Basic Image Request\n\n```javascript\nconst blob = await ai.generate(\"A sunset over mountains\", {\n  model: \"flux\"\n});\n\n// Display image\nconst img = document.createElement('img');\nimg.src = URL.createObjectURL(blob);\ndocument.body.appendChild(img);\n```\n\n### Reproducible Images (Seeding)\n\nSeeding is crucial for image generation to recreate specific images.\n\n```javascript\n// Generate an image\nconst blob1 = await ai.generate(\"A cyberpunk cat\", {\n  model: \"flux\",\n  seed: 999\n});\n\n// Generate the EXACT same image later\nconst blob2 = await ai.generate(\"A cyberpunk cat\", {\n  model: \"flux\",\n  seed: 999\n});\n// blob1 and blob2 are identical\n```\n\n### Dimensions\n\nControl resolution via options.\n\n```javascript\nconst blob = await ai.generate(\"Wide landscape\", {\n  model: \"flux\",\n  width: 1920,\n  height: 1080\n});\n```"
         },
         {
           "id": "history",
-          "label": "History & Memory",
+          "label": "History Management",
           "icon": "clock",
-          "content": "# History Management\n\nBy default, `AIClient` remembers the last 10 conversations (history limit) so the model understands context.\n\n### Conversation with Context\n\n```javascript\nawait ai.generate(\"My name is John.\");\nconst r2 = await ai.generate(\"What is my name?\");\n// Output: \"Your name is John.\"\n```\n\n### Clear History\n\nStart a new conversation with `clearHistory()`.\n\n```javascript\nawait ai.generate(\"My name is John.\");\nai.clearHistory(); // Cleared!\nconst r2 = await ai.generate(\"What is my name?\");\n// Output: \"I do not know.\"\n```\n\n### Disable History\n\nSet `historyLimit` to `0` to stop keeping history. This saves tokens and costs.\n\n```javascript\nconst ai = new AIClient({ \n  apiKey: \"...\", \n  historyLimit: 0 // Memory off\n});\n```"
+          "content": "# History Management\n\nThe client maintains a conversation history to provide context for subsequent requests.\n\n### How it Works\n\nEvery user prompt and AI response is stored. The `historyLimit` determines how many turns are kept.\n\n### Contextual Conversation\n\n```javascript\nconst ai = new AIClient({ apiKey: \"...\", historyLimit: 5 });\n\nawait ai.generate(\"My name is Alice.\");\nconst reply = await ai.generate(\"What is my name?\");\n// Reply: \"Your name is Alice.\"\n```\n\n### Clearing History\n\nReset the memory to start a fresh conversation.\n\n```javascript\nai.clearHistory();\n```\n\n### Disabling History\n\nSet `historyLimit: 0` in the constructor for stateless interactions.\n\n```javascript\nconst ai = new AIClient({ apiKey: \"...\", historyLimit: 0 });\n```"
         }
       ]
     },
@@ -63,16 +69,16 @@
       "title": "Advanced",
       "items": [
         {
-          "id": "auto-detect",
+          "id": "auto-detection",
           "label": "Auto Model Detection",
           "icon": "cpu",
-          "content": "# Model Detection Logic\n\nThe client fetches the list of available models from `https://gen.pollinations.ai/v1/models` upon first use.\n\n### How it works\n\n1. The client checks the `output_modalities` of the selected model ID.\n2. If the output modality contains `\"image\"`, the **Image API** is used.\n3. Otherwise, the **Chat Completions API** is used.\n\n### Fallback\n\nIf the model list cannot be fetched, the client uses an internal list of known image models (`flux`, `zimage`, `kontext`, `gptimage`, `seedream5`).\n\nThis ensures you don't have to worry about endpoints; just choose a model and the client handles the rest.\n\n```javascript\n// This automatically goes to /v1/images/generations\nawait ai.generate(\"...\", { model: \"flux\" }); \n\n// This automatically goes to /v1/chat/completions\nawait ai.generate(\"...\", { model: \"openai\" }); \n```"
+          "content": "# Auto Model Detection\n\nThe client automatically determines whether to use the Text or Image API endpoint based on the model selected.\n\n### Detection Logic\n\n1.  **API Lookup**: The client fetches the model list from `https://gen.pollinations.ai/v1/models`.\n2.  **Modality Check**: It checks the `output_modalities` field of the selected model.\n3.  **Fallback**: If the API is unreachable, it checks an internal list of known image models (`flux`, `zimage`, etc.).\n\n### Implications\n\nYou do not need to specify if a model is for text or images. You simply select the model, and the client handles the routing.\n\n```javascript\n// Automatically routed to /v1/chat/completions\nawait ai.generate(\"Hi\", { model: \"openai\" });\n\n// Automatically routed to /v1/images/generations\nawait ai.generate(\"Hi\", { model: \"flux\" });\n```"
         },
         {
           "id": "error-handling",
-          "label": "Error Handling",
+          "label": "Error Handling & Retry",
           "icon": "alert-triangle",
-          "content": "# Error Handling & Retry\n\nThe client has a built-in retry mechanism for network errors.\n\n### Retry Configuration\n\n*   `retry`: Number of attempts (default: true / 2).\n*   `retryDelay`: Wait time between attempts in ms (default: 1000).\n\n### Try/Catch Example\n\n```javascript\ntry {\n  const res = await ai.generate(\"Test\");\n} catch (error) {\n  console.error(\"Generation failed:\", error.message);\n}\n```\n\n### Common Errors\n\n*   `Key required`: You forgot to set the `apiKey`.\n*   `Text Error 401`: Invalid API key.\n*   `Image Error 400`: Invalid parameters (e.g., wrong dimensions).\n*   `AI Request Timeout`: The request took longer than `timeout` ms."
+          "content": "# Error Handling\n\nThe client includes robust error handling and automatic retries.\n\n### Retry Mechanism\n\nIf a request fails due to network issues or server errors, the client automatically retries.\n*   `retry`: Enable/disable (default: `true`).\n*   `retryAttempts`: Max retries (default: `2`).\n*   `retryDelay`: Delay between retries (default: `1000ms`).\n\n### Error Types\n\n| Error Message | Cause |\n|---|---|\n| `Key required` | No API key provided. |\n| `Text Error 401` | Invalid API key. |\n| `Image Error 400` | Bad parameters (e.g., invalid dimensions). |\n| `AI Request Timeout` | Request exceeded `timeout` duration. |\n\n### Try/Catch Pattern\n\n```javascript\ntry {\n  const res = await ai.generate(\"Test\");\n} catch (error) {\n  console.error(\"Failed:\", error.message);\n}\n```"
         }
       ]
     }
