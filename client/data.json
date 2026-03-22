@@ -8,21 +8,21 @@
           "label": "Config",
           "badge": "AI Configuration",
           "icon": "code",
-          "content": "# AI Instance - Configuration\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'openai',\n  stream: true,\n  isImage: false,\n  seed: 12345,\n  chatId: 't1',\n  systemPrompt('You are...')\n});\n```\n- Creates a new text AI client instance.\n- `apiKey` – your API key.\n- `model` – AI model to use.\n- `stream` – enable streaming responses.\n- `isImage` – false, text only.\n- `seed` – reproducible outputs.\n- `chatId` – unique session ID.\n- `systemPrompt()` – instructions for the AI."
+          "content": "# AI Instance - Configuration\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'openai',\n  stream: true,\n  isImage: false,\n  seed: 12345,\n  chatId: 't1',\n  systemPrompt('You are...')\n});\n```\n- Creates a new text AI client instance.\n- `apiKey` – your API key.\n- `model` – AI model to use.\n- `stream` – enable streaming responses.\n- `isImage` – false, text only.\n- `seed` – reproducible outputs.\n- `chatId` – unique session ID.\n- `systemPrompt()` – instructions for the AI.\n- History can be set manually via `client.setHistory([...])` or cleared with `client.clearHistory()`."
         },
         {
           "id": "text-stream",
           "label": "Stream",
           "badge": "Text Streaming",
           "icon": "wifi",
-          "content": "# Text Streaming\n\n```javascript\nclient.addEventListener('message', e => {\n  const { data, stream } = e.detail;\n  if (stream) console.log('Chunk:', data);\n  else console.log('Final:', data);\n});\n```\n- Listens for streaming chunks.\n- Only for text generation.\n- Auto cleanup after `[DONE]`."
+          "content": "# Text Streaming\n\n```javascript\nclient.addEventListener('message', e => {\n  const { data, stream } = e.detail;\n  if (stream) console.log('Chunk:', data);\n  else console.log('Final:', data);\n});\n```\n- Listens for streaming chunks.\n- Only for text generation.\n- Auto cleanup after `[DONE]`.\n- History is not updated automatically; manage with `setHistory()`."
         },
         {
           "id": "text-gen",
           "label": ".generate()",
           "badge": "Text Generation",
           "icon": "zap",
-          "content": "# Generate Text\n\n```javascript\nawait client.generate('Write a short motivational quote about AI.');\n```\n- Generates text using the client.\n- Uses streaming if enabled.\n- Seed ensures repeatable output."
+          "content": "# Generate Text\n\n```javascript\nawait client.generate('Write a short motivational quote about AI.');\n```\n- Generates text using the client.\n- Uses streaming if enabled.\n- Seed ensures repeatable output.\n- History must be manually managed outside if you want context preservation."
         },
         {
           "id": "text-clean",
@@ -41,7 +41,7 @@
           "label": "Init",
           "badge": "Image Configuration",
           "icon": "info",
-          "content": "# Init Image Client\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'i1'\n});\n```\n- Creates a new image AI client.\n- `apiKey` – your API key.\n- `model` – image model alias.\n- `isImage` – true.\n- `width` & `height` – output size.\n- `seed` – reproducible images.\n- `chatId` – unique session ID."
+          "content": "# Init Image Client\n\n```javascript\nconst client = new AIClient({\n  apiKey: 'YOUR_API_KEY',\n  model: 'flux',\n  isImage: true,\n  width: 1024,\n  height: 1024,\n  seed: 12345,\n  chatId: 'i1'\n});\n```\n- Creates a new image AI client.\n- `apiKey` – your API key.\n- `model` – image model alias.\n- `isImage` – true.\n- `width` & `height` – output size.\n- `seed` – reproducible images.\n- `chatId` – unique session ID.\n- History can be set manually via `client.setHistory([...])` for text contexts."
         },
         {
           "id": "img-config",
@@ -55,7 +55,7 @@
           "label": "Generate",
           "badge": "Image Generation",
           "icon": "image",
-          "content": "# Generate Image\n\n```javascript\nconst blob = await client.generate('Futuristic city at sunset');\ndocument.querySelector('#output-image').src = URL.createObjectURL(blob);\n```\n- Generates an image.\n- Auto cleanup removes `chatId`.\n- Seed ensures reproducible results."
+          "content": "# Generate Image\n\n```javascript\nconst blob = await client.generate('Futuristic city at sunset');\ndocument.querySelector('#output-image').src = URL.createObjectURL(blob);\n```\n- Generates an image.\n- Auto cleanup removes `chatId`.\n- Seed ensures reproducible results.\n- Image history is not tracked; only relevant for text messages."
         },
         {
           "id": "img-clean",
