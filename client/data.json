@@ -4,80 +4,56 @@
       "title": "Getting Started",
       "items": [
         {
-          "id": "include-script",
-          "label": "Include the AIClient Library",
-          "icon": "code",
-          "badge": "Step 1",
-          "content": "# Including the AIClient Library\\n\\nTo use AIClient in browser environments, include the following script tag in your HTML. This makes the `AIClient` class available globally.\\n\\n```html\\n<script src=\\\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\\\"></script>\\n```\\n\\n### What Happens When You Load This Script\\n- The AIClient library is initialized in the page.\\n- `AIClient` becomes globally accessible.\\n- No module bundlers or build steps are required.\\n\\n### Requirements\\n- Include this script **before** any code that uses `AIClient`.\\n- This version is only for browser environments; it is not a Node.js package."
+          "id": "ai-client-setup",
+          "label": "Including the AIClient Library",
+          "badge": "Docs",
+          "icon": "book",
+          "content": "Including the AIClient Library\\n\\nTo use AIClient in browser environments, include the following script tag in your HTML. This makes the AIClient class available globally.\\n\\nhtml\\n<script src=\\\"https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.3.min.js\\\"></script>\\n\\n### What Happens When You Load This Script\\n- The AIClient library is initialized in the page.\\n- AIClient becomes globally accessible.\\n- No module bundlers or build steps are required.\\n\\n### Requirements\\n- Include this script before any code that uses AIClient.\\n- This version is only for browser environments; it is not a Node.js package."
         },
         {
-          "id": "initialize-client",
-          "label": "Initialize the Client",
-          "icon": "play",
-          "badge": "Step 2",
-          "content": "# Initializing the Client\\n\\nAfter including the script, you must create a new client instance and provide your API key.\\n\\n## JavaScript Example\\n```javascript\\nconst client = new AIClient()\\n  .setApiKey('YOUR_API_KEY');\\n```\\n\\n### What This Does\\n- Stores the API key internally.\\n- Prepares the client for requests.\\n\\n### Internal Default Configuration\\n| Property | Default Value |\\n|----------|----------------|\\n| model | \\\"flux\\\" |\\n| type | \\\"text\\\" |\\n| systemPrompt | \\\"You are a helpful assistant.\\\" |\\n| timeout | 30000 |\\n| retry | true |\\n| retryAttempts | 2 |\\n| retryDelay | 1000 |\\n| seed | null |\\n| width | 1024 |\\n| height | 1024 |\\n| history | [] |\\n\\n### Important Notes\\n- The API key is required; without it, calls to `generate()` will fail.\\n- The client does not validate the API key; validation occurs on the server."
-        }
-      ]
-    },
-    {
-      "title": "Text Generation",
-      "items": [
-        {
-          "id": "setup-text-mode",
-          "label": "Set Text Mode",
-          "icon": "file-text",
-          "badge": "Step 3",
-          "content": "# Set Text Generation Mode\\n\\nThe client must be configured for text generation before issuing text requests.\\n\\n## JavaScript Example\\n```javascript\\nclient.setType('text');\\n```\\n\\n### What This Does\\n- Configures the client to use text endpoints.\\n- Internally this affects the request payload and endpoint targeted.\\n\\n### Endpoint Used\\nText generation uses the `POST /v1/chat/completions` endpoint on the API."
-        },
-        {
-          "id": "select-text-model",
-          "label": "Select a Text Model",
-          "icon": "cpu",
-          "badge": "Step 4",
-          "content": "# Selecting a Model for Text\\n\\nAfter setting the mode to text, you must specify which model should handle the request.\\n\\n## JavaScript Example\\n```javascript\\nclient.setModel('openai-fast');\\n```\\n\\n### Model Information and Status\\nModels supported by the service may change over time. Visit the official model listing to explore available models and their capabilities:\\n\\n[Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)\\n\\n### Model Health and Availability\\nModel status, latency, and health stats are available here:\\n\\n[Pollinations Model Monitor](https://model-monitor.pollinations.ai/)"
-        },
-        {
-          "id": "generate-text",
-          "label": "Generate Text",
+          "id": "ai-client-init",
+          "label": "Initializing AIClient",
+          "badge": "Docs",
           "icon": "play-circle",
-          "badge": "Core",
-          "content": "# Generating Text Output\\n\\nOnce the client is configured for text and a model is set, you can generate text output.\\n\\n## JavaScript Example\\n```javascript\\nconst output = await client.generate('Explain how AIClient works');\\nconsole.log(output);\\n```\\n\\n### What Happens Internally\\n1. The client prepares a JSON body containing:\\n   - `model`\\n   - `messages` (system prompt, history, user message)\\n   - `seed`\\n2. It sends a POST request to the text generation API.\\n3. On success, it returns the generated text.\\n4. User + assistant messages are appended to the internal history.\\n5. If history exceeds `2 * historyLimit`, the oldest messages are removed.\\n\\n### History Management\\n- Preserves context for multi-turn conversations.\\n\\n### Error Conditions\\n| Error Condition | Result |\\n|----------------|--------|\\n| No API key | Throws Error: \\\"API Key is required\\\" |\\n| Empty prompt | Throws Error: \\\"Input prompt cannot be empty\\\" |\\n| Server error (5xx) or 429 | Retries if retry is enabled |\\n| Timeout | Throws \\\"AI Request Timeout\\\" |"
+          "content": "After including the library, you can initialize AIClient like this:\\n\\n```javascript\\nconst client = new AIClient({ apiKey: 'YOUR_API_KEY' });\\n```\\n\\n- `apiKey` is your personal API key.\\n- No additional build steps are needed for browser usage."
         }
       ]
     },
     {
-      "title": "Image Generation",
+      "title": "Models",
       "items": [
         {
-          "id": "setup-image-mode",
-          "label": "Set Image Mode",
-          "icon": "image",
-          "badge": "Step 3",
-          "content": "# Set Image Mode\\n\\nConfigure the client for image generation.\\n\\n## JavaScript Example\\n```javascript\\nclient.setType('image');\\n```\\n\\n- Enables image endpoint usage."
+          "id": "model-listing",
+          "label": "Available Text/Image Models",
+          "badge": "Docs",
+          "icon": "layers",
+          "content": "You can find all available text and image models [here](https://enter.pollinations.ai/#:~:text=Models).\\n\\nYou can also check model health in real-time [here](https://model-monitor.pollinations.ai/).\\n\\nThis page excludes video and audio models."
         },
         {
-          "id": "select-image-model",
-          "label": "Select Image Model",
+          "id": "model-usage",
+          "label": "Using Models",
+          "badge": "Docs",
           "icon": "cpu",
-          "badge": "Step 4",
-          "content": "# Selecting an Image Model\\n\\nChoose a model capable of image generation.\\n\\n## JavaScript Example\\n```javascript\\nclient.setModel('gptimage');\\n```\\n\\n### Model Reference\\n[Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)\\n\\n### Model Health\\n[Pollinations Model Monitor](https://model-monitor.pollinations.ai/)"
+          "content": "To use a model in AIClient, do:\\n\\n```javascript\\nconst response = await client.request({\\n  model: 'openai',\\n  prompt: 'Hello world',\\n});\\nconsole.log(response.output_text);\\n```\\n\\n- Replace `model` with the desired model ID from the listing.\\n- `prompt` is your input string."
         }
       ]
     },
     {
-      "title": "References",
+      "title": "Examples",
       "items": [
         {
-          "id": "official-model-list",
-          "label": "Official Model List",
-          "icon": "link-2",
-          "content": "# Official Model List\\n\\nExplore the latest models and capabilities here:\\n\\n[Pollinations Models Page](https://enter.pollinations.ai/#:~:text=Models)"
+          "id": "example-basic",
+          "label": "Basic Text Completion",
+          "badge": "Example",
+          "icon": "edit-3",
+          "content": "A simple text completion example:\\n\\n```javascript\\nconst result = await client.request({\\n  model: 'openai',\\n  prompt: 'Write a short story about a cat.',\\n});\\nconsole.log(result.output_text);\\n```"
         },
         {
-          "id": "model-health-dashboard",
-          "label": "Model Health Dashboard",
-          "icon": "activity",
-          "content": "# Model Health and Status\\n\\nMonitor uptime, latency, and errors here:\\n\\n[Pollinations Model Monitor](https://model-monitor.pollinations.ai/)"
+          "id": "example-image",
+          "label": "Generate an Image",
+          "badge": "Example",
+          "icon": "image",
+          "content": "Generating an image using AIClient:\\n\\n```javascript\\nconst image = await client.request({\\n  model: 'gptimage',\\n  prompt: 'A futuristic city at sunset',\\n});\\nconsole.log(image.output_url);\\n```\\n\\n- `output_url` contains the URL to the generated image."
         }
       ]
     }
