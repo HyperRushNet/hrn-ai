@@ -26,12 +26,10 @@
       this._syncModels();
     }
 
-    // Lazy loading van models: wacht alleen als we het nog niet weten
+    // Lazy loading van models
     async _syncModels() {
       if (AIClient._cache.fetched) return;
       try {
-        // Geen await, fire-and-forget om instantie creatie niet te vertragen
-        // Tenzij we het direct nodig hebben, dan wacht _getType wel.
         if (!AIClient._cache.models) {
            const res = await fetch('https://gen.pollinations.ai/v1/models');
            const data = await res.json();
@@ -39,32 +37,36 @@
            AIClient._cache.fetched = true;
         }
       } catch(e) {
-        console.warn("Model sync failed, using heuristics.");
-        AIClient._cache.fetched = true; // Prevent retry loop on failure
+        // console.warn("Model sync failed, using heuristics.");
+        AIClient._cache.fetched = true; 
       }
     }
 
     async _getType(modelId) {
-      // Zorg dat de sync klaar is als we het nodig hebben
       if (!AIClient._cache.fetched) await this._syncModels();
       
       const info = (AIClient._cache.models || []).find(m => m.id === modelId);
-      // Als we info hebben en output bevat 'image', dan is het image.
       if (info?.output_modalities?.includes('image')) return 'image';
       
-      // Smart Fallback: bekende image model namen
+      // Smart Fallback
       if (['flux', 'zimage', 'kontext', 'gptimage', 'seedream5'].includes(modelId)) return 'image';
       
       return 'text';
     }
 
-    // Chaining Setters (Kort en bondig)
-    set key(k) { this.cfg.key = k; return this; }
-    set model(m) { this.cfg.model = m; return this; }
-    set prompt(p) { this.cfg.prompt = p; return this; }
-    set timeout(t) { this.cfg.timeout = t; return this; }
-    set seed(s) { this.cfg.seed = s; return this; }
-    set dimensions(d) { this.cfg.width = d.w; this.cfg.height = d.h; return this; }
+    // --- Method Chaining Helpers (Corrected Syntax) ---
+    key(k) { this.cfg.key = k; return this; }
+    model(m) { this.cfg.model = m; return this; }
+    prompt(p) { this.cfg.prompt = p; return this; }
+    timeout(t) { this.cfg.timeout = t; return this; }
+    seed(s) { this.cfg.seed = s; return this; }
+    dimensions(w, h) { this.cfg.width = w; this.cfg.height = h; return this; }
+
+    // --- History Management ---
+    clearHistory() { 
+      this.cfg.history = []; 
+      return this; 
+    }
 
     // Core Generator
     async generate(input, opts = {}) {
@@ -114,7 +116,6 @@
       let res = await this._exec(url, payload, this.cfg.timeout);
       let attempts = 0;
 
-      // Retry Logic Inline
       while (!res.ok && attempts < this.cfg.retry) {
         await new Promise(r => setTimeout(r, this.cfg.delay));
         res = await this._exec(url, payload, this.cfg.timeout);
@@ -127,7 +128,6 @@
       const b64 = data.data?.[0]?.b64_json;
       if (!b64) throw new Error("No image data");
       
-      // Direct Blob return
       return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
     }
 
@@ -150,11 +150,7 @@
       const data = await res.json();
       const content = data.choices?.[0]?.message?.content;
       
-      // Update History
-      this.cfg.history.push({ role: 'user', content: input });
-      this.cfg.history.push({ role: 'assistant', content });
-      if (this.cfg.history.length > this.cfg.limit * 2) this.cfg.history.splice(0, 2);
-      
+      this._updateHistory(input, content);
       return content;
     }
 
@@ -185,7 +181,7 @@
         
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // Keep incomplete line
+        buffer = lines.pop();
         
         for (let line of lines) {
           if (!line.startsWith('data: ')) continue;
@@ -202,9 +198,20 @@
         }
       }
       
-      this.cfg.history.push({ role: 'user', content: input });
-      this.cfg.history.push({ role: 'assistant', content: fullText });
+      this._updateHistory(input, fullText);
       return null;
+    }
+
+    // Central History Updater
+    _updateHistory(userInput, assistantOutput) {
+      if (this.cfg.limit === 0) return; // No history mode
+      
+      this.cfg.history.push({ role: 'user', content: userInput });
+      this.cfg.history.push({ role: 'assistant', content: assistantOutput });
+      
+      if (this.cfg.history.length > this.cfg.limit * 2) {
+        this.cfg.history.splice(0, 2);
+      }
     }
   }
 
