@@ -15,7 +15,7 @@ The `AIClient` is a robust, zero-dependency JavaScript class designed to interfa
 ### Installation
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.6.min.js"></script>
 ```
 
 ## Quick Start
