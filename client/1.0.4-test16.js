@@ -86,7 +86,6 @@ class AIClient extends EventTarget {
               if (!trimmedLine) continue;
 
               const message = trimmedLine.startsWith('data: ') ? trimmedLine.slice(6) : trimmedLine;
-
               if (message === '[DONE]') {
                 this.dispatchEvent(new CustomEvent("message", { detail: { data: false, chatId: this.config.chatId, stream: true } }));
                 return;
@@ -95,17 +94,11 @@ class AIClient extends EventTarget {
               try {
                 const parsed = JSON.parse(message);
                 const content = parsed?.choices?.[0]?.delta?.content;
-                if (content) {
-                  this.dispatchEvent(new CustomEvent("message", { detail: { data: content, chatId: this.config.chatId, stream: true } }));
-                }
-              } catch (e) {
-                 console.warn("Stream parse error:", e);
-              }
+                if (content) this.dispatchEvent(new CustomEvent("message", { detail: { data: content, chatId: this.config.chatId, stream: true } }));
+              } catch (e) {}
             }
           }
-          
           this.dispatchEvent(new CustomEvent("message", { detail: { data: false, chatId: this.config.chatId, stream: true } }));
-
         } else {
           clearTimeout(timer);
           const data = await res.json();
