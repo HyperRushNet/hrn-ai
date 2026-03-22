@@ -2,9 +2,9 @@ class AIClient {
   constructor(options = {}) {
     this.config = {
       apiKey: options.apiKey || null,
-      model: options.model || 'flux',
+      model: options.model || 'openai', // Default to a text model
       systemPrompt: options.systemPrompt || 'You are a helpful assistant.',
-      type: options.type === 'image' ? 'image' : 'text',
+      // Dimensions only used if model turns out to be image
       width: options.width || 1024,
       height: options.height || 1024,
       history: options.history || [],
@@ -15,6 +15,9 @@ class AIClient {
       retryAttempts: options.retryAttempts || 2,
       retryDelay: options.retryDelay || 1000
     };
+    
+    // Internal cache for model metadata
+    this._modelCache = null;
   }
 
   setHistory(h) { 
@@ -27,12 +30,83 @@ class AIClient {
     return this; 
   }
 
+  /**
+   * Fetches models from /v1/models and caches them.
+   * Returns the model info object for the configured model.
+   */
+  async _getModelInfo() {
+    if (this._modelCache) return this._modelCache.find(m => m.id === this.config.model);
+
+    try {
+      // Fetching the model list does not strictly require an API key according to docs
+      const res = await fetch('https://gen.pollinations.ai/v1/models', {
+        headers: this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {}
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch model list");
+      
+      const data = await res.json();
+      this._modelCache = data.data || []; // Store the list
+      
+      const modelInfo = this._modelCache.find(m => m.id === this.config.model);
+      if (!modelInfo) {
+        // If model ID is not found, we assume text by default or throw error
+        console.warn(`AIClient: Model '${this.config.model}' not found in registry. Assuming text endpoint.`);
+        return null;
+      }
+      return modelInfo;
+    } catch (err) {
+      console.warn("AIClient: Could not fetch model registry. Falling back to text.", err);
+      return null;
+    }
+  }
+
   async generate(input, attempt = 0) {
     if (!input || typeof input !== 'string' || !input.trim()) throw new Error("AIClient: Input prompt cannot be empty.");
 
-    const isImg = this.config.type === 'image';
-    const url = isImg ? 'https://gen.pollinations.ai/v1/images/generations' : 'https://gen.pollinations.ai/v1/chat/completions';
+    // 1. Determine Model Capabilities
+    const modelInfo = await this._getModelInfo();
     
+    // Default fallback values
+    let type = 'text';
+    let endpoint = 'https://gen.pollinations.ai/v1/chat/completions';
+
+    if (modelInfo) {
+      const hasImageOutput = modelInfo.output_modalities?.includes('image');
+      const hasTextOutput = modelInfo.output_modalities?.includes('text');
+      const supportedEndpoints = modelInfo.supported_endpoints || [];
+
+      // Logic to decide type
+      if (hasImageOutput && !hasTextOutput) {
+        type = 'image';
+      } else {
+        type = 'text';
+      }
+
+      // Logic to decide endpoint (Prefer the first supported endpoint)
+      if (supportedEndpoints.length > 0) {
+        // Normalize relative vs absolute URLs if needed, but API gives relative paths mostly
+        // For safety we map known paths
+        const path = supportedEndpoints[0];
+        if (path.startsWith('/v1')) {
+             endpoint = `https://gen.pollinations.ai${path}`;
+        } else if (path.startsWith('http')) {
+             endpoint = path;
+        } else {
+             // Handle legacy style like /text/{prompt} -> usually implies base URL
+             endpoint = `https://gen.pollinations.ai${path}`;
+        }
+      }
+    }
+
+    const isImg = (type === 'image');
+    
+    // Override endpoint for images if we are using the POST standard (which is usually /v1/images/generations)
+    // The registry might return specific paths, but for images we need the generation endpoint.
+    if (isImg) {
+        endpoint = 'https://gen.pollinations.ai/v1/images/generations';
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.config.timeout);
 
@@ -61,7 +135,7 @@ class AIClient {
         headers['Authorization'] = `Bearer ${this.config.apiKey}`;
       }
 
-      const response = await fetch(url, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: headers,
         signal: controller.signal,
