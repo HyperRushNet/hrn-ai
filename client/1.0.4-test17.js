@@ -63,16 +63,20 @@
       const streamOpt = options.stream !== undefined ? options.stream : this.config.stream;
       const onStream = typeof options.onStream === 'function' ? options.onStream : null;
 
+      // We bewaren de messages lokaal om ze later aan de history toe te voegen
+      const messagesPayload = [
+        { role: 'system', content: this.config.systemPrompt },
+        ...this.config.history,
+        { role: 'user', content: prompt }
+      ];
+
       const payload = {
         model: this.config.model,
-        messages: [
-          { role: 'system', content: this.config.systemPrompt },
-          ...this.config.history,
-          { role: 'user', content: prompt }
-        ],
+        messages: messagesPayload,
         stream: streamOpt,
         seed: this.config.seed ?? Math.floor(Math.random() * 1e9),
-        response_format: streamOpt ? { type: 'json_object' } : undefined
+        // JSON mode is optioneel en kan problemen geven bij simpele teksten, we laten het standaard weg tenzij expliciet gevraagd
+        response_format: options.response_format 
       };
 
       const executeRequest = async (attempt = 1) => {
@@ -95,7 +99,8 @@
           }
 
           if (streamOpt && res.body) {
-            return await this._handleStreamResponse(res.body, onStream);
+            // We geven de originele prompt en messages mee voor de history update
+            return await this._handleStreamResponse(res.body, onStream, prompt);
           } else {
             const data = await res.json();
             const text = data?.choices?.[0]?.message?.content;
@@ -118,7 +123,8 @@
       return executeRequest();
     }
 
-    async _handleStreamResponse(body, onStream) {
+    // FIX: prompt parameter toegevoegd om history correct te updaten
+    async _handleStreamResponse(body, onStream, prompt) {
       const reader = body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -147,12 +153,13 @@
               if (onStream) onStream(chunk);
             }
           } catch (parseError) {
-            // Ignore parsing errors for incomplete chunks
+             // Ignore incomplete JSON chunks
           }
         }
       }
       
-      this._updateHistory(payload.messages[payload.messages.length - 1].content, fullText);
+      // Update history met de volledige tekst en originele prompt
+      this._updateHistory(prompt, fullText);
       return null; 
     }
 
