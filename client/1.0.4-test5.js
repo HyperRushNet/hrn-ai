@@ -7,7 +7,7 @@ class AIClient {
       type: options.type === 'image' ? 'image' : 'text',
       width: options.width || 1024,
       height: options.height || 1024,
-      history: options.history || [], // Nu puur input, geen automatische update
+      history: options.history || [],
       historyLimit: options.historyLimit || 10,
       timeout: options.timeout || 30000,
       seed: options.seed || null,
@@ -17,59 +17,19 @@ class AIClient {
     };
   }
 
-  // --- SETTERS (Return NEW instance -> Immutable) ---
-  
-  setApiKey(k) {
-    return new AIClient({ ...this.config, apiKey: String(k) });
+  setHistory(h) { 
+    this.config.history = Array.isArray(h) ? h.slice(-this.config.historyLimit) : []; 
+    return this; 
   }
 
-  setModel(m) {
-    return new AIClient({ ...this.config, model: String(m) });
+  clearHistory() { 
+    this.config.history = []; 
+    return this; 
   }
-
-  setType(t) {
-    return new AIClient({ ...this.config, type: t === 'image' ? 'image' : 'text' });
-  }
-
-  setSystemPrompt(p) {
-    return new AIClient({ ...this.config, systemPrompt: String(p) });
-  }
-
-  setTimeout(ms) {
-    return new AIClient({ ...this.config, timeout: Number(ms) || 30000 });
-  }
-
-  setSeed(s) {
-    return new AIClient({ ...this.config, seed: s ? Number(s) : null });
-  }
-
-  setDimensions(w, h) {
-    return new AIClient({
-      ...this.config,
-      width: Number(w) || 1024,
-      height: Number(h) || 1024
-    });
-  }
-
-  setRetry(bool, attempts = 2, delay = 1000) {
-    return new AIClient({
-      ...this.config,
-      retry: !!bool,
-      retryAttempts: Number(attempts),
-      retryDelay: Number(delay)
-    });
-  }
-
-  setHistory(historyArray) {
-    // Verwacht een array van message objects
-    return new AIClient({ ...this.config, history: historyArray || [] });
-  }
-
-  // --- GENERATE (Stateless, no auto-push) ---
 
   async generate(input, attempt = 0) {
     if (!this.config.apiKey) throw new Error("AIClient: API Key is required.");
-    if (!input?.trim()) throw new Error("AIClient: Input prompt cannot be empty.");
+    if (!input || typeof input !== 'string' || !input.trim()) throw new Error("AIClient: Input prompt cannot be empty.");
 
     const isImg = this.config.type === 'image';
     const url = isImg ? 'https://gen.pollinations.ai/v1/images/generations' : 'https://gen.pollinations.ai/v1/chat/completions';
@@ -78,9 +38,7 @@ class AIClient {
     const timer = setTimeout(() => controller.abort(), this.config.timeout);
 
     try {
-      const activeSeed = this.config.seed || Math.floor(Math.random() * 1e9);
-      
-      // History wordt nu enkel gebruikt vanuit de config, niet aangepast.
+      const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
       const payload = isImg ? {
         prompt: input,
         model: this.config.model,
@@ -123,11 +81,21 @@ class AIClient {
       const data = await response.json();
 
       if (isImg) {
+        if (!data?.data?.[0]?.b64_json) throw new Error("Invalid image response structure.");
         const b64 = data.data[0].b64_json;
         return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
       } else {
-        // Alleen de content teruggeven, geen history update.
-        return data.choices[0].message.content;
+        const content = data?.choices?.[0]?.message?.content;
+        if (!content) throw new Error("Invalid text response structure.");
+        
+        this.config.history.push({ role: 'user', content: input });
+        this.config.history.push({ role: 'assistant', content: content });
+        
+        if (this.config.history.length > this.config.historyLimit * 2) {
+           this.config.history = this.config.history.slice(-this.config.historyLimit * 2);
+        }
+        
+        return content;
       }
 
     } catch (err) {
