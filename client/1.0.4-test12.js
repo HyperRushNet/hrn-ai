@@ -1,4 +1,8 @@
 class AIClient {
+  static _activeRequests = 0;
+  static _maxConcurrent = 5;
+  static _queue = [];
+
   constructor(options = {}) {
     const immutableConfig = Object.freeze({
       apiKey: options.apiKey || null,
@@ -42,79 +46,97 @@ class AIClient {
     }
   }
 
-  async generate(input, attempt = 0) {
-    if (!input || typeof input !== 'string' || !input.trim()) throw new Error("Input prompt cannot be empty.");
-    const modelInfo = await this._getModelInfo();
-    let type = 'text';
-    let endpoint = 'https://gen.pollinations.ai/v1/chat/completions';
-    if (modelInfo) {
-      const hasImage = modelInfo.output_modalities?.includes('image');
-      const hasText = modelInfo.output_modalities?.includes('text');
-      const supported = modelInfo.supported_endpoints || [];
-      type = hasImage && !hasText ? 'image' : 'text';
-      if (supported.length > 0) {
-        const path = supported[0];
-        endpoint = path.startsWith('http') ? path : `https://gen.pollinations.ai${path}`;
-      }
+  async _enqueueRequest(fn) {
+    if (AIClient._activeRequests >= AIClient._maxConcurrent) {
+      await new Promise(resolve => AIClient._queue.push(resolve));
     }
-    if (type === 'image') endpoint = 'https://gen.pollinations.ai/v1/images/generations';
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.config.timeout);
+    AIClient._activeRequests++;
     try {
-      const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
-      const payload = type === 'image' ? {
-        prompt: input,
-        model: this.config.model,
-        size: `${this.config.width}x${this.config.height}`,
-        response_format: "b64_json",
-        nologo: true,
-        seed: activeSeed
-      } : {
-        model: this.config.model,
-        messages: [
-          { role: 'system', content: this.config.systemPrompt },
-          ...this.config.history,
-          { role: 'user', content: input }
-        ],
-        seed: activeSeed
-      };
-      const headers = { 'Content-Type': 'application/json' };
-      if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        signal: controller.signal,
-        body: JSON.stringify(payload)
-      });
-      clearTimeout(timer);
-      if (!response.ok) {
-        const retryable = response.status >= 500 || response.status === 429;
-        if (this.config.retry && attempt < this.config.retryAttempts && retryable) {
-          await new Promise(r => setTimeout(r, this.config.retryDelay));
-          return this.generate(input, attempt + 1);
-        }
-        let errMsg = `API Error: ${response.status}`;
-        try { const errJson = await response.json(); if (errJson.error?.message) errMsg = errJson.error.message } catch {}
-        throw new Error(errMsg);
+      return await fn();
+    } finally {
+      AIClient._activeRequests--;
+      if (AIClient._queue.length > 0) {
+        const next = AIClient._queue.shift();
+        next();
       }
-      const data = await response.json();
-      if (type === 'image') {
-        if (!data?.data?.[0]?.b64_json) throw new Error("Invalid image response.");
-        const b64 = data.data[0].b64_json;
-        return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
-      } else {
-        const content = data?.choices?.[0]?.message?.content;
-        if (!content) throw new Error("Invalid text response.");
-        return content;
-      }
-    } catch (err) {
-      clearTimeout(timer);
-      if (err.name === 'AbortError') {
-        if (this.config.retry && attempt < this.config.retryAttempts) return this.generate(input, attempt + 1);
-        throw new Error("AI Request Timeout");
-      }
-      throw err;
     }
+  }
+
+  async generate(input, attempt = 0) {
+    return this._enqueueRequest(async () => {
+      if (!input || typeof input !== 'string' || !input.trim()) throw new Error("Input prompt cannot be empty.");
+      const modelInfo = await this._getModelInfo();
+      let type = 'text';
+      let endpoint = 'https://gen.pollinations.ai/v1/chat/completions';
+      if (modelInfo) {
+        const hasImage = modelInfo.output_modalities?.includes('image');
+        const hasText = modelInfo.output_modalities?.includes('text');
+        const supported = modelInfo.supported_endpoints || [];
+        type = hasImage && !hasText ? 'image' : 'text';
+        if (supported.length > 0) {
+          const path = supported[0];
+          endpoint = path.startsWith('http') ? path : `https://gen.pollinations.ai${path}`;
+        }
+      }
+      if (type === 'image') endpoint = 'https://gen.pollinations.ai/v1/images/generations';
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), this.config.timeout);
+      try {
+        const activeSeed = this.config.seed ?? Math.floor(Math.random() * 1e9);
+        const payload = type === 'image' ? {
+          prompt: input,
+          model: this.config.model,
+          size: `${this.config.width}x${this.config.height}`,
+          response_format: "b64_json",
+          nologo: true,
+          seed: activeSeed
+        } : {
+          model: this.config.model,
+          messages: [
+            { role: 'system', content: this.config.systemPrompt },
+            ...this.config.history,
+            { role: 'user', content: input }
+          ],
+          seed: activeSeed
+        };
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.config.apiKey) headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          signal: controller.signal,
+          body: JSON.stringify(payload)
+        });
+        clearTimeout(timer);
+        if (!response.ok) {
+          const retryable = response.status >= 500 || response.status === 429;
+          if (this.config.retry && attempt < this.config.retryAttempts && retryable) {
+            await new Promise(r => setTimeout(r, this.config.retryDelay));
+            return this.generate(input, attempt + 1);
+          }
+          let errMsg = `API Error: ${response.status}`;
+          try { const errJson = await response.json(); if (errJson.error?.message) errMsg = errJson.error.message } catch {}
+          throw new Error(errMsg);
+        }
+        const data = await response.json();
+        if (type === 'image') {
+          if (!data?.data?.[0]?.b64_json) throw new Error("Invalid image response.");
+          const b64 = data.data[0].b64_json;
+          return new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: 'image/png' });
+        } else {
+          const content = data?.choices?.[0]?.message?.content;
+          if (!content) throw new Error("Invalid text response.");
+          return content;
+        }
+      } catch (err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') {
+          if (this.config.retry && attempt < this.config.retryAttempts) return this.generate(input, attempt + 1);
+          throw new Error("AI Request Timeout");
+        }
+        throw err;
+      }
+    });
   }
 }
 
