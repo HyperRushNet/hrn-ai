@@ -17,13 +17,14 @@
   --text: #f8fafc;
   --muted: #64748b;
   --accent: #38bdf8;
+  --success: #10b981;
   --radius: 12px;
   --fs-base: 14px;
   --fs-code: 13px;
   --fs-h1: 22px;
   --fs-h2: 18px;
   --fs-h3: 16px;
-  --header-h: 36px;
+  --header-h: 38px;
   --lh: 1.6;
 }
 
@@ -42,18 +43,18 @@ h1 { font-size: var(--fs-h1); }
 h2 { font-size: var(--fs-h2); }
 h3 { font-size: var(--fs-h3); }
 
-/* --- LIJST FIX --- */
+/* Lijsten */
 ul, ol { padding-left: 28px; margin: 10px 0; }
 li { margin-bottom: 6px; color: #cbd5e1; }
-li > p { margin: 0; display: inline; }
 
-/* Takenlijst (Tasklist) specifieke styling */
+/* Takenlijst */
 .task-list { list-style: none; padding-left: 0; }
-.task-list li { display: flex; align-items: flex-start; gap: 12px; }
+.task-list li { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
 .task-check { 
   flex-shrink: 0; width: 18px; height: 18px; margin-top: 3px; 
   border: 1.5px solid var(--border); border-radius: 5px; 
   background: var(--surface); cursor: pointer; position: relative;
+  transition: all 0.2s ease;
 }
 .is-checked .task-check { background: rgba(56,189,248,0.1); border-color: var(--accent); }
 .is-checked .task-check::after {
@@ -70,19 +71,34 @@ blockquote {
   padding: 16px 20px; margin: 20px 0; 
   border-radius: 0 var(--radius) var(--radius) 0;
 }
-blockquote p { font-style: italic; }
 
 /* Code & Math */
 .katex { font-size: 1.05em !important; }
 code { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-code) !important; }
 :not(pre) > code { background: rgba(255,255,255,0.06); padding: 2px 5px; border-radius: 4px; color: var(--accent); }
 
-.code-block { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: 20px 0; overflow: hidden; }
-.code-header { display: flex; justify-content: space-between; align-items: center; height: var(--header-h); padding: 0 14px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
-.code-lang { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono'; font-weight: 700; text-transform: uppercase; }
-.copy-btn { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 11px; }
+/* Code Block met verbeterde header */
+.code-block { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: 24px 0; overflow: hidden; }
+.code-header { 
+  display: flex; justify-content: space-between; align-items: center; 
+  height: var(--header-h); padding: 0 14px; 
+  background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); 
+}
+.code-lang { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono'; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Copy Button Styling */
+.copy-btn { 
+  background: transparent; border: none; color: var(--muted); 
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  padding: 4px 8px; border-radius: 4px; transition: all 0.2s;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.copy-btn svg { width: 14px; height: 14px; fill: currentColor; }
+.copy-btn.copied { color: var(--success); }
+
 pre { padding: 16px !important; margin: 0 !important; background: transparent !important; overflow-x: auto; }
 
+/* Table */
 .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); margin: 24px 0; }
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-code); }
 th { background: rgba(255,255,255,0.02); color: var(--accent); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; }
@@ -102,24 +118,43 @@ td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: #94a3b8;
 </div>
 
 <script>
+// Iconen templates
+const iconCopy = `<svg viewBox="0 0 24 24"><path d="M19 21H8V7h11m0-2H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2m-3-4H4a2 2 0 00-2 2v14h2V3h12V1z"/></svg>`;
+const iconCheck = `<svg viewBox="0 0 24 24"><path d="M21 7L9 19l-5.5-5.5 1.41-1.41L9 16.17 19.59 5.59 21 7z"/></svg>`;
+
+function copyToClipboard(button, text) {
+    navigator.clipboard.writeText(text).then(() => {
+        button.innerHTML = iconCheck;
+        button.classList.add('copied');
+        setTimeout(() => {
+            button.innerHTML = iconCopy;
+            button.classList.remove('copied');
+        }, 2000);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function(){
   const contentEl = document.getElementById('content');
   const mdDiv = document.createElement('div'); 
   mdDiv.className = 'md-body';
 
-  // --- 1. Task List ---
+  // 1. Task List
   const taskUl = document.createElement('ul'); 
   taskUl.className = 'task-list';
-  [14, 15].forEach(i => {
+  const tasks = [
+    { id: 14, checked: false, text: "Inline math $x^{14}+y^{14}=z^{14}$ and code <code>console.log(14)</code>" },
+    { id: 15, checked: true, text: "Inline math $x^{15}+y^{15}=z^{15}$ and code <code>console.log(15)</code>" }
+  ];
+
+  tasks.forEach(t => {
     const li = document.createElement('li');
-    if(i === 15) li.className = 'is-checked';
-    li.innerHTML = `<div class="task-check"></div><div class="li-content">Task ${i}: Inline math $x^${i}+y^${i}=z^${i}$ and code <code>console.log(${i})</code></div>`;
+    if(t.checked) li.className = 'is-checked';
+    li.innerHTML = `<div class="task-check"></div><div class="li-content">${t.text}</div>`;
     taskUl.appendChild(li);
   });
   mdDiv.appendChild(taskUl);
 
-  // --- 2. Omega Stress Test Markdown (Correcte nesting!) ---
-  // Belangrijk: Gebruik template literals en let op de spaties voor de 'Subitem' lijst.
+  // 2. Omega Stress Test Markdown
   const omegaMD = `
 # 🛡️ Omega Stress Test V5.3 Extreme Fixed
 
@@ -132,26 +167,49 @@ document.addEventListener('DOMContentLoaded', function(){
 >     2. Subitem code \`rm -rf /\`
 >     3. Subitem with inline math $\\frac{a_i}{b_j}$
 > * Another first level item with code \`let x=5;\`
-> * Yet another first level item
 `;
-
   mdDiv.innerHTML += marked.parse(omegaMD);
 
-  // --- 3. Extra Content ---
+  // 3. Extra Content (Table)
   let extraMD = "## Extra Data\n| Item | Math | Code |\n| :--- | :--- | :--- |\n| Alpha | $\\gamma$ | `init()` |\n| Beta | $\\delta$ | `stop()` |";
   mdDiv.innerHTML += marked.parse(extraMD);
 
   contentEl.appendChild(mdDiv);
 
-  // --- 4. Code Blocks ---
-  const codeBox = document.createElement('div');
-  codeBox.className = 'code-block';
-  codeBox.innerHTML = `
-    <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn">Copy</button></div>
-    <pre><code class="language-javascript">function test() {\n  console.log("System stable");\n  return true;\n}</code></pre>`;
-  mdDiv.appendChild(codeBox);
+  // 4. Code Blocks met werkende Copy Button
+  function createCodeBlock(lang, code) {
+    const container = document.createElement('div');
+    container.className = 'code-block';
+    
+    const header = document.createElement('div');
+    header.className = 'code-header';
+    header.innerHTML = `<span class="code-lang">${lang}</span>`;
+    
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.innerHTML = iconCopy;
+    btn.onclick = () => copyToClipboard(btn, code);
+    
+    header.appendChild(btn);
+    
+    const pre = document.createElement('pre');
+    const codeTag = document.createElement('code');
+    codeTag.className = `language-${lang}`;
+    codeTag.textContent = code;
+    
+    pre.appendChild(codeTag);
+    container.appendChild(header);
+    container.appendChild(pre);
+    return container;
+  }
 
-  // --- RENDERING ---
+  const jsCode = `function test() {\n  console.log("System stable");\n  return true;\n}`;
+  mdDiv.appendChild(createCodeBlock('javascript', jsCode));
+
+  const cssCode = `:root {\n  --accent: #38bdf8;\n  --bg: #050505;\n}`;
+  mdDiv.appendChild(createCodeBlock('css', cssCode));
+
+  // RENDERING & HIGHLIGHTING
   renderMathInElement(contentEl, {
     delimiters: [
       {left: '$$', right: '$$', display: true},
