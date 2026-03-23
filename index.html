@@ -101,6 +101,15 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 .md-body ul li::marker{color:var(--accent)}
 .md-body blockquote{border-left:3px solid var(--accent);padding-left:16px;margin:16px 0;color:var(--text-muted)}
 .md-body blockquote blockquote{border-left-color:var(--text-muted);margin:8px 0}
+
+/* HR Styling */
+.md-body hr {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+    margin: 3em 0;
+}
+
 .table-wrapper{width:100%;overflow-x:auto;margin:16px 0;border:1px solid var(--border-subtle);border-radius:8px}
 table{width:100%;border-collapse:collapse;font-size:14px;text-align:left}
 th,td{padding:10px 14px;border-bottom:1px solid var(--border-subtle)}
@@ -249,7 +258,6 @@ const renderer = new marked.Renderer();
 
 // Fix for [object Object] and adding Header
 renderer.code = function(code, language) {
-    // Handle new Marked.js signature where 'code' might be an object/token
     let codeText = '';
     let lang = 'plaintext';
     
@@ -272,7 +280,6 @@ renderer.code = function(code, language) {
         console.error(e);
     }
 
-    // Return HTML with header
     return `
     <div class="code-wrapper">
         <div class="code-header">
@@ -283,7 +290,35 @@ renderer.code = function(code, language) {
     </div>`;
 };
 
+// Fix for [object Object] in tables
 renderer.table = function(header, body) {
+    // Handle object (Token) case for newer Marked.js versions
+    if (typeof header === 'object' && header !== null && header.type === 'table') {
+        const token = header;
+        
+        let headHtml = '<tr>';
+        if (token.header) {
+            token.header.forEach(cell => {
+                headHtml += '<th>' + marked.parseInline(cell.text) + '</th>';
+            });
+        }
+        headHtml += '</tr>';
+
+        let bodyHtml = '';
+        if (token.rows) {
+            token.rows.forEach(row => {
+                bodyHtml += '<tr>';
+                row.forEach(cell => {
+                    bodyHtml += '<td>' + marked.parseInline(cell.text) + '</td>';
+                });
+                bodyHtml += '</tr>';
+            });
+        }
+        
+        return `<div class="table-wrapper"><table>\n<thead>${headHtml}</thead>\n<tbody>${bodyHtml}</tbody></table></div>\n`;
+    }
+
+    // Fallback for standard string arguments
     if (body) body = '<tbody>' + body + '</tbody>';
     return '<div class="table-wrapper"><table>\n<thead>' + header + '</thead>\n' + body + '</table></div>\n';
 };
@@ -323,7 +358,6 @@ function parseMarkdown(text) {
 function copyCodeBlock(button) {
     const wrapper = button.closest('.code-wrapper');
     const codeEl = wrapper.querySelector('code');
-    // Use innerText to get raw text without HTML entities/tags
     const text = codeEl.innerText; 
     navigator.clipboard.writeText(text).then(() => {
         const originalText = button.innerText;
