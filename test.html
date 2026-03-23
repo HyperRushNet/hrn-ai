@@ -372,8 +372,14 @@ The frontend rendering engine supports specific Markdown features. You must form
 - FORMATTING: Use Markdown. Use MathJax ($$...$$) for math.
 `;
 
-let CURRENT_ID = null, CHATS = [], PK = localStorage.getItem("pk"), isGenerating = !1, abortController = null, lastMathjaxRender = 0;
-const DB_NAME = "HyperRushDB", DB_STORE = "chatHistory";
+let CURRENT_ID = null;
+let CHATS = [];
+let PK = localStorage.getItem("pk");
+let isGenerating = false;
+let abortController = null;
+let lastMathjaxRender = 0;
+const DB_NAME = "HyperRushDB";
+const DB_STORE = "chatHistory";
 let db;
 let selectedFiles = [];
 let selectedFilePreviews = [];
@@ -543,14 +549,18 @@ async function init() {
     if (!PK) {
         const e = new URLSearchParams(window.location.hash.substring(1)).get("api_key");
         if (!e) return void(window.location.href = `https://enter.pollinations.ai/authorize?redirect_url=${encodeURIComponent(window.location.href)}&permissions=profile,balance,usage,offline_access&app_key=pk_kn9KoGgYC7i5Sk6P&expiry=never`);
-        localStorage.setItem("pk", e), PK = e, location.reload()
+        localStorage.setItem("pk", e);
+        PK = e;
+        location.reload();
     }
-    renderSidebar(), updateBalance();
+    renderSidebar();
+    updateBalance();
     const e = document.getElementById("prompt");
-    e.addEventListener("input", (() => { e.style.height = "auto", e.style.height = e.scrollHeight + "px" })), e.addEventListener("keydown", (e => { "Enter" !== e.key || e.shiftKey || (e.preventDefault(), handleSendOrStop()) }))
+    e.addEventListener("input", () => { e.style.height = "auto"; e.style.height = e.scrollHeight + "px"; });
+    e.addEventListener("keydown", (e) => { if ("Enter" !== e.key || e.shiftKey) return; e.preventDefault(); handleSendOrStop(); });
 }
 
-function toggleSidebar() { document.body.classList.toggle("sidebar-open") }
+function toggleSidebar() { document.body.classList.toggle("sidebar-open"); }
 
 async function updateBalance() {
     const e = document.getElementById("balance");
@@ -561,61 +571,174 @@ async function updateBalance() {
         if (!t.ok) throw new Error(`HTTP status ${t.status}`);
         const n = await t.json();
         e.innerText = Math.round(((n.balance || 0) + Number.EPSILON) * 1000).toLocaleString() + " CREDITS";
-    } catch (t) { console.error("Balance fetch error:", t), e.innerText = "ERROR" }
+    } catch (t) { console.error("Balance fetch error:", t); e.innerText = "ERROR"; }
 }
 
 function renderSidebar() {
-    const e = document.getElementById("chat-list"); e.innerHTML = "";
-    CHATS.forEach((t => {
-        const n = document.createElement("div"); n.className = "chat-item " + (t.id === CURRENT_ID ? "active" : "");
-        const titleWrap = document.createElement("div"); titleWrap.className = "chat-title-wrap";
-        const s = document.createElement("span"); s.className = "chat-title"; const displayTitle = _cleanTitle(t.title); s.innerText = displayTitle; s.title = displayTitle;
-        const editBtn = document.createElement("button"); editBtn.className = "edit-title-btn"; editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'; editBtn.title = "Edit title";
+    const e = document.getElementById("chat-list");
+    e.innerHTML = "";
+    CHATS.forEach((t) => {
+        const n = document.createElement("div");
+        n.className = "chat-item " + (t.id === CURRENT_ID ? "active" : "");
+        
+        const titleWrap = document.createElement("div");
+        titleWrap.className = "chat-title-wrap";
+        
+        const s = document.createElement("span");
+        s.className = "chat-title";
+        const displayTitle = _cleanTitle(t.title);
+        s.innerText = displayTitle;
+        s.title = displayTitle;
+        
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-title-btn";
+        editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+        editBtn.title = "Edit title";
+        
         editBtn.onclick = (e) => { e.stopPropagation(); _startEditTitle(t.id, s); };
-        titleWrap.appendChild(s); titleWrap.appendChild(editBtn); s.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(t.id, s); }; n.onclick = () => loadChat(t.id);
-        const o = document.createElement("button"); o.className = "act-btn", o.onclick = e => deleteChat(t.id, e), o.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;opacity:0.6"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-        n.appendChild(titleWrap); n.appendChild(o); e.appendChild(n);
-    }))
+        
+        titleWrap.appendChild(s);
+        titleWrap.appendChild(editBtn);
+        
+        s.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(t.id, s); };
+        
+        n.onclick = () => loadChat(t.id);
+        
+        const o = document.createElement("button");
+        o.className = "act-btn";
+        o.onclick = e => deleteChat(t.id, e);
+        o.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;opacity:0.6"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+        
+        n.appendChild(titleWrap);
+        n.appendChild(o);
+        e.appendChild(n);
+    });
 }
 
 function _startEditTitle(chatId, titleElement) {
-    const chat = CHATS.find(c => c.id === chatId); if (!chat) return; const currentTitle = chat.title || "New Chat";
-    const input = document.createElement("input"); input.type = "text"; input.className = "chat-title-input"; input.value = currentTitle;
-    const parent = titleElement.parentNode; parent.replaceChild(input, titleElement); input.focus(); input.select();
+    const chat = CHATS.find(c => c.id === chatId);
+    if (!chat) return;
+    
+    const currentTitle = chat.title || "New Chat";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "chat-title-input";
+    input.value = currentTitle;
+    
+    const parent = titleElement.parentNode;
+    parent.replaceChild(input, titleElement);
+    input.focus();
+    input.select();
+    
     const saveTitle = async () => {
-        const newTitle = input.value.trim() || "New Chat"; chat.title = newTitle; await _saveChatsToDB();
-        const newSpan = document.createElement("span"); newSpan.className = "chat-title"; newSpan.innerText = _cleanTitle(newTitle); newSpan.title = _cleanTitle(newTitle);
-        newSpan.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(chatId, newSpan); }; parent.replaceChild(newSpan, input);
+        const newTitle = input.value.trim() || "New Chat";
+        chat.title = newTitle;
+        await _saveChatsToDB();
+        
+        const newSpan = document.createElement("span");
+        newSpan.className = "chat-title";
+        newSpan.innerText = _cleanTitle(newTitle);
+        newSpan.title = _cleanTitle(newTitle);
+        
+        newSpan.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(chatId, newSpan); };
+        parent.replaceChild(newSpan, input);
     };
-    input.onblur = saveTitle; input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); input.blur(); } else if (e.key === "Escape") { input.value = currentTitle; input.blur(); } };
+    
+    input.onblur = saveTitle;
+    input.onkeydown = (e) => {
+        if (e.key === "Enter") { e.preventDefault(); input.blur(); }
+        else if (e.key === "Escape") { input.value = currentTitle; input.blur(); }
+    };
 }
 
 async function _generateChatTitle(chatId, userMessage, aiResponse) {
     try {
-        const response = await fetch(`${API_BASE}/v1/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` }, body: JSON.stringify({ model: "gemini-fast", messages: [{ role: "system", content: "Generate a very short title (max 4 words) for this conversation. (eg: 'Greeting') Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." }, { role: "user", content: `User: ${userMessage}\n\nAssistant: ${aiResponse.substring(0, 200)}` }], max_tokens: 20, temperature: 0.7 }) });
-        if (!response.ok) return null; const data = await response.json(); const title = data.choices?.[0]?.message?.content?.trim();
-        if (title && title.length > 0 && title.length <= 50) { const chat = CHATS.find(c => c.id === chatId); if (chat) { chat.title = title; await _saveChatsToDB(); renderSidebar(); return title; } }
-    } catch (e) { console.error("Title generation error:", e); } return null;
+        const response = await fetch(`${API_BASE}/v1/chat/completions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
+            body: JSON.stringify({
+                model: "gemini-fast",
+                messages: [
+                    { role: "system", content: "Generate a very short title (max 4 words) for this conversation. (eg: 'Greeting') Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." },
+                    { role: "user", content: `User: ${userMessage}\n\nAssistant: ${aiResponse.substring(0, 200)}` }
+                ],
+                max_tokens: 20,
+                temperature: 0.7
+            })
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        const title = data.choices?.[0]?.message?.content?.trim();
+        if (title && title.length > 0 && title.length <= 50) {
+            const chat = CHATS.find(c => c.id === chatId);
+            if (chat) {
+                chat.title = title;
+                await _saveChatsToDB();
+                renderSidebar();
+                return title;
+            }
+        }
+    } catch (e) { console.error("Title generation error:", e); }
+    return null;
 }
 
 function loadChat(e) {
-    if (isGenerating) return; CURRENT_ID = e;
+    if (isGenerating) return;
+    CURRENT_ID = e;
     const t = CHATS.find((t => t.id === e));
-    t && (document.getElementById("welcome").style.display = "none", document.getElementById("chat-view").style.display = "block", document.getElementById("chat-container").innerHTML = "", t.messages && Array.isArray(t.messages) && t.messages.forEach(((e, t) => { renderMsg(e.role, e.content, t, !0, e.images) })), renderSidebar(), window.innerWidth < 1024 && document.body.classList.remove("sidebar-open"))
+    if (t) {
+        document.getElementById("welcome").style.display = "none";
+        document.getElementById("chat-view").style.display = "block";
+        document.getElementById("chat-container").innerHTML = "";
+        if (t.messages && Array.isArray(t.messages)) {
+            t.messages.forEach((msg, index) => {
+                renderMsg(msg.role, msg.content, index, true, msg.images);
+            });
+        }
+        renderSidebar();
+        if (window.innerWidth < 1024) document.body.classList.remove("sidebar-open");
+    }
 }
 
-function newChat() { isGenerating || (CURRENT_ID = null, document.getElementById("welcome").style.display = "flex", document.getElementById("chat-view").style.display = "none", document.getElementById("chat-container").innerHTML = "", renderSidebar()) }
+function newChat() {
+    if (isGenerating) return;
+    CURRENT_ID = null;
+    document.getElementById("welcome").style.display = "flex";
+    document.getElementById("chat-view").style.display = "none";
+    document.getElementById("chat-container").innerHTML = "";
+    renderSidebar();
+}
 
-async function deleteChat(e, t) { t.stopPropagation(), CHATS = CHATS.filter((t => t.id !== e)), await _saveChatsToDB(), CURRENT_ID === e ? newChat() : renderSidebar() }
+async function deleteChat(e, t) {
+    t.stopPropagation();
+    CHATS = CHATS.filter((t => t.id !== e));
+    await _saveChatsToDB();
+    if (CURRENT_ID === e) newChat();
+    else renderSidebar();
+}
 
-function copyText(e, t) { navigator.clipboard.writeText(decodeURIComponent(t)); const n = e.innerHTML; e.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>', setTimeout((() => e.innerHTML = n), 2e3) }
+function copyText(e, t) {
+    navigator.clipboard.writeText(decodeURIComponent(t));
+    const n = e.innerHTML;
+    e.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    setTimeout(() => e.innerHTML = n, 2000);
+}
 
-function startSuggestion(e) { document.getElementById("prompt").value = e, handleSendOrStop() }
+function startSuggestion(e) {
+    document.getElementById("prompt").value = e;
+    handleSendOrStop();
+}
 
 function renderMsg(e, t, n, s, images = null) {
-    const o = "user" === e, a = document.createElement("div");
-    if (a.className = "msg " + (o ? "user" : "ai"), a.id = `msg-${n}`, o) {
-        const e = document.createElement("div"); e.className = "bubble";
+    const o = "user" === e;
+    const a = document.createElement("div");
+    a.className = "msg " + (o ? "user" : "ai");
+    a.id = `msg-${n}`;
+    
+    if (o) {
+        const e = document.createElement("div");
+        e.className = "bubble";
+        
         if (images && images.length > 0) {
             const pill = document.createElement('div');
             pill.className = 'pill-tag';
@@ -631,33 +754,56 @@ function renderMsg(e, t, n, s, images = null) {
             pill.onclick = () => openLightbox(images, 0);
             e.appendChild(pill);
         }
-        const contentDiv = document.createElement("div"); contentDiv.className = "bubble-content"; contentDiv.innerText = t || ""; e.appendChild(contentDiv);
-        const actionsDiv = document.createElement("div"); actionsDiv.className = "actions";
+        
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "bubble-content";
+        contentDiv.innerText = t || "";
+        e.appendChild(contentDiv);
+        
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "actions";
         actionsDiv.innerHTML = `<button class="act-btn" onclick="editUserMessage(${n})" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
-        e.appendChild(actionsDiv); a.appendChild(e);
+        e.appendChild(actionsDiv);
+        a.appendChild(e);
     } else {
         const e = document.createElement("div");
-        if (e.className = "md-body", s) {
-            e.innerHTML = parseMarkdown(t || ""), window.MathJax && MathJax.typesetPromise([e]).catch((e => console.log(e)));
-            const s = document.createElement("div"); s.className = "actions", s.innerHTML = `<button class="act-btn" onclick="handleRegen(${n})" title="Regenerate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button><button class="act-btn" onclick="copyText(this, \`${encodeURIComponent(t||"")}\`)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`, a.appendChild(s)
-        } else e.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
-        a.insertBefore(e, a.firstChild)
+        e.className = "md-body";
+        
+        if (s) {
+            e.innerHTML = parseMarkdown(t || "");
+            if (window.MathJax) MathJax.typesetPromise([e]).catch((e => console.log(e)));
+            
+            const s = document.createElement("div");
+            s.className = "actions";
+            s.innerHTML = `<button class="act-btn" onclick="handleRegen(${n})" title="Regenerate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button><button class="act-btn" onclick="copyText(this, \`${encodeURIComponent(t||"")}\`)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`;
+            a.appendChild(s);
+        } else {
+            e.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
+        }
+        a.insertBefore(e, a.firstChild);
     }
-    return document.getElementById("chat-container").appendChild(a), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight, a
+    
+    document.getElementById("chat-container").appendChild(a);
+    document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight;
+    return a;
 }
 
 function editUserMessage(index) {
-    const msgDiv = document.getElementById(`msg-${index}`); if (!msgDiv) return;
+    const msgDiv = document.getElementById(`msg-${index}`);
+    if (!msgDiv) return;
     const bubble = msgDiv.querySelector('.bubble');
     const contentDiv = bubble.querySelector('.bubble-content');
     const oldText = contentDiv.innerText;
     const chat = CHATS.find(c => c.id === CURRENT_ID);
     const currentImages = (chat && chat.messages[index] && chat.messages[index].images) ? chat.messages[index].images : [];
+    
     const actions = bubble.querySelector('.actions');
     if(actions) actions.style.display = 'none';
-    bubble.innerHTML = ''; 
+    
+    bubble.innerHTML = '';
     const container = document.createElement('div');
     container.className = 'edit-container';
+    
     if (currentImages.length > 0) {
         const pill = document.createElement('div');
         pill.className = 'pill-tag';
@@ -672,10 +818,12 @@ function editUserMessage(index) {
         pill.onclick = () => openLightbox(currentImages, 0);
         container.appendChild(pill);
     }
+    
     const textarea = document.createElement('textarea');
     textarea.className = 'edit-msg-textarea';
     textarea.value = oldText;
     container.appendChild(textarea);
+    
     const btns = document.createElement('div');
     btns.className = 'edit-actions';
     btns.innerHTML = `
@@ -684,6 +832,7 @@ function editUserMessage(index) {
     `;
     container.appendChild(btns);
     bubble.appendChild(container);
+    
     textarea.focus();
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
@@ -695,7 +844,9 @@ function cancelEdit(index, oldTextEncoded) {
     const container = bubble.querySelector('.edit-container');
     const chat = CHATS.find(c => c.id === CURRENT_ID);
     const currentImages = (chat && chat.messages[index] && chat.messages[index].images) ? chat.messages[index].images : [];
+    
     bubble.innerHTML = '';
+    
     if (currentImages.length > 0) {
         const pill = document.createElement('div');
         pill.className = 'pill-tag';
@@ -711,10 +862,12 @@ function cancelEdit(index, oldTextEncoded) {
         pill.onclick = () => openLightbox(currentImages, 0);
         bubble.appendChild(pill);
     }
+    
     const contentDiv = document.createElement('div');
     contentDiv.className = 'bubble-content';
     contentDiv.innerText = decodeURIComponent(oldTextEncoded);
     bubble.appendChild(contentDiv);
+    
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'actions';
     actionsDiv.innerHTML = `<button class="act-btn" onclick="editUserMessage(${index})" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
@@ -728,12 +881,16 @@ async function saveEdit(index) {
     const pill = container.querySelector('.pill-tag');
     const textarea = container.querySelector('.edit-msg-textarea');
     const newText = textarea.value.trim();
+    
     if (!newText && !pill) return;
+    
     const chat = CHATS.find(c => c.id === CURRENT_ID);
     if (!chat) return;
+    
     chat.messages[index].content = newText;
     chat.messages = chat.messages.slice(0, index + 1);
     await _saveChatsToDB();
+    
     document.getElementById("chat-container").innerHTML = "";
     chat.messages.forEach((msg, i) => renderMsg(msg.role, msg.content, i, true, msg.images));
     streamAI(false);
@@ -742,18 +899,41 @@ async function saveEdit(index) {
 async function handleRegen(e) {
     if (isGenerating) return;
     const t = CHATS.find((t => t.id === CURRENT_ID));
-    t && t.messages && (t.messages = t.messages.slice(0, e), await _saveChatsToDB(), document.getElementById("chat-container").innerHTML = "", t.messages.forEach(((e, t) => renderMsg(e.role, e.content, t, !0, e.images))), streamAI())
+    if (t && t.messages) {
+        t.messages = t.messages.slice(0, e);
+        await _saveChatsToDB();
+        document.getElementById("chat-container").innerHTML = "";
+        t.messages.forEach((msg, i) => renderMsg(msg.role, msg.content, i, true, msg.images));
+        streamAI();
+    }
 }
 
 async function handleSendOrStop() {
-    if (isGenerating) return void(abortController && abortController.abort());
-    const e = document.getElementById("prompt"), t = e.value.trim();
+    if (isGenerating) {
+        if (abortController) abortController.abort();
+        return;
+    }
+    
+    const e = document.getElementById("prompt");
+    const t = e.value.trim();
     if (!t && selectedFiles.length === 0) return;
-    e.value = "", e.style.height = "auto", document.getElementById("welcome").style.display = "none", document.getElementById("chat-view").style.display = "block";
+    
+    e.value = "";
+    e.style.height = "auto";
+    document.getElementById("welcome").style.display = "none";
+    document.getElementById("chat-view").style.display = "block";
+    
     const isNewChat = !CURRENT_ID;
-    CURRENT_ID || (CURRENT_ID = Date.now().toString(), CHATS.unshift({ id: CURRENT_ID, title: "New Chat", messages: [], needsTitle: true, firstUserMessage: t || "Image upload" }), renderSidebar());
+    
+    if (!CURRENT_ID) {
+        CURRENT_ID = Date.now().toString();
+        CHATS.unshift({ id: CURRENT_ID, title: "New Chat", messages: [], needsTitle: true, firstUserMessage: t || "Image upload" });
+        renderSidebar();
+    }
+    
     const n = CHATS.find((e => e.id === CURRENT_ID));
     const userMsg = { role: "user", content: t };
+    
     if (selectedFilePreviews.length > 0) {
         userMsg.images = [...selectedFilePreviews];
         selectedFiles = [];
@@ -761,7 +941,13 @@ async function handleSendOrStop() {
         document.getElementById('attachment-preview').innerHTML = '';
         document.getElementById('file-input').value = '';
     }
-    if (n) { n.messages || (n.messages = []); n.messages.push(userMsg); renderMsg("user", t, n.messages.length - 1, !0, userMsg.images); streamAI(isNewChat); }
+    
+    if (n) {
+        if (!n.messages) n.messages = [];
+        n.messages.push(userMsg);
+        renderMsg("user", t, n.messages.length - 1, true, userMsg.images);
+        streamAI(isNewChat);
+    }
 }
 
 function _createImageContent(base64) {
@@ -770,11 +956,24 @@ function _createImageContent(base64) {
 }
 
 async function streamAI(isNewChat = false) {
-    isGenerating = !0; const e = document.getElementById("send-btn"), t = document.getElementById("icon-send"), n = document.getElementById("icon-stop");
-    e.classList.add("active"), t.style.display = "none", n.style.display = "block";
-    const s = CHATS.find((e => e.id === CURRENT_ID)); if (!s) return;
-    const o = renderMsg("assistant", "", s.messages.length, !1), a = o.querySelector(".md-body"); let r = "";
-    abortController = new AbortController;
+    isGenerating = true;
+    const e = document.getElementById("send-btn");
+    const t = document.getElementById("icon-send");
+    const n = document.getElementById("icon-stop");
+    
+    e.classList.add("active");
+    t.style.display = "none";
+    n.style.display = "block";
+    
+    const s = CHATS.find((e => e.id === CURRENT_ID));
+    if (!s) return;
+    
+    const o = renderMsg("assistant", "", s.messages.length, false);
+    const a = o.querySelector(".md-body");
+    let r = "";
+    
+    abortController = new AbortController();
+    
     try {
         const apiMessages = s.messages.map(msg => {
             if (msg.images && msg.images.length > 0) {
@@ -784,36 +983,91 @@ async function streamAI(isNewChat = false) {
             }
             return { role: msg.role, content: msg.content };
         });
+        
         const response = await fetch(`${API_BASE}/v1/chat/completions`, {
-            method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
-            body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: !0, seed: Math.floor(1e6 * Math.random()) }),
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
+            body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: true, seed: Math.floor(1e6 * Math.random()) }),
             signal: abortController.signal
         });
+        
         if (response.status === 402) { _showQuotaToast(); throw new Error("Quota Exceeded"); }
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        const t = response.body.getReader(), n = new TextDecoder; let o = "";
+        
+        const t = response.body.getReader();
+        const n = new TextDecoder();
+        let o = "";
+        
         for (;;) {
-            const { done: s, value: i } = await t.read(); if (s) break;
-            o += n.decode(i, { stream: !0 }); const l = o.split("\n"); o = l.pop();
+            const { done: s, value: i } = await t.read();
+            if (s) break;
+            
+            o += n.decode(i, { stream: true });
+            const l = o.split("\n");
+            o = l.pop();
+            
             for (const t of l) {
-                if (!t.trim().startsWith("data: ")) continue; const n = t.trim().slice(6); if ("[DONE]" === n) break;
-                try { const e = JSON.parse(n), t = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content; t && (r += t, a.innerHTML = parseMarkdown(r), _renderMathLive(a), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight) } catch (e) {}
+                if (!t.trim().startsWith("data: ")) continue;
+                const n = t.trim().slice(6);
+                if ("[DONE]" === n) break;
+                
+                try {
+                    const e = JSON.parse(n);
+                    const t = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content;
+                    if (t) {
+                        r += t;
+                        a.innerHTML = parseMarkdown(r);
+                        _renderMathLive(a);
+                        document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight;
+                    }
+                } catch (e) {}
             }
         }
-        _isTruncated(r) ? (s.messages.push({ role: "assistant", content: r }), r = "", s.messages.push({ role: "user", content: "Continue exactly where you left off. Do not repeat text." }), a.innerHTML += '<div style="text-align:center;color:var(--accent);font-size:12px;margin-top:10px">Continuing...</div>', await _continueGeneration(s, a, r)) : (s.messages.push({ role: "assistant", content: r }), await _saveChatsToDB(), updateBalance(), isNewChat && s.firstUserMessage && _generateChatTitle(CURRENT_ID, s.firstUserMessage, r))
+        
+        if (_isTruncated(r)) {
+            s.messages.push({ role: "assistant", content: r });
+            r = "";
+            s.messages.push({ role: "user", content: "Continue exactly where you left off. Do not repeat text." });
+            a.innerHTML += '<div style="text-align:center;color:var(--accent);font-size:12px;margin-top:10px">Continuing...</div>';
+            await _continueGeneration(s, a, r);
+        } else {
+            s.messages.push({ role: "assistant", content: r });
+            await _saveChatsToDB();
+            updateBalance();
+            if (isNewChat && s.firstUserMessage) _generateChatTitle(CURRENT_ID, s.firstUserMessage, r);
+        }
     } catch (e) {
-        if (e.name === "AbortError") { if (r.length > 0) { s.messages.push({ role: "assistant", content: r + " [Stopped]" }); await _saveChatsToDB(); } }
-        else a.innerHTML = `<span style="color:#ef4444">Error: ${e.message}</span>`;
+        if (e.name === "AbortError") {
+            if (r.length > 0) {
+                s.messages.push({ role: "assistant", content: r + " [Stopped]" });
+                await _saveChatsToDB();
+            }
+        } else {
+            a.innerHTML = `<span style="color:#ef4444">Error: ${e.message}</span>`;
+        }
     } finally {
-        if (!r.trim()) { r = "I apologize, but I could not generate a response. Please try again."; a.innerHTML = parseMarkdown(r); }
-        abortController = null, isGenerating = !1, e.classList.remove("active"), t.style.display = "block", n.style.display = "none", r.length > 0 && (o.remove(), renderMsg("assistant", r, s.messages.length - 1, !0))
+        if (!r.trim()) {
+            r = "I apologize, but I could not generate a response. Please try again.";
+            a.innerHTML = parseMarkdown(r);
+        }
+        abortController = null;
+        isGenerating = false;
+        e.classList.remove("active");
+        t.style.display = "block";
+        n.style.display = "none";
+        if (r.length > 0) {
+            o.remove();
+            renderMsg("assistant", r, s.messages.length - 1, true);
+        }
     }
 }
 
-function _isTruncated(e) { return !!e && (e.match(/```/g) || []).length % 2 != 0 }
+function _isTruncated(e) {
+    return !!e && (e.match(/```/g) || []).length % 2 != 0;
+}
 
 async function _continueGeneration(e, t, n) {
-    abortController = new AbortController;
+    abortController = new AbortController();
     try {
         const apiMessages = e.messages.map(msg => {
             if (msg.images && msg.images.length > 0) {
@@ -823,22 +1077,48 @@ async function _continueGeneration(e, t, n) {
             }
             return { role: msg.role, content: msg.content };
         });
+        
         const s = (await fetch(`${API_BASE}/v1/chat/completions`, {
-            method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
-            body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: !0, seed: Math.floor(1e6 * Math.random()) }),
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
+            body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: true, seed: Math.floor(1e6 * Math.random()) }),
             signal: abortController.signal
-        })).body.getReader(), o = new TextDecoder; let a = "";
+        })).body.getReader();
+        
+        const o = new TextDecoder();
+        let a = "";
+        
         for (;;) {
-            const { done: r, value: i } = await s.read(); if (r) break;
-            a += o.decode(i, { stream: !0 }); const l = a.split("\n"); a = l.pop();
+            const { done: r, value: i } = await s.read();
+            if (r) break;
+            
+            a += o.decode(i, { stream: true });
+            const l = a.split("\n");
+            a = l.pop();
+            
             for (const s of l) {
-                if (!s.trim().startsWith("data: ")) continue; const o = s.trim().slice(6); if ("[DONE]" ===o) break;
-                try { const e = JSON.parse(o), s = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content; s && (n += s, t.innerHTML = parseMarkdown(n), _renderMathLive(t), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight) } catch (e) {}
+                if (!s.trim().startsWith("data: ")) continue;
+                const o = s.trim().slice(6);
+                if ("[DONE]" === o) break;
+                
+                try {
+                    const e = JSON.parse(o);
+                    const s = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content;
+                    if (s) {
+                        n += s;
+                        t.innerHTML = parseMarkdown(n);
+                        _renderMathLive(t);
+                        document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight;
+                    }
+                } catch (e) {}
             }
         }
-        e.messages[e.messages.length - 1] = { role: "assistant", content: n }, await _saveChatsToDB(), updateBalance()
-    } catch (e) { console.error(e) }
+        e.messages[e.messages.length - 1] = { role: "assistant", content: n };
+        await _saveChatsToDB();
+        updateBalance();
+    } catch (e) { console.error(e); }
 }
+
 init();
 </script>
 </body>
