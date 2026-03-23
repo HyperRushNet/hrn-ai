@@ -1,15 +1,15 @@
 /**
  * Dark Angel - Omega Markdown Renderer Library
- * Versie: 6.0 Stable
- * Inclusief embedded syntax highlighting theme.
+ * Versie: 6.1 Stable (Light Mode Support)
  */
 
 (function(global) {
   'use strict';
 
-  // --- 1. EMBEDDED CSS (VOLLEDIG) ---
+  // --- 1. EMBEDDED CSS ---
   const DARK_ANGEL_CSS = `
 :root {
+  /* Default = Dark Mode */
   --bg: #09090b;
   --bg-elevated: #0e0e11;
   --surface: #111114;
@@ -31,32 +31,65 @@
   --fs-h3: 17px;
   --header-h: 40px;
   --lh: 1.7;
+  
+  /* Code Syntax Colors (Dark) */
+  --code-comment: #6a737d;
+  --code-punctuation: #ccc;
+  --code-property: #f97583;
+  --code-string: #9ecbff;
+  --code-operator: #d19a66;
+  --code-keyword: #c678dd;
+  --code-function: #e5c07b;
 }
 
-/* --- Prism Tomorrow Night Theme (Aangepast voor Dark Angel) --- */
-.token.comment, .token.prolog, .token.doctype, .token.cdata {
-  color: #6a737d; /* Comment grey */
+/* --- LIGHT MODE OVERRIDES --- */
+.da-light-mode {
+  --bg: #ffffff;
+  --bg-elevated: #f4f4f5;
+  --surface: #f8f8f8;
+  --surface-hover: #e4e4e7;
+  --border: rgba(0,0,0,0.08);
+  --border-focus: rgba(0,0,0,0.15);
+  --text: #18181b;
+  --text-secondary: #52525b;
+  --muted: #a1a1aa;
+  --accent: #0284c7; /* Darker blue for contrast */
+  --accent-soft: rgba(2, 132, 199, 0.1);
+  
+  /* Code Syntax Colors (Light) */
+  --code-comment: #6a737d;
+  --code-punctuation: #24292e;
+  --code-property: #d73a49; /* Red */
+  --code-string: #032f62; /* Blue */
+  --code-operator: #d19a66;
+  --code-keyword: #d73a49; /* Red */
+  --code-function: #6f42c1; /* Purple */
 }
-.token.punctuation { color: #ccc; }
+
+/* --- Prism Syntax Highlighting (Variabelized) --- */
+.token.comment, .token.prolog, .token.doctype, .token.cdata {
+  color: var(--code-comment);
+}
+.token.punctuation { color: var(--code-punctuation); }
 .token.namespace { opacity: .7; }
 
 .token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol, .token.deleted {
-  color: #f97583; /* Red/Pink */
+  color: var(--code-property);
 }
 .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted {
-  color: #9ecbff; /* Blue */
+  color: var(--code-string);
 }
 .token.operator, .token.entity, .token.url, .language-css .token.string, .style .token.string {
-  color: #d19a66; /* Orange */
+  color: var(--code-operator);
 }
 .token.atrule, .token.attr-value, .token.keyword {
-  color: #c678dd; /* Purple */
+  color: var(--code-keyword);
 }
 .token.function, .token.class-name {
-  color: #e5c07b; /* Yellow/Gold */
+  color: var(--code-function);
 }
 .token.regex, .token.important, .token.variable {
-  color: #e06c75;
+  color: var(--code-property);
 }
 
 /* --- Layout & Components --- */
@@ -122,17 +155,21 @@ li > ul, li > ol { margin: 0.25em 0; }
   background: transparent;
   cursor: pointer;
   position: relative;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
   display: grid;
   place-items: center;
 }
 
 .da-task-check:hover { border-color: var(--accent); }
+/* Light mode fix for checkbox */
+.da-light-mode .da-task-check { border-color: var(--muted); }
+.da-light-mode .da-is-checked .da-task-check { background: var(--accent); border-color: var(--accent); }
+
 
 .da-task-check svg {
   width: 12px;
   height: 12px;
-  stroke: var(--accent);
+  stroke: #ffffff; /* Always white check for contrast */
   stroke-width: 3;
   fill: none;
   stroke-linecap: round;
@@ -142,7 +179,10 @@ li > ul, li > ol { margin: 0.25em 0; }
   transition: all 0.15s ease;
 }
 
-.da-is-checked .da-task-check { border-color: var(--accent); }
+.da-is-checked .da-task-check { 
+  border-color: var(--accent); 
+  background: var(--accent); /* Solid background for check */
+}
 .da-is-checked .da-task-check svg { opacity: 1; transform: scale(1); }
 
 .da-li-content { 
@@ -186,7 +226,7 @@ code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
   overflow: hidden;
 }
 
@@ -226,7 +266,7 @@ code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
 }
 
 .da-copy-btn:hover { 
-  background: var(--surface); 
+  background: var(--surface-hover); 
   border-color: var(--border);
   color: var(--text); 
 }
@@ -291,6 +331,7 @@ td {
 
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.01); }
+.da-light-mode tr:hover td { background: rgba(0,0,0,0.01); }
 
 *:focus-visible {
   outline: 2px solid var(--accent);
@@ -356,7 +397,6 @@ tr:hover td { background: rgba(255,255,255,0.01); }
     
     const pre = document.createElement('pre');
     const codeTag = document.createElement('code');
-    // Voeg classes toe voor Prism
     codeTag.className = `language-${lang}`;
     codeTag.textContent = code;
     
@@ -396,7 +436,7 @@ tr:hover td { background: rgba(255,255,255,0.01); }
 
   // --- 4. MAIN RENDER FUNCTION ---
 
-  function render(element, content) {
+  function render(element, content, options = {}) {
     // Inject CSS once
     injectStyle();
     
@@ -405,6 +445,11 @@ tr:hover td { background: rgba(255,255,255,0.01); }
     
     const mdDiv = document.createElement('div');
     mdDiv.className = 'da-render-body';
+    
+    // Apply Light Mode if set in options
+    if (options.theme === 'light') {
+      mdDiv.classList.add('da-light-mode');
+    }
 
     // 1. Tasks
     if (content.tasks && content.tasks.length > 0) {
@@ -414,7 +459,6 @@ tr:hover td { background: rgba(255,255,255,0.01); }
     // 2. Markdown Content
     if (content.markdown) {
       if (typeof marked !== 'undefined') {
-        // Parse markdown
         mdDiv.innerHTML += marked.parse(content.markdown);
       } else {
         console.error('DarkAngel Error: marked.js is required.');
@@ -445,7 +489,6 @@ tr:hover td { background: rgba(255,255,255,0.01); }
     }
 
     // Prism Highlight
-    // We gebruiken highlightAllUnder om alleen de nieuwe elementen te highlighten
     if (typeof Prism !== 'undefined') {
       Prism.highlightAllUnder(element);
     }
