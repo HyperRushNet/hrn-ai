@@ -249,8 +249,8 @@ const renderer = new marked.Renderer();
 renderer.code = function(code, language) {
     const lang = language || 'plaintext';
     let highlighted = code;
-    
-    // Use Highlight.js
+
+    // Gebruik Highlight.js
     try {
         if (hljs.getLanguage(lang)) {
             highlighted = hljs.highlight(code, { language: lang }).value;
@@ -261,12 +261,13 @@ renderer.code = function(code, language) {
         console.error("Highlighting error", e);
     }
 
-    const encodedCode = encodeURIComponent(code);
+    // Escapen voor HTML in onclick
+    const escapedCode = code.replace(/`/g, '\\`').replace(/\$/g, '\\$');
 
     return `<div class="code-block">
         <div class="code-header">
             <span class="code-lang">${lang}</span>
-            <button class="act-btn" onclick="copyText(this, \`${encodedCode}\`)" title="Copy code">
+            <button class="act-btn" onclick="copyText(this, \`${escapedCode}\`)" title="Copy code">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
