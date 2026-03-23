@@ -1,15 +1,3 @@
-De fout `Uncaught SyntaxError: Unexpected token ')'` wordt veroorzaakt door de manier waarop de code wordt ingevoegd in de `onclick` attribute binnen een *template literal* (de backticks ` `).
-
-Als een codeblok speciale tekens bevat zoals `${` (bijvoorbeeld in JavaScript template literals) of backticks zelf, breekt dit de parser van de outer template string. Daarnaast is het invoegen van grote stukken code in een `onclick` attribuut riskant.
-
-**De Oplossing:**
-1.  Ik heb de **template literals** (backticks) vervangen door gewone **string concatenatie** (`+`) in de `renderer.code` functie. Dit voorkomt dat de inhoud van de code de parser breekt.
-2.  Ik gebruik nu een `data-code` attribuut om de code veilig op te slaan en lees deze in de `copyText` functie weer uit. Dit is veel robuuster.
-3.  Ik heb de `copyText` functie bijgewerkt om zowel de oude manier (met argument) als de nieuwe manier (met `dataset.code`) te ondersteunen.
-
-Hier is de gecorrigeerde en veilige code:
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,10 +99,6 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 .md-body ul,.md-body ol{padding-left:24px;margin-bottom:12px}
 .md-body li{margin-bottom:6px}
 .md-body ul li::marker{color:var(--accent)}
-.md-body .task-list-item{list-style:none;margin-left:-24px}
-.md-body input[type="checkbox"]{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1px solid var(--border-hover);border-radius:4px;margin-right:8px;vertical-align:middle;cursor:pointer;position:relative;background:transparent}
-.md-body input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent)}
-.md-body input[type="checkbox"]:checked::after{content:'✔';color:#000;font-size:10px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
 .md-body blockquote{border-left:3px solid var(--accent);padding-left:16px;margin:16px 0;color:var(--text-muted)}
 .md-body blockquote blockquote{border-left-color:var(--text-muted);margin:8px 0}
 .table-wrapper{width:100%;overflow-x:auto;margin:16px 0;border:1px solid var(--border-subtle);border-radius:8px}
@@ -123,12 +107,18 @@ th,td{padding:10px 14px;border-bottom:1px solid var(--border-subtle)}
 th{background:rgba(255,255,255,0.05);font-weight:600;color:#fff}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(255,255,255,0.03)}
-.code-block{margin:16px 0;border:1px solid var(--border-subtle);border-radius:10px;background:#0d0d0f;overflow:hidden}
+
+/* Code Block Styles with Header */
+.code-wrapper{margin:16px 0;border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden;background:#0d0d0f}
 .code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border-subtle)}
-.code-lang{font-size:11px;color:var(--accent);font-family:'JetBrains Mono';text-transform:uppercase;letter-spacing:0.5px}
-.code-content{overflow-x:auto}
-pre{padding:14px;margin:0}
-pre code{background:none !important;font-family:'JetBrains Mono',monospace;font-size:13px}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);text-transform:uppercase;font-weight:500;letter-spacing:0.5px}
+.copy-code-btn{background:none;border:1px solid var(--border-subtle);color:var(--text-muted);padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+.copy-code-btn:hover{background:var(--accent);color:#000;border-color:var(--accent)}
+.md-body pre{margin:0;padding:14px;overflow-x:auto;white-space:pre;background:transparent;border:none;border-radius:0}
+.md-body pre code{font-family:'JetBrains Mono',monospace;font-size:13px;background:none;color:inherit;white-space:pre;display:block}
+.md-body code{font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.1);padding:0.2em 0.4em;border-radius:4px;font-size:0.9em;}
+.md-body pre code{padding:0;background:none;border-radius:0}
+
 .actions{display:flex;gap:4px;margin-top:8px;opacity:0.4;transition:opacity 0.2s}
 .msg:hover .actions{opacity:1}
 .act-btn{background:none;border:none;color:#a1a1aa;cursor:pointer;padding:6px;border-radius:6px;transition:0.15s;display:flex;align-items:center}
@@ -257,42 +247,42 @@ New Chat
 // --- MARKED.JS CONFIGURATION ---
 const renderer = new marked.Renderer();
 
-// Custom Code Block Renderer to match existing CSS
+// Fix for [object Object] and adding Header
 renderer.code = function(code, language) {
-    const lang = language || 'plaintext';
-    let highlighted = code;
+    // Handle new Marked.js signature where 'code' might be an object/token
+    let codeText = '';
+    let lang = 'plaintext';
     
-    try {
-        if (hljs.getLanguage(lang)) {
-            highlighted = hljs.highlight(code, { language: lang }).value;
-        } else {
-            highlighted = hljs.highlightAuto(code).value;
-        }
-    } catch (e) {
-        console.error("Highlighting error", e);
+    if (typeof code === 'object' && code !== null) {
+        codeText = code.text || '';
+        lang = code.lang || 'plaintext';
+    } else if (typeof code === 'string') {
+        codeText = code;
+        lang = language || 'plaintext';
     }
 
-    // Use data-code attribute to avoid syntax errors with backticks in onclick
-    const encodedCode = encodeURIComponent(code);
+    let highlighted = codeText;
+    try {
+        if (hljs.getLanguage(lang)) {
+            highlighted = hljs.highlight(codeText, { language: lang, ignoreIllegals: true }).value;
+        } else {
+            highlighted = hljs.highlightAuto(codeText).value;
+        }
+    } catch (e) {
+        console.error(e);
+    }
 
-    // Use string concatenation to prevent ${} injection issues in template literals
-    return '<div class="code-block">' +
-        '<div class="code-header">' +
-            '<span class="code-lang">' + lang + '</span>' +
-            '<button class="act-btn" data-code="' + encodedCode + '" onclick="copyText(this)" title="Copy code">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:16px;height:16px">' +
-                    '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
-                    '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
-                '</svg>' +
-            '</button>' +
-        '</div>' +
-        '<div class="code-content">' +
-            '<pre><code class="hljs">' + highlighted + '</code></pre>' +
-        '</div>' +
-    '</div>';
+    // Return HTML with header
+    return `
+    <div class="code-wrapper">
+        <div class="code-header">
+            <span class="code-lang">${lang}</span>
+            <button class="copy-code-btn" onclick="copyCodeBlock(this)">Copy</button>
+        </div>
+        <pre><code class="hljs language-${lang}">${highlighted}</code></pre>
+    </div>`;
 };
 
-// Custom Table Renderer
 renderer.table = function(header, body) {
     if (body) body = '<tbody>' + body + '</tbody>';
     return '<div class="table-wrapper"><table>\n<thead>' + header + '</thead>\n' + body + '</table></div>\n';
@@ -304,13 +294,12 @@ marked.setOptions({
     gfm: true
 });
 
-// Helper function to handle MathJax placeholders
 function parseMarkdown(text) {
     if (!text) return "";
     const mathBlocks = [];
     let t = text;
 
-    // 1. Protect Math Blocks
+    // Protect Math
     t = t.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => {
         const id = mathBlocks.length;
         mathBlocks.push('\\[' + p1 + '\\]');
@@ -322,10 +311,8 @@ function parseMarkdown(text) {
         return '[[MATHBLOCK' + id + ']]';
     });
 
-    // 2. Parse with Marked.js
     let html = marked.parse(t);
 
-    // 3. Restore Math Blocks
     mathBlocks.forEach((val, i) => {
         html = html.split('[[MATHBLOCK' + i + ']]').join(val);
     });
@@ -333,19 +320,33 @@ function parseMarkdown(text) {
     return html;
 }
 
-// --- EXISTING APPLICATION LOGIC ---
+function copyCodeBlock(button) {
+    const wrapper = button.closest('.code-wrapper');
+    const codeEl = wrapper.querySelector('code');
+    // Use innerText to get raw text without HTML entities/tags
+    const text = codeEl.innerText; 
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        button.style.borderColor = 'var(--accent)';
+        button.style.color = 'var(--accent)';
+        setTimeout(() => {
+            button.innerText = originalText;
+            button.style.borderColor = '';
+            button.style.color = '';
+        }, 2000);
+    });
+}
+
+// --- APP LOGIC ---
 
 const API_BASE = "https://gen.pollinations.ai";
 const USER_BROWSER_LANG = navigator.language || 'en';
 const SYS_PROMPT = `
-You are HyperRush AI. Your responses are parsed by a custom rendering engine.
-
-**=== CRITICAL PARSER SAFETY RULES ===**
-1. **CODE BLOCKS:** Always close code blocks with \`\`\`. Do not use raw HTML in markdown.
-2. **MATH:** Use $$...$$ for block and $...$ for inline math.
-3. **LANGUAGE:** If the user speaks Dutch, respond in Dutch.
-
-Be helpful and direct.
+You are HyperRush AI.
+1. Respond in the language the user uses.
+2. Use Markdown for formatting.
+3. Use $$...$$ for block math and $...$ for inline math.
 `;
 
 let CURRENT_ID = null, CHATS = [], PK = localStorage.getItem("pk"), isGenerating = !1, abortController = null, lastMathjaxRender = 0;
@@ -564,8 +565,7 @@ async function _generateChatTitle(chatId, userMessage, aiResponse) {
     } catch (e) { console.error("Title generation error:", e); } return null;
 }
 
-function
- loadChat(e) {
+function loadChat(e) {
     if (isGenerating) return; CURRENT_ID = e;
     const t = CHATS.find((t => t.id === e));
     t && (document.getElementById("welcome").style.display = "none", document.getElementById("chat-view").style.display = "block", document.getElementById("chat-container").innerHTML = "", t.messages && Array.isArray(t.messages) && t.messages.forEach(((e, t) => { renderMsg(e.role, e.content, t, !0, e.images) })), renderSidebar(), window.innerWidth < 1024 && document.body.classList.remove("sidebar-open"))
@@ -575,9 +575,8 @@ function newChat() { isGenerating || (CURRENT_ID = null, document.getElementById
 
 async function deleteChat(e, t) { t.stopPropagation(), CHATS = CHATS.filter((t => t.id !== e)), await _saveChatsToDB(), CURRENT_ID === e ? newChat() : renderSidebar() }
 
-// Updated copyText to support data-code attribute
 function copyText(e, t) { 
-    const textToCopy = t !== undefined ? t : e.dataset.code;
+    const textToCopy = t !== undefined ? t : (e.dataset.code || "");
     if(!textToCopy) return;
     navigator.clipboard.writeText(decodeURIComponent(textToCopy)); 
     const n = e.innerHTML; 
@@ -793,4 +792,3 @@ init();
 </script>
 </body>
 </html>
-```
