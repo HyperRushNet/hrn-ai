@@ -1,9 +1,9 @@
 /**
- * Dark Angel - Core Renderer v8.0 (Stable)
+ * Dark Angel - Core Renderer v8.1 (Stable & Fixed)
  * 
  * - Geen CSS injectie (volledige gebruikerscontrole).
- * - Behoudt inline HTML (code, links, math) in taken.
- * - Geen redundante code.
+ * - Behoudt inline HTML in taken.
+ * - Geen DOM conflicts (replaceWith bug fixed).
  */
 
 (function(global) {
@@ -30,8 +30,8 @@
 
   // --- COMPONENT FACTORIES ---
 
-  // Code Block: Vervangt standaard <pre><code> door wrapper met button
-  function createCodeBlock(lang, code, originalPre) {
+  // Code Block: Altijd nieuwe structuur aanmaken (geen hergebruik van DOM nodes)
+  function createCodeBlock(lang, codeText) {
     const container = document.createElement('div');
     container.className = 'da-code-block';
     
@@ -45,47 +45,42 @@
     const btn = document.createElement('button');
     btn.className = 'da-copy-btn';
     btn.innerHTML = iconCopy + ' Kopieer';
-    btn.onclick = () => copyToClipboard(btn, code);
+    btn.onclick = () => copyToClipboard(btn, codeText);
     
     header.appendChild(langSpan);
     header.appendChild(btn);
     
+    const pre = document.createElement('pre');
+    const codeTag = document.createElement('code');
+    if(lang) codeTag.className = `language-${lang}`;
+    codeTag.textContent = codeText;
+    pre.appendChild(codeTag);
+    
     container.appendChild(header);
-    
-    // Hergebruik de originele <pre> om eventuele Prism classes die er al op staan te behouden
-    // Of maak een nieuwe aan als dat niet kan
-    const pre = originalPre || document.createElement('pre');
-    if(!pre.parentElement) { // Als het niet in DOM zit (nieuwe creatie)
-        const codeTag = document.createElement('code');
-        if(lang) codeTag.className = `language-${lang}`;
-        codeTag.textContent = code;
-        pre.appendChild(codeTag);
-    }
-    
     container.appendChild(pre);
     
     return container;
   }
 
-  // Task Item: Vervangt <li><input> door custom structuur
+  // Task Item: Zet <li><input> om naar custom structuur
   function createTaskItem(li) {
     const input = li.querySelector('input[type="checkbox"]');
-    if (!input) return null; // Geen task
+    if (!input) return null; 
 
     const isChecked = input.hasAttribute('checked') || input.checked;
     
-    // Clone de LI node om alle innerlijke HTML (code, links, etc.) te behouden
+    // Clone de LI node om innerlijke HTML te behouden
     const newLi = li.cloneNode(true);
     
-    // Verwijder de input checkbox uit de clone
+    // Verwijder de originele checkbox input uit de clone
     const inputInClone = newLi.querySelector('input[type="checkbox"]');
     if(inputInClone) inputInClone.remove();
     
-    // Zet classes
-    newLi.className = 'da-task-item'; // Reset classes
+    // Reset classes en zet status
+    newLi.className = 'da-task-item'; 
     if(isChecked) newLi.classList.add('checked');
     
-    // Maak de custom checkbox
+    // Maak custom checkbox
     const checkDiv = document.createElement('div');
     checkDiv.className = 'da-task-check';
     checkDiv.setAttribute('role', 'checkbox');
@@ -93,16 +88,16 @@
     checkDiv.setAttribute('tabindex', '0');
     checkDiv.innerHTML = checkIcon;
     
-    // Wrap de resterende content in een div
+    // Wrap content in div
     const contentDiv = document.createElement('div');
     contentDiv.className = 'da-task-content';
     
-    // Verplaats alle child nodes van newLi naar contentDiv
+    // Verplaats alle kinderen (text, code, strong, etc.) naar contentDiv
     while (newLi.firstChild) {
         contentDiv.appendChild(newLi.firstChild);
     }
     
-    // Bouw de nieuwe structuur op: [Check] + [Content]
+    // Nieuwe structuur opbouwen
     newLi.appendChild(checkDiv);
     newLi.appendChild(contentDiv);
     
@@ -111,11 +106,6 @@
 
   // --- MAIN RENDER FUNCTION ---
 
-  /**
-   * Rendert markdown naar HTML in een target element.
-   * @param {HTMLElement} element - De container waar gerenderd wordt.
-   * @param {String} markdown - De ruwe markdown tekst.
-   */
   function render(element, markdown) {
     if(!element || !markdown) return;
 
@@ -124,7 +114,7 @@
     const container = document.createElement('div');
     container.className = 'da-body';
 
-    // 2. Parse Markdown (GFM)
+    // 2. Parse Markdown
     if (typeof marked === 'undefined') {
         container.textContent = "Error: marked.js is required.";
         element.appendChild(container);
@@ -134,18 +124,15 @@
     marked.setOptions({ gfm: true, breaks: false });
     container.innerHTML = marked.parse(markdown);
 
-    // 3. Post-Processing: Loop door alle elementen
+    // 3. Post-Processing
     
-    // Verzamel eerst alle nodes om live DOM updates te vermijden
-    const listItems = Array.from(container.querySelectorAll('li'));
-    const codeBlocks = Array.from(container.querySelectorAll('pre > code'));
-
     // Process Tasks
+    // We selecteren alle LIs en filteren degene met een checkbox
+    const listItems = Array.from(container.querySelectorAll('li'));
     listItems.forEach(li => {
-        // Check of het een task is (bevat input checkbox)
         if (li.querySelector('input[type="checkbox"]')) {
             const parentUl = li.parentElement;
-            if(parentUl) parentUl.classList.add('da-task-list'); // Class op de UL zetten
+            if(parentUl) parentUl.classList.add('da-task-list');
             
             const newTaskItem = createTaskItem(li);
             if(newTaskItem) {
@@ -155,27 +142,28 @@
     });
 
     // Process Code Blocks
+    // We selecteren alle CODE blocks die een PRE als parent hebben
+    const codeBlocks = Array.from(container.querySelectorAll('pre > code'));
     codeBlocks.forEach(block => {
-        // Check of de parent een PRE is (dus block, niet inline)
-        // marked wrapped code blocks in <pre>
-        const pre = block.parentElement;
-        if(pre && pre.tagName === 'PRE') {
-            const langMatch = block.className.match(/language-(\w+)/);
-            const lang = langMatch ? langMatch[1] : 'code';
-            const code = block.textContent; // Tekst is veilig
-            
-            // Als de pre al vervangen is door een vorig loop, skip
-            if(pre.parentElement.classList.contains('da-code-block')) return;
-
-            const newBlock = createCodeBlock(lang, code, pre);
-            pre.replaceWith(newBlock);
-        }
+        const pre = block.parentElement; // De <pre> tag
+        
+        // Extract info
+        const langMatch = block.className.match(/language-(\w+)/);
+        const lang = langMatch ? langMatch[1] : 'code';
+        const codeText = block.textContent; // Veilige tekst extractie
+        
+        // Maak nieuw blok
+        const newBlock = createCodeBlock(lang, codeText);
+        
+        // Vervang de oude <pre> met de nieuwe wrapper
+        // Dit is veilig omdat newBlock een vers element is
+        pre.replaceWith(newBlock);
     });
 
     // 4. Inject in DOM
     element.appendChild(container);
 
-    // 5. Render Extensions (KaTeX & Prism)
+    // 5. Render Extensions
     
     // KaTeX
     if (typeof renderMathInElement !== 'undefined') {
@@ -190,12 +178,10 @@
 
     // Prism
     if (typeof Prism !== 'undefined') {
-      // Highlight alleen onder onze container
       Prism.highlightAllUnder(element);
     }
 
     // 6. Interaction Bindings
-    
     container.addEventListener('click', e => {
         const check = e.target.closest('.da-task-check');
         if (check) {
