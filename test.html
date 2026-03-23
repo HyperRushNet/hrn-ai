@@ -1,481 +1,157 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Angel - Omega Stress Test V5.3 Extreme Fixed</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Angel v9.0 - Math & Syntax Fixed</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/hyperRushNet/hrn-ai/test-mdr9-l.css">
 
-<style>
-:root {
-  --bg: #08090a;
-  --bg-elevated: #0c0d0f;
-  --surface: #0f1012;
-  --surface-hover: #141517;
-  --border: rgba(255,255,255,0.06);
-  --border-subtle: rgba(255,255,255,0.04);
-  --text: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --muted: #64748b;
-  --accent: #22d3ee;
-  --accent-muted: rgba(34,211,238,0.15);
-  --accent-glow: rgba(34,211,238,0.08);
-  --success: #34d399;
-  --radius: 14px;
-  --radius-sm: 8px;
-  --fs-base: 14.5px;
-  --fs-code: 13px;
-  --fs-h1: 24px;
-  --fs-h2: 19px;
-  --fs-h3: 16px;
-  --header-h: 40px;
-  --lh: 1.65;
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/gh/hyperRushNet/hrn-ai/test-mdr11.js"></script>
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+    <style>
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background-color: #ffffff;
+            color: #1a1a1a;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+        .container { width: 100%; max-width: 850px; }
+        
+        /* Wiskunde Wrap Fix */
+        .katex-display { 
+            overflow-x: hidden !important; 
+            white-space: normal !important;
+            padding: 10px 0;
+        }
 
-body { 
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', -apple-system, sans-serif;
-  font-size: var(--fs-base);
-  line-height: var(--lh);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  position: relative;
-  min-height: 100vh;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34,211,238,0.04), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(34,211,238,0.02), transparent);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.chat-scroll {
-  padding: 48px 24px;
-  display: flex;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-}
-
-.container {
-  max-width: 880px;
-  width: 100%;
-  animation: fadeSlideIn 0.5s ease-out;
-}
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.md-body > * { margin-bottom: 22px; }
-.md-body > *:last-child { margin-bottom: 0; }
-
-h1, h2, h3 {
-  font-weight: 600;
-  color: #fff;
-  margin-top: 32px;
-  letter-spacing: -0.02em;
-}
-h1 { font-size: var(--fs-h1); margin-top: 0; }
-h2 { font-size: var(--fs-h2); }
-h3 { font-size: var(--fs-h3); }
-
-p { color: var(--text-secondary); }
-
-/* Lijsten */
-ul, ol { padding-left: 28px; margin: 12px 0; }
-li { margin-bottom: 8px; color: var(--text-secondary); transition: color var(--transition); }
-li:hover { color: var(--text); }
-
-/* Takenlijst */
-.task-list {
-  list-style: none;
-  padding-left: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.task-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 0;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition);
-  cursor: default;
-}
-
-.task-list li:hover {
-  background: var(--surface-hover);
-}
-
-.task-check { 
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  cursor: pointer;
-  position: relative;
-  transition: all var(--transition);
-  display: grid;
-  place-items: center;
-}
-
-.task-check:hover {
-  border-color: var(--accent);
-  background: var(--accent-muted);
-}
-
-.task-check::after {
-  content: "";
-  width: 6px;
-  height: 10px;
-  border: solid transparent;
-  border-width: 0 2.5px 2.5px 0;
-  transition: all var(--transition);
-}
-
-.is-checked .task-check {
-  background: var(--accent-muted);
-  border-color: var(--accent);
-}
-
-.is-checked .task-check::after {
-  border-color: var(--accent);
-  transform: rotate(45deg);
-}
-
-.is-checked .li-content {
-  color: var(--muted);
-  text-decoration: line-through;
-  text-decoration-color: var(--border);
-}
-
-.li-content { transition: all var(--transition); }
-
-/* Quote Styling */
-blockquote {
-  border-left: 3px solid var(--accent);
-  background: linear-gradient(135deg, rgba(34,211,238,0.03), rgba(34,211,238,0.01));
-  padding: 18px 22px;
-  margin: 24px 0;
-  border-radius: 0 var(--radius) var(--radius) 0;
-  position: relative;
-}
-
-blockquote::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, var(--accent), rgba(34,211,238,0.3));
-  border-radius: 3px;
-}
-
-blockquote p:last-child { margin-bottom: 0; }
-blockquote ul, blockquote ol { margin: 8px 0; }
-
-/* Math Styling */
-.katex-display { 
-  background: transparent !important;
-  border: none !important;
-  padding: 16px 0;
-  margin: 24px 0;
-  overflow-x: auto;
-}
-.katex { font-size: 1.12em !important; color: var(--text); }
-
-/* Code inline */
-code { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-code) !important; }
-
-:not(pre) > code {
-  background: var(--accent-muted);
-  padding: 3px 7px;
-  border-radius: 5px;
-  color: var(--accent);
-  font-weight: 500;
-  border: 1px solid rgba(34,211,238,0.1);
-}
-
-/* Code Block */
-.code-block {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  margin: 28px 0;
-  overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-  transition: all var(--transition);
-}
-
-.code-block:hover {
-  border-color: rgba(255,255,255,0.08);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-
-.code-header { 
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: var(--header-h);
-  padding: 0 16px;
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.code-lang {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: 'JetBrains Mono';
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-/* Copy Button */
-.copy-btn { 
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: all var(--transition);
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.copy-btn:hover {
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-}
-
-.copy-btn svg { width: 15px; height: 15px; fill: currentColor; }
-.copy-btn.copied { color: var(--success); background: rgba(52,211,153,0.1); }
-
-pre {
-  padding: 18px !important;
-  margin: 0 !important;
-  background: transparent !important;
-  overflow-x: auto;
-}
-
-pre::-webkit-scrollbar { height: 8px; }
-pre::-webkit-scrollbar-track { background: transparent; }
-pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-/* Table */
-.table-wrapper {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin: 28px 0;
-  background: var(--surface);
-}
-
-table { width: 100%; border-collapse: collapse; font-size: var(--fs-code); }
-
-th {
-  background: rgba(255,255,255,0.02);
-  color: var(--accent);
-  padding: 14px 18px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-td {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  transition: background var(--transition);
-}
-
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: var(--surface-hover); color: var(--text); }
-
-/* Focus states */
-*:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+        .streaming::after {
+            content: '▊';
+            display: inline-block;
+            animation: blink 0.8s step-end infinite;
+            color: #10b981;
+            margin-left: 4px;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    </style>
 </head>
 <body>
 
-<div class="chat-scroll">
-  <div class="container" id="content"></div>
+<div class="container">
+    <div id="render-target" class="da-body streaming"></div>
 </div>
 
 <script>
-const iconCopy = `<svg viewBox="0 0 24 24"><path d="M19 21H8V7h11m0-2H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2m-3-4H4a2 2 0 00-2 2v14h2V3h12V1z"/></svg>`;
-const iconCheck = `<svg viewBox="0 0 24 24"><path d="M21 7L9 19l-5.5-5.5 1.41-1.41L9 16.17 19.59 5.59 21 7z"/></svg>`;
+const content = `
+# 🚀 Dark Angel v9
 
-function copyToClipboard(button, text) {
-  navigator.clipboard.writeText(text).then(() => {
-    button.innerHTML = iconCheck + ' Gekopieerd';
-    button.classList.add('copied');
-    setTimeout(() => {
-      button.innerHTML = iconCopy;
-      button.classList.remove('copied');
-    }, 2000);
-  }).catch(() => {
-    button.innerHTML = iconCopy;
-  });
+## 1. Advanced Mathematical Proof
+Let's test if the non-scroll math logic holds up with a multi-line derivation. Notice how the indices and operators are rendered without clipping:
+$$
+\\oint_{C} \\mathbf{B} \\cdot d\\mathbf{l} = \\mu_0 \\left( I_{\\text{enc}} + \\varepsilon_0 \\frac{d\\Phi_E}{dt} \\right)
+$$
+And an inline challenge: Is the spacing of $\\psi(x,t) = A e^{i(kx-\\omega t)}$ correct when surrounded by heavy text?
+
+## 2. High-Level System Logic (Syntax Test)
+We are testing the **Prism.js** integration. This Python snippet uses f-strings, decorators, and type hinting—elements that often trip up basic highlighters:
+\`\`\`python
+@dataclass
+class RenderEngine:
+    version: str = "9.2.0"
+    is_stable: bool = True
+
+    async def stream_payload(self, raw_data: dict) -> str:
+        # Testing syntax highlighting for f-strings and logic
+        summary = f"Processing {len(raw_data)} chunks on v{self.version}"
+        if not self.is_stable:
+            raise Exception("Unstable Render State Detected")
+        return summary.upper()
+\`\`\`
+
+## 3. The Responsive "Deep-Dive" Table
+This table tests if your CSS can handle long English sentences and math symbols inside a fixed grid without breaking the container.
+
+| Category | Technical Specification | Operational Status | Detailed Observations |
+| :--- | :--- | :--- | :--- |
+| **Quantics** | $H\\psi = E\\psi$ | 🟢 OPTIMAL | The wave function is stable across all dimensions of the viewport. |
+| **Logic** | \`if (x > y) return x;\` | 🟡 PENDING | Testing if inline code blocks inside a table cell cause unwanted height expansion. |
+| **Network** | 10.0.0.1/24 | 🔴 LATENCY | This very long description is here to ensure that the table-cell wraps the text properly instead of forcing a horizontal scrollbar on the user's screen. |
+
+## 4. Nested Hierarchy & Quotes
+> "The true test of a parser is not the simple text, but the chaos within the structure."
+> 1. Level One
+>    - Level Two (Unordered)
+>        - **Level Three (Bold)**
+>    - Back to Level Two
+> 2. Back to Level \`One\`
+
+---
+**Challenge Status:** *Complete!*
+`;
+
+const target = document.getElementById('render-target');
+
+function applyPlugins() {
+    // Render KaTeX wiskunde
+    if (window.renderMathInElement) {
+        renderMathInElement(target, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
+    // Render Prism highlighting
+    if (window.Prism) {
+        Prism.highlightAllUnder(target);
+    }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const contentEl = document.getElementById('content');
-  const mdDiv = document.createElement('div');
-  mdDiv.className = 'md-body';
-
-  // 1. Task List
-  const taskUl = document.createElement('ul');
-  taskUl.className = 'task-list';
-  const tasks = [
-    { id: 14, checked: false, text: "Inline math $x^{14}+y^{14}=z^{14}$ and code <code>console.log(14)</code>" },
-    { id: 15, checked: true, text: "Inline math $x^{15}+y^{15}=z^{15}$ and code <code>console.log(15)</code>" }
-  ];
-
-  tasks.forEach(t => {
-    const li = document.createElement('li');
-    if (t.checked) li.className = 'is-checked';
-    li.innerHTML = `<div class="task-check" role="checkbox" aria-checked="${t.checked}" tabindex="0"></div><div class="li-content">${t.text}</div>`;
-    taskUl.appendChild(li);
-  });
-  mdDiv.appendChild(taskUl);
-
-  // 2. Omega Stress Test Markdown
-  const omegaMD = `
-# Omega Stress Test V5.3 Extreme Fixed
-
-### Nested math and code stress test
-
-> Main quote with nested items:
-> * First level $\\alpha + \\beta$ >   * Second level:
->     1. Subitem $\\sqrt{2}+\\sqrt{3}$ >     2. Subitem code \`rm -rf /\`
->     3. Subitem with inline math $\\frac{a_i}{b_j}$ `;
-  mdDiv.innerHTML += marked.parse(omegaMD);
-
-  // 3. COMPLEX NON-INLINE FORMULA (DISPLAY MATH)
-  const mathSectionHeader = document.createElement('h2');
-  mathSectionHeader.innerText = "Complex Display Math";
-  mdDiv.appendChild(mathSectionHeader);
-
-  const displayMath = `$$   \\begin{aligned}
-    \\mathcal{F}(\\omega) &= \\int_{-\\infty}^{\\infty} f(t) e^{-i\\omega t} dt \\\\
-    \\hat{H}\\Psi &= E\\Psi = \\left[ -\\frac{\\hbar^2}{2m}\\nabla^2 + V(\\mathbf{r},t) \\right] \\Psi \\\\
-    \\zeta(s) &= \\sum_{n=1}^{\\infty} \\frac{1}{n^s} = \\prod_{p \\text{ prim}} \\frac{1}{1-p^{-s}}
-  \\end{aligned}
-  $$`;
-  mdDiv.innerHTML += marked.parse(displayMath);
-
-  // 4. Extra Content (Table)
-  let extraMD = "## Extra Data\n| Item | Math | Code |\n| :--- | :--- | :--- |\n| Alpha | $\\gamma$ | `init()` |\n| Beta | $\\delta$ | `stop()` |";
-  mdDiv.innerHTML += marked.parse(extraMD);
-
-  contentEl.appendChild(mdDiv);
-
-  // 5. Code Blocks
-  function createCodeBlock(lang, code) {
-    const container = document.createElement('div');
-    container.className = 'code-block';
-    const header = document.createElement('div');
-    header.className = 'code-header';
-    header.innerHTML = `<span class="code-lang">${lang}</span>`;
-    const btn = document.createElement('button');
-    btn.className = 'copy-btn';
-    btn.innerHTML = iconCopy;
-    btn.setAttribute('aria-label', 'Kopieer code');
-    btn.onclick = () => copyToClipboard(btn, code);
-    header.appendChild(btn);
-    const pre = document.createElement('pre');
-    const codeTag = document.createElement('code');
-    codeTag.className = `language-${lang}`;
-    codeTag.textContent = code;
-    pre.appendChild(codeTag);
-    container.appendChild(header);
-    container.appendChild(pre);
-    return container;
-  }
-
-  const jsCode = `function test() {\n  console.log("System stable");\n  return true;\n}`;
-  mdDiv.appendChild(createCodeBlock('javascript', jsCode));
-
-  // RENDERING & HIGHLIGHTING
-  renderMathInElement(contentEl, {
-    delimiters: [
-      { left: '$$', right: '$$', display: true },
-      { left: '$', right: '$', display: false }
-    ],
-    throwOnError: false
-  });
-
-  Prism.highlightAll();
-
-  // Task list interactie
-  mdDiv.addEventListener('click', e => {
-    const check = e.target.closest('.task-check');
-    if (check) {
-      const li = check.parentElement;
-      const isChecked = li.classList.toggle('is-checked');
-      check.setAttribute('aria-checked', isChecked);
+async function streamText(text) {
+    // VEILIGHEIDSCHECK: Wacht tot marked beschikbaar is
+    if (typeof marked === 'undefined') {
+        console.error("Marked nog niet geladen, herproberen...");
+        setTimeout(() => streamText(text), 100);
+        return;
     }
-  });
 
-  // Keyboard accessibility for task checks
-  mdDiv.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      const check = e.target.closest('.task-check');
-      if (check) {
-        e.preventDefault();
-        const li = check.parentElement;
-        const isChecked = li.classList.toggle('is-checked');
-        check.setAttribute('aria-checked', isChecked);
-      }
+    let i = 0;
+    const bufferSize = 8;
+
+    function update() {
+        if (i <= text.length) {
+            if (window.DarkAngel && DarkAngel.render) {
+                DarkAngel.render(target, text.slice(0, i));
+                applyPlugins();
+            }
+            i += bufferSize;
+            requestAnimationFrame(update);
+        } else {
+            DarkAngel.render(target, text);
+            applyPlugins();
+            target.classList.remove('streaming');
+        }
     }
-  });
+    update();
+}
+
+// Start pas als alles in de window geladen is
+window.addEventListener('load', () => {
+    streamText(content);
 });
 </script>
 
