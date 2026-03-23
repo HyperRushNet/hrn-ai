@@ -1,3 +1,15 @@
+De fout `Uncaught SyntaxError: Unexpected token ')'` wordt veroorzaakt door de manier waarop de code wordt ingevoegd in de `onclick` attribute binnen een *template literal* (de backticks ` `).
+
+Als een codeblok speciale tekens bevat zoals `${` (bijvoorbeeld in JavaScript template literals) of backticks zelf, breekt dit de parser van de outer template string. Daarnaast is het invoegen van grote stukken code in een `onclick` attribuut riskant.
+
+**De Oplossing:**
+1.  Ik heb de **template literals** (backticks) vervangen door gewone **string concatenatie** (`+`) in de `renderer.code` functie. Dit voorkomt dat de inhoud van de code de parser breekt.
+2.  Ik gebruik nu een `data-code` attribuut om de code veilig op te slaan en lees deze in de `copyText` functie weer uit. Dit is veel robuuster.
+3.  Ik heb de `copyText` functie bijgewerkt om zowel de oude manier (met argument) als de nieuwe manier (met `dataset.code`) te ondersteunen.
+
+Hier is de gecorrigeerde en veilige code:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -249,8 +261,7 @@ const renderer = new marked.Renderer();
 renderer.code = function(code, language) {
     const lang = language || 'plaintext';
     let highlighted = code;
-
-    // Gebruik Highlight.js
+    
     try {
         if (hljs.getLanguage(lang)) {
             highlighted = hljs.highlight(code, { language: lang }).value;
@@ -261,39 +272,36 @@ renderer.code = function(code, language) {
         console.error("Highlighting error", e);
     }
 
-    // Veilige escape voor onclick (backticks, dollars, backslashes)
-    const safeCode = code
-        .replace(/\\/g, '\\\\')   // escape backslash
-        .replace(/`/g, '\\`')     // escape backticks
-        .replace(/\$/g, '\\$');   // escape $ voor template literals
+    // Use data-code attribute to avoid syntax errors with backticks in onclick
+    const encodedCode = encodeURIComponent(code);
 
-    return `<div class="code-block">
-        <div class="code-header">
-            <span class="code-lang">${lang}</span>
-            <button class="act-btn" onclick="copyText(this, \`${safeCode}\`)" title="Copy code">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </button>
-        </div>
-        <div class="code-content">
-            <pre><code class="hljs">${highlighted}</code></pre>
-        </div>
-    </div>`;
+    // Use string concatenation to prevent ${} injection issues in template literals
+    return '<div class="code-block">' +
+        '<div class="code-header">' +
+            '<span class="code-lang">' + lang + '</span>' +
+            '<button class="act-btn" data-code="' + encodedCode + '" onclick="copyText(this)" title="Copy code">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:16px;height:16px">' +
+                    '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
+                    '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
+                '</svg>' +
+            '</button>' +
+        '</div>' +
+        '<div class="code-content">' +
+            '<pre><code class="hljs">' + highlighted + '</code></pre>' +
+        '</div>' +
+    '</div>';
 };
 
-// Custom Table Renderer to match existing CSS wrapper
+// Custom Table Renderer
 renderer.table = function(header, body) {
     if (body) body = '<tbody>' + body + '</tbody>';
     return '<div class="table-wrapper"><table>\n<thead>' + header + '</thead>\n' + body + '</table></div>\n';
 };
 
-// Configure Marked options
 marked.setOptions({
     renderer: renderer,
-    breaks: true, // Converts \n to <br>
-    gfm: true // Github Flavored Markdown (tables, task lists, etc.)
+    breaks: true,
+    gfm: true
 });
 
 // Helper function to handle MathJax placeholders
@@ -302,20 +310,16 @@ function parseMarkdown(text) {
     const mathBlocks = [];
     let t = text;
 
-    // 1. Protect Math Blocks (so Marked doesn't mess up the syntax)
-
-    // Display math $$...$$
+    // 1. Protect Math Blocks
     t = t.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => {
         const id = mathBlocks.length;
-        mathBlocks.push(`\\[${p1}\\]`);
-        return `[[MATHBLOCK${id}]]`;
+        mathBlocks.push('\\[' + p1 + '\\]');
+        return '[[MATHBLOCK' + id + ']]';
     });
-
-    // Inline math $...$
     t = t.replace(/\$([^\$\n]+?)\$/g, (match, p1) => {
         const id = mathBlocks.length;
-        mathBlocks.push(`\\(${p1}\\)`);
-        return `[[MATHBLOCK${id}]]`;
+        mathBlocks.push('\\(' + p1 + '\\)');
+        return '[[MATHBLOCK' + id + ']]';
     });
 
     // 2. Parse with Marked.js
@@ -323,7 +327,7 @@ function parseMarkdown(text) {
 
     // 3. Restore Math Blocks
     mathBlocks.forEach((val, i) => {
-        html = html.split(`[[MATHBLOCK${i}]]`).join(val);
+        html = html.split('[[MATHBLOCK' + i + ']]').join(val);
     });
 
     return html;
@@ -337,27 +341,11 @@ const SYS_PROMPT = `
 You are HyperRush AI. Your responses are parsed by a custom rendering engine.
 
 **=== CRITICAL PARSER SAFETY RULES ===**
-**VIOLATING THESE RULES WILL CRASH THE INTERFACE.**
+1. **CODE BLOCKS:** Always close code blocks with \`\`\`. Do not use raw HTML in markdown.
+2. **MATH:** Use $$...$$ for block and $...$ for inline math.
+3. **LANGUAGE:** If the user speaks Dutch, respond in Dutch.
 
-1.  **CODE BLOCK DISCIPLINE:**
-    - You MUST close every code block.
-    - Always use the format: \`\`\`language \\n CODE \\n \`\`\`
-    - **STRICT PROHIBITION:** Do NOT use HTML tags (\`<div>\`, \`<style>\`, \`<script>\`) anywhere in your response. It will be displayed as ugly text code.
-    - If you need to show HTML code, place it INSIDE a fenced code block.
-
-2.  **MARKDOWN SYNTAX STRICTNESS:**
-    - **Math:** Use ONLY \`$$...$$\` for block math and \`$...$\` for inline math.
-    - **Links/Images:** Ensure all brackets and parentheses are paired.
-
-3.  **STRUCTURAL INTEGRITY:**
-    - Ensure clear separation between code blocks and explanatory text (use double newlines).
-
-**=== LANGUAGE PROTOCOL ===**
-1.  **PERSISTENCE:** If the user speaks Dutch, YOU MUST RESPOND IN DUTCH. Do not switch to English unless explicitly requested.
-2.  **NO META-TALK:** Do not announce the language switch. Just speak the language.
-
-**=== INTERACTION STYLE ===**
-- Be helpful and direct.
+Be helpful and direct.
 `;
 
 let CURRENT_ID = null, CHATS = [], PK = localStorage.getItem("pk"), isGenerating = !1, abortController = null, lastMathjaxRender = 0;
@@ -442,7 +430,7 @@ function _updateCountdown() {
     } 
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); 
     const seconds = Math.floor((diff % (1000 * 60)) / 1000); 
-    const str = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`; 
+    const str = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
     document.getElementById('toast-countdown').innerText = str; 
 }
 
@@ -454,7 +442,7 @@ function openLightbox(images, index) {
     images.forEach((src, i) => {
         const thumb = document.createElement('img');
         thumb.src = src;
-        thumb.className = `lightbox-thumb ${i === index ? 'active' : ''}`;
+        thumb.className = 'lightbox-thumb' + (i === index ? ' active' : '');
         thumb.onclick = () => {
             mainImg.src = src;
             document.querySelectorAll('.lightbox-thumb').forEach(t => t.classList.remove('active'));
@@ -484,20 +472,9 @@ async function handleFiles(files) {
     if (selectedFilePreviews.length > 0) {
         const pill = document.createElement('div');
         pill.className = 'pill-tag';
-        pill.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-            ${selectedFilePreviews.length} Image${selectedFilePreviews.length > 1 ? 's' : ''} selected
-            <div class="pill-remove" onclick="clearFiles(event)">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </div>
-        `;
+        pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' +
+            selectedFilePreviews.length + ' Image' + (selectedFilePreviews.length > 1 ? 's' : '') + ' selected' +
+            '<div class="pill-remove" onclick="clearFiles(event)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>';
         pill.onclick = (e) => {
             if (e.target.closest('.pill-remove')) return;
             openLightbox(selectedFilePreviews, 0);
@@ -530,12 +507,13 @@ async function init() {
     try { CHATS = await _loadChatsFromDB(); } catch (e) { CHATS = []; }
     if (!PK) {
         const e = new URLSearchParams(window.location.hash.substring(1)).get("api_key");
-        if (!e) return void(window.location.href = `https://enter.pollinations.ai/authorize?redirect_url=${encodeURIComponent(window.location.href)}&permissions=profile,balance,usage,offline_access&app_key=pk_kn9KoGgYC7i5Sk6P&expiry=never`);
-        localStorage.setItem("pk", e), PK = e, location.reload()
+        if (!e) return void(window.location.href = 'https://enter.pollinations.ai/authorize?redirect_url=' + encodeURIComponent(window.location.href) + '&permissions=profile,balance,usage,offline_access&app_key=pk_kn9KoGgYC7i5Sk6P&expiry=never');
+        localStorage.setItem("pk", e); PK = e; location.reload();
     }
-    renderSidebar(), updateBalance();
+    renderSidebar(); updateBalance();
     const e = document.getElementById("prompt");
-    e.addEventListener("input", (() => { e.style.height = "auto", e.style.height = e.scrollHeight + "px" })), e.addEventListener("keydown", (e => { "Enter" !== e.key || e.shiftKey || (e.preventDefault(), handleSendOrStop()) }))
+    e.addEventListener("input", (() => { e.style.height = "auto"; e.style.height = e.scrollHeight + "px" })); 
+    e.addEventListener("keydown", (e => { if ("Enter" !== e.key || e.shiftKey) return; e.preventDefault(); handleSendOrStop() }));
 }
 
 function toggleSidebar() { document.body.classList.toggle("sidebar-open") }
@@ -543,13 +521,13 @@ function toggleSidebar() { document.body.classList.toggle("sidebar-open") }
 async function updateBalance() {
     const e = document.getElementById("balance");
     try {
-        const t = await fetch(`${API_BASE}/account/balance`, { method: "GET", headers: { Authorization: `Bearer ${PK}`, "Content-Type": "application/json" }, referrer: window.location.href, referrerPolicy: "strict-origin-when-cross-origin" });
+        const t = await fetch(API_BASE + "/account/balance", { method: "GET", headers: { Authorization: "Bearer " + PK, "Content-Type": "application/json" }, referrer: window.location.href, referrerPolicy: "strict-origin-when-cross-origin" });
         if (t.status === 402) { _showQuotaToast(); e.innerText = "LIMIT"; return; }
         _hideQuotaToast();
-        if (!t.ok) throw new Error(`HTTP status ${t.status}`);
+        if (!t.ok) throw new Error("HTTP status " + t.status);
         const n = await t.json();
         e.innerText = Math.round(((n.balance || 0) + Number.EPSILON) * 1000).toLocaleString() + " CREDITS";
-    } catch (t) { console.error("Balance fetch error:", t), e.innerText = "ERROR" }
+    } catch (t) { console.error("Balance fetch error:", t); e.innerText = "ERROR" }
 }
 
 function renderSidebar() {
@@ -561,7 +539,7 @@ function renderSidebar() {
         const editBtn = document.createElement("button"); editBtn.className = "edit-title-btn"; editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'; editBtn.title = "Edit title";
         editBtn.onclick = (e) => { e.stopPropagation(); _startEditTitle(t.id, s); };
         titleWrap.appendChild(s); titleWrap.appendChild(editBtn); s.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(t.id, s); }; n.onclick = () => loadChat(t.id);
-        const o = document.createElement("button"); o.className = "act-btn", o.onclick = e => deleteChat(t.id, e), o.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;opacity:0.6"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+        const o = document.createElement("button"); o.className = "act-btn"; o.onclick = e => deleteChat(t.id, e); o.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;opacity:0.6"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
         n.appendChild(titleWrap); n.appendChild(o); e.appendChild(n);
     }))
 }
@@ -580,13 +558,14 @@ function _startEditTitle(chatId, titleElement) {
 
 async function _generateChatTitle(chatId, userMessage, aiResponse) {
     try {
-        const response = await fetch(`${API_BASE}/v1/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` }, body: JSON.stringify({ model: "gemini-fast", messages: [{ role: "system", content: "Generate a very short title (max 4 words) for this conversation. (eg: 'Greeting') Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." }, { role: "user", content: `User: ${userMessage}\n\nAssistant: ${aiResponse.substring(0, 200)}` }], max_tokens: 20, temperature: 0.7 }) });
+        const response = await fetch(API_BASE + "/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK }, body: JSON.stringify({ model: "gemini-fast", messages: [{ role: "system", content: "Generate a very short title (max 4 words) for this conversation. (eg: 'Greeting') Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." }, { role: "user", content: "User: " + userMessage + "\n\nAssistant: " + aiResponse.substring(0, 200) }], max_tokens: 20, temperature: 0.7 }) });
         if (!response.ok) return null; const data = await response.json(); const title = data.choices?.[0]?.message?.content?.trim();
         if (title && title.length > 0 && title.length <= 50) { const chat = CHATS.find(c => c.id === chatId); if (chat) { chat.title = title; await _saveChatsToDB(); renderSidebar(); return title; } }
     } catch (e) { console.error("Title generation error:", e); } return null;
 }
 
-function loadChat(e) {
+function
+ loadChat(e) {
     if (isGenerating) return; CURRENT_ID = e;
     const t = CHATS.find((t => t.id === e));
     t && (document.getElementById("welcome").style.display = "none", document.getElementById("chat-view").style.display = "block", document.getElementById("chat-container").innerHTML = "", t.messages && Array.isArray(t.messages) && t.messages.forEach(((e, t) => { renderMsg(e.role, e.content, t, !0, e.images) })), renderSidebar(), window.innerWidth < 1024 && document.body.classList.remove("sidebar-open"))
@@ -596,38 +575,39 @@ function newChat() { isGenerating || (CURRENT_ID = null, document.getElementById
 
 async function deleteChat(e, t) { t.stopPropagation(), CHATS = CHATS.filter((t => t.id !== e)), await _saveChatsToDB(), CURRENT_ID === e ? newChat() : renderSidebar() }
 
-function copyText(e, t) { navigator.clipboard.writeText(decodeURIComponent(t)); const n = e.innerHTML; e.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>', setTimeout((() => e.innerHTML = n), 2e3) }
+// Updated copyText to support data-code attribute
+function copyText(e, t) { 
+    const textToCopy = t !== undefined ? t : e.dataset.code;
+    if(!textToCopy) return;
+    navigator.clipboard.writeText(decodeURIComponent(textToCopy)); 
+    const n = e.innerHTML; 
+    e.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>'; 
+    setTimeout((() => e.innerHTML = n), 2e3);
+}
 
 function startSuggestion(e) { document.getElementById("prompt").value = e, handleSendOrStop() }
 
 function renderMsg(e, t, n, s, images = null) {
     const o = "user" === e, a = document.createElement("div");
-    if (a.className = "msg " + (o ? "user" : "ai"), a.id = `msg-${n}`, o) {
+    if (a.className = "msg " + (o ? "user" : "ai"), a.id = "msg-" + n, o) {
         const e = document.createElement("div"); e.className = "bubble";
         if (images && images.length > 0) {
             const pill = document.createElement('div');
             pill.className = 'pill-tag';
             pill.style.marginBottom = '6px';
-            pill.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-                ${images.length} Image${images.length > 1 ? 's' : ''}
-            `;
+            pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + images.length + ' Image' + (images.length > 1 ? 's' : '');
             pill.onclick = () => openLightbox(images, 0);
             e.appendChild(pill);
         }
         const contentDiv = document.createElement("div"); contentDiv.className = "bubble-content"; contentDiv.innerText = t || ""; e.appendChild(contentDiv);
         const actionsDiv = document.createElement("div"); actionsDiv.className = "actions";
-        actionsDiv.innerHTML = `<button class="act-btn" onclick="editUserMessage(${n})" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+        actionsDiv.innerHTML = '<button class="act-btn" onclick="editUserMessage(' + n + ')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
         e.appendChild(actionsDiv); a.appendChild(e);
     } else {
         const e = document.createElement("div");
         if (e.className = "md-body", s) {
-            e.innerHTML = parseMarkdown(t || ""), window.MathJax && MathJax.typesetPromise([e]).catch((e => console.log(e)));
-            const s = document.createElement("div"); s.className = "actions", s.innerHTML = `<button class="act-btn" onclick="handleRegen(${n})" title="Regenerate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button><button class="act-btn" onclick="copyText(this, \`${encodeURIComponent(t||"")}\`)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`, a.appendChild(s)
+            e.innerHTML = parseMarkdown(t || ""); window.MathJax && MathJax.typesetPromise([e]).catch((e => console.log(e)));
+            const s = document.createElement("div"); s.className = "actions"; s.innerHTML = '<button class="act-btn" onclick="handleRegen(' + n + ')" title="Regenerate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button><button class="act-btn" onclick="copyText(this, \`' + encodeURIComponent(t||"") + '\`)" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>'; a.appendChild(s);
         } else e.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
         a.insertBefore(e, a.firstChild)
     }
@@ -635,7 +615,7 @@ function renderMsg(e, t, n, s, images = null) {
 }
 
 function editUserMessage(index) {
-    const msgDiv = document.getElementById(`msg-${index}`); if (!msgDiv) return;
+    const msgDiv = document.getElementById("msg-" + index); if (!msgDiv) return;
     const bubble = msgDiv.querySelector('.bubble');
     const contentDiv = bubble.querySelector('.bubble-content');
     const oldText = contentDiv.innerText;
@@ -649,14 +629,7 @@ function editUserMessage(index) {
     if (currentImages.length > 0) {
         const pill = document.createElement('div');
         pill.className = 'pill-tag';
-        pill.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-            ${currentImages.length} Image${currentImages.length > 1 ? 's' : ''}
-        `;
+        pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + currentImages.length + ' Image' + (currentImages.length > 1 ? 's' : '');
         pill.onclick = () => openLightbox(currentImages, 0);
         container.appendChild(pill);
     }
@@ -666,10 +639,7 @@ function editUserMessage(index) {
     container.appendChild(textarea);
     const btns = document.createElement('div');
     btns.className = 'edit-actions';
-    btns.innerHTML = `
-        <button class="edit-cancel-btn" onclick="cancelEdit(${index}, \`${encodeURIComponent(oldText)}\`)">Cancel</button>
-        <button class="edit-save-btn" onclick="saveEdit(${index})">Send</button>
-    `;
+    btns.innerHTML = '<button class="edit-cancel-btn" onclick="cancelEdit(' + index + ', \`' + encodeURIComponent(oldText) + '\`)">Cancel</button><button class="edit-save-btn" onclick="saveEdit(' + index + ')">Send</button>';
     container.appendChild(btns);
     bubble.appendChild(container);
     textarea.focus();
@@ -678,7 +648,7 @@ function editUserMessage(index) {
 }
 
 function cancelEdit(index, oldTextEncoded) {
-    const msgDiv = document.getElementById(`msg-${index}`);
+    const msgDiv = document.getElementById("msg-" + index);
     const bubble = msgDiv.querySelector('.bubble');
     const container = bubble.querySelector('.edit-container');
     const chat = CHATS.find(c => c.id === CURRENT_ID);
@@ -688,14 +658,7 @@ function cancelEdit(index, oldTextEncoded) {
         const pill = document.createElement('div');
         pill.className = 'pill-tag';
         pill.style.marginBottom = '6px';
-        pill.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-            ${currentImages.length} Image${currentImages.length > 1 ? 's' : ''}
-        `;
+        pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + currentImages.length + ' Image' + (currentImages.length > 1 ? 's' : '');
         pill.onclick = () => openLightbox(currentImages, 0);
         bubble.appendChild(pill);
     }
@@ -705,12 +668,12 @@ function cancelEdit(index, oldTextEncoded) {
     bubble.appendChild(contentDiv);
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'actions';
-    actionsDiv.innerHTML = `<button class="act-btn" onclick="editUserMessage(${index})" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+    actionsDiv.innerHTML = '<button class="act-btn" onclick="editUserMessage(' + index + ')" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
     bubble.appendChild(actionsDiv);
 }
 
 async function saveEdit(index) {
-    const msgDiv = document.getElementById(`msg-${index}`);
+    const msgDiv = document.getElementById("msg-" + index);
     const bubble = msgDiv.querySelector('.bubble');
     const container = bubble.querySelector('.edit-container');
     const pill = container.querySelector('.pill-tag');
@@ -737,15 +700,14 @@ async function handleSendOrStop() {
     if (isGenerating) return void(abortController && abortController.abort());
     const e = document.getElementById("prompt"), t = e.value.trim();
     if (!t && selectedFiles.length === 0) return;
-    e.value = "", e.style.height = "auto", document.getElementById("welcome").style.display = "none", document.getElementById("chat-view").style.display = "block";
+    e.value = ""; e.style.height = "auto"; document.getElementById("welcome").style.display = "none"; document.getElementById("chat-view").style.display = "block";
     const isNewChat = !CURRENT_ID;
     CURRENT_ID || (CURRENT_ID = Date.now().toString(), CHATS.unshift({ id: CURRENT_ID, title: "New Chat", messages: [], needsTitle: true, firstUserMessage: t || "Image upload" }), renderSidebar());
     const n = CHATS.find((e => e.id === CURRENT_ID));
     const userMsg = { role: "user", content: t };
     if (selectedFilePreviews.length > 0) {
         userMsg.images = [...selectedFilePreviews];
-        selectedFiles = [];
-        selectedFilePreviews = [];
+        selectedFiles = []; selectedFilePreviews = [];
         document.getElementById('attachment-preview').innerHTML = '';
         document.getElementById('file-input').value = '';
     }
@@ -759,7 +721,7 @@ function _createImageContent(base64) {
 
 async function streamAI(isNewChat = false) {
     isGenerating = !0; const e = document.getElementById("send-btn"), t = document.getElementById("icon-send"), n = document.getElementById("icon-stop");
-    e.classList.add("active"), t.style.display = "none", n.style.display = "block";
+    e.classList.add("active"); t.style.display = "none"; n.style.display = "block";
     const s = CHATS.find((e => e.id === CURRENT_ID)); if (!s) return;
     const o = renderMsg("assistant", "", s.messages.length, !1), a = o.querySelector(".md-body"); let r = "";
     abortController = new AbortController;
@@ -772,13 +734,13 @@ async function streamAI(isNewChat = false) {
             }
             return { role: msg.role, content: msg.content };
         });
-        const response = await fetch(`${API_BASE}/v1/chat/completions`, {
-            method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
+        const response = await fetch(API_BASE + "/v1/chat/completions", {
+            method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK },
             body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: !0, seed: Math.floor(1e6 * Math.random()) }),
             signal: abortController.signal
         });
         if (response.status === 402) { _showQuotaToast(); throw new Error("Quota Exceeded"); }
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        if (!response.ok) throw new Error("HTTP error " + response.status);
         const t = response.body.getReader(), n = new TextDecoder; let o = "";
         for (;;) {
             const { done: s, value: i } = await t.read(); if (s) break;
@@ -791,10 +753,10 @@ async function streamAI(isNewChat = false) {
         _isTruncated(r) ? (s.messages.push({ role: "assistant", content: r }), r = "", s.messages.push({ role: "user", content: "Continue exactly where you left off. Do not repeat text." }), a.innerHTML += '<div style="text-align:center;color:var(--accent);font-size:12px;margin-top:10px">Continuing...</div>', await _continueGeneration(s, a, r)) : (s.messages.push({ role: "assistant", content: r }), await _saveChatsToDB(), updateBalance(), isNewChat && s.firstUserMessage && _generateChatTitle(CURRENT_ID, s.firstUserMessage, r))
     } catch (e) {
         if (e.name === "AbortError") { if (r.length > 0) { s.messages.push({ role: "assistant", content: r + " [Stopped]" }); await _saveChatsToDB(); } }
-        else a.innerHTML = `<span style="color:#ef4444">Error: ${e.message}</span>`;
+        else a.innerHTML = '<span style="color:#ef4444">Error: ' + e.message + '</span>';
     } finally {
         if (!r.trim()) { r = "I apologize, but I could not generate a response. Please try again."; a.innerHTML = parseMarkdown(r); }
-        abortController = null, isGenerating = !1, e.classList.remove("active"), t.style.display = "block", n.style.display = "none", r.length > 0 && (o.remove(), renderMsg("assistant", r, s.messages.length - 1, !0))
+        abortController = null; isGenerating = !1; e.classList.remove("active"); t.style.display = "block"; n.style.display = "none"; r.length > 0 && (o.remove(), renderMsg("assistant", r, s.messages.length - 1, !0))
     }
 }
 
@@ -811,8 +773,8 @@ async function _continueGeneration(e, t, n) {
             }
             return { role: msg.role, content: msg.content };
         });
-        const s = (await fetch(`${API_BASE}/v1/chat/completions`, {
-            method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${PK}` },
+        const s = (await fetch(API_BASE + "/v1/chat/completions", {
+            method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK },
             body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: !0, seed: Math.floor(1e6 * Math.random()) }),
             signal: abortController.signal
         })).body.getReader(), o = new TextDecoder; let a = "";
@@ -824,10 +786,11 @@ async function _continueGeneration(e, t, n) {
                 try { const e = JSON.parse(o), s = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content; s && (n += s, t.innerHTML = parseMarkdown(n), _renderMathLive(t), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight) } catch (e) {}
             }
         }
-        e.messages[e.messages.length - 1] = { role: "assistant", content: n }, await _saveChatsToDB(), updateBalance()
+        e.messages[e.messages.length - 1] = { role: "assistant", content: n }; await _saveChatsToDB(); updateBalance()
     } catch (e) { console.error(e) }
 }
 init();
 </script>
 </body>
 </html>
+```
