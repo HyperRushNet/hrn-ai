@@ -102,11 +102,11 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 .md-body blockquote{border-left:3px solid var(--accent);padding-left:16px;margin:16px 0;color:var(--text-muted)}
 .md-body blockquote blockquote{border-left-color:var(--text-muted);margin:8px 0}
 
-/* HR Styling */
+/* HR Styling - Solid Line */
 .md-body hr {
     border: 0;
     height: 1px;
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+    background-color: rgba(255, 255, 255, 0.15);
     margin: 3em 0;
 }
 
@@ -783,7 +783,27 @@ async function streamAI(isNewChat = false) {
                 try { const e = JSON.parse(n), t = e.choices && e.choices[0] && e.choices[0].delta && e.choices[0].delta.content; t && (r += t, a.innerHTML = parseMarkdown(r), _renderMathLive(a), document.getElementById("chat-view").scrollTop = document.getElementById("chat-view").scrollHeight) } catch (e) {}
             }
         }
-        _isTruncated(r) ? (s.messages.push({ role: "assistant", content: r }), r = "", s.messages.push({ role: "user", content: "Continue exactly where you left off. Do not repeat text." }), a.innerHTML += '<div style="text-align:center;color:var(--accent);font-size:12px;margin-top:10px">Continuing...</div>', await _continueGeneration(s, a, r)) : (s.messages.push({ role: "assistant", content: r }), await _saveChatsToDB(), updateBalance(), isNewChat && s.firstUserMessage && _generateChatTitle(CURRENT_ID, s.firstUserMessage, r))
+        
+        // Check for truncation
+        if (_isTruncated(r)) {
+            s.messages.push({ role: "assistant", content: r });
+            const indicator = document.createElement('div');
+            indicator.style.cssText = 'text-align:center;color:var(--accent);font-size:12px;margin-top:10px;opacity:0.8';
+            indicator.innerText = 'Continuing generation...';
+            a.appendChild(indicator);
+            
+            // Delay to prevent "too fast" continuation
+            await new Promise(res => setTimeout(res, 1200));
+            
+            s.messages.push({ role: "user", content: "Continue exactly where you left off. Do not repeat text." });
+            await _continueGeneration(s, a, "");
+        } else {
+            s.messages.push({ role: "assistant", content: r });
+            await _saveChatsToDB();
+            updateBalance();
+            if (isNewChat && s.firstUserMessage) _generateChatTitle(CURRENT_ID, s.firstUserMessage, r);
+        }
+
     } catch (e) {
         if (e.name === "AbortError") { if (r.length > 0) { s.messages.push({ role: "assistant", content: r + " [Stopped]" }); await _saveChatsToDB(); } }
         else a.innerHTML = '<span style="color:#ef4444">Error: ' + e.message + '</span>';
