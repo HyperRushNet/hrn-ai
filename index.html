@@ -242,6 +242,11 @@ New Chat
 </div>
 <script>
 class MarkdownParser {
+    constructor() {
+        this.codeBlockRegex = /```(\w*)\n([\s\S]*?)(?:```|$)/g;
+        this.inlineCodeRegex = /`([^`\n]+)`/g;
+    }
+
     _escapeHtml(t) {
         if (!t) return "";
         const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -254,6 +259,7 @@ class MarkdownParser {
         const mathBlocks = [];
         const codeBlocks = [];
         
+        // 1. Protect Math Blocks
         t = t.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => {
             const id = mathBlocks.length;
             mathBlocks.push(`\\[${p1}\\]`);
@@ -265,19 +271,32 @@ class MarkdownParser {
             return `[[MATHBLOCK${id}]]`;
         });
 
-        t = t.replace(/```(\w*)\n([\s\S]*?)(?:```|$)/g, (match, lang, code) => {
+        // 2. Protect Code Blocks (Handles unclosed blocks gracefully with the '|' in regex)
+        t = t.replace(this.codeBlockRegex, (match, lang, code) => {
             const id = codeBlocks.length;
             codeBlocks.push(this._renderCodeBlock(code || "", lang));
             return `[[CODEBLOCK${id}]]`;
         });
 
+        // 3. Parse Tables
         t = this._parseTables(t);
+        
+        // 4. Parse Headers
         t = this._parseHeaders(t);
+        
+        // 5. Parse Blockquotes
         t = this._parseBlockquotes(t);
+        
+        // 6. Parse Lists
         t = this._parseLists(t);
+        
+        // 7. Parse Inline styles (bold, italic, links, etc)
         t = this._parseInline(t);
+        
+        // 8. Parse Paragraphs
         t = this._parseParagraphs(t);
 
+        // 9. Restore Protected Blocks
         mathBlocks.forEach((val, i) => { t = t.replace(`[[MATHBLOCK${i}]]`, val); });
         codeBlocks.forEach((val, i) => { t = t.replace(`[[CODEBLOCK${i}]]`, val); });
 
@@ -286,15 +305,21 @@ class MarkdownParser {
 
     _renderCodeBlock(code, lang) {
         const language = lang || "code";
-        const safeCode = code.trim();
+        // Trim trailing newlines but preserve internal structure
+        const safeCode = code.replace(/\n+$/, ''); 
         let highlighted = this._escapeHtml(safeCode);
+        
         try {
             if (lang && hljs.getLanguage(lang)) {
                 highlighted = hljs.highlight(safeCode, { language: lang }).value;
             } else {
                 highlighted = hljs.highlightAuto(safeCode).value;
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error("Highlighting error", e);
+        }
+        
+        // Use encodeURIComponent to safely pass code to onclick
         return `<div class="code-block"><div class="code-header"><span class="code-lang">${language}</span><button class="act-btn" onclick="copyText(this, \`${encodeURIComponent(safeCode)}\`)" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><div class="code-content"><pre><code class="hljs">${highlighted}</code></pre></div></div>`;
     }
 
@@ -403,7 +428,7 @@ class MarkdownParser {
     }
 
     _parseInline(t) {
-        t = t.replace(/`([^`\n]+)`/g, `<code class="inline-code" style="background:rgba(255,255,255,0.15);padding:2px 5px;border-radius:4px;font-size:0.9em;">$1</code>`);
+        t = t.replace(this.inlineCodeRegex, `<code class="inline-code" style="background:rgba(255,255,255,0.15);padding:2px 5px;border-radius:4px;font-size:0.9em;">$1</code>`);
         t = t.replace(/\*\*\*([^*\n]+)\*\*\*/g, "<strong><em>$1</em></strong>");
         t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
         t = t.replace(/__([^_\n]+)__/g, "<strong>$1</strong>");
