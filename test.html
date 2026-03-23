@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Angel - Omega Parser V5.5</title>
+<title>Dark Angel - Omega Parser V5.3</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
@@ -18,73 +18,73 @@
   --muted: #64748b;
   --accent: #38bdf8;
   --radius: 12px;
+  --fs-base: 14px;
+  --fs-code: 13px;
   --fs-h1: 22px;
   --fs-h2: 18px;
   --fs-h3: 16px;
-  --fs-base: 14px;
-  --fs-code: 13px;
   --header-h: 36px;
   --lh: 21px;
   --section-gap: 20px;
-  --cell-padding: 12px 16px;
 }
 
 /* --- GLOBAL --- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
   background: var(--bg); color: var(--text); 
-  font-family: 'Inter', sans-serif; font-size: var(--fs-base); line-height: 1.5; 
-  -webkit-font-smoothing: antialiased;
+  font-family: 'Inter', sans-serif; font-size: var(--fs-base);
+  line-height: 1.5; -webkit-font-smoothing: antialiased; 
 }
 .chat-scroll { padding: 40px 20px; display: flex; justify-content: center; }
 .container { max-width: 800px; width: 100%; }
 
-/* --- MD CONTENT --- */
+/* --- CONTENT --- */
 .md-body > * { margin-bottom: var(--section-gap); }
-h1 { font-weight: 600; color: #fff; font-size: var(--fs-h1); line-height:1.5; }
-h2 { font-weight: 600; color: #fff; font-size: var(--fs-h2); line-height:1.5; }
-h3 { font-weight: 600; color: #fff; font-size: var(--fs-h3); line-height:1.5; }
-p, li, blockquote, td { font-size: var(--fs-base); line-height: 1.5; }
+h1{ font-weight:600; color:#fff; font-size: var(--fs-h1); line-height:1.5; margin-top:32px; }
+h2{ font-weight:600; color:#fff; font-size: var(--fs-h2); line-height:1.5; margin-top:32px; }
+h3{ font-weight:600; color:#fff; font-size: var(--fs-h3); line-height:1.5; margin-top:32px; }
+p,li,td,blockquote{font-size: var(--fs-base); line-height:1.5; color:#cbd5e1;}
 
-/* Blockquote */
+/* --- Blockquote --- */
 blockquote { 
   border-left: 3px solid var(--accent); 
   background: rgba(56,189,248,0.03); 
-  padding: 12px 20px; margin: var(--section-gap) 0; 
+  padding: 12px 20px; 
+  margin: 20px 0; 
   border-radius: 0 var(--radius) var(--radius) 0;
 }
-blockquote p { font-style: italic; margin: 0; }
+blockquote p { font-style: italic; margin:0; }
 
-/* Lists & Task Checkboxes */
+/* --- Lists & Task Checkboxes --- */
 ul, ol { padding-left: 24px; margin: 16px 0; }
-li { margin-bottom: 8px; display: flex; align-items: center; gap: 12px; min-height: var(--lh); }
-.task-check{flex-shrink:0;width:18px;height:18px;border:1.5px solid var(--border);border-radius:5px;background:var(--surface);display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;margin-top:0.1em;}
-.is-checked .task-check{background:rgba(56,189,248,0.1);border-color:var(--accent);box-shadow:0 0 10px rgba(56,189,248,0.2);}
-.is-checked .task-check::after{content:"";width:5px;height:9px;border:solid var(--accent);border-width:0 2.5px 2.5px 0;transform:rotate(45deg); margin-top:-2px;}
-li .li-content{flex:1; display:inline-block;}
+li { margin-bottom: 8px; display:flex; align-items:flex-start; gap:12px; min-height: var(--lh);}
+.task-check{flex-shrink:0;width:18px;height:18px;margin-top:1.5px;border:1.5px solid var(--border);border-radius:5px;background:var(--surface);display:flex;align-items:center;justify-content:center;transition:all 0.2s ease; cursor:pointer;}
+.is-checked .task-check{background: rgba(56,189,248,0.1); border-color: var(--accent); box-shadow:0 0 10px rgba(56,189,248,0.2);}
+.is-checked .task-check::after{content:"";width:5px;height:9px;border:solid var(--accent);border-width:0 2.5px 2.5px 0;transform:rotate(45deg);margin-top:-2px;}
+li .li-content{flex:1;line-height:var(--lh);display:inline-block;}
 .is-checked .li-content{color:var(--muted);text-decoration:line-through rgba(100,116,139,0.4);}
 
-/* --- MATH --- */
-.katex { font-size: 1.05em !important; vertical-align: middle; }
-.katex-display { margin: 1.5em 0 !important; overflow-x:auto; }
+/* --- Math --- */
+.katex { font-size:1.05em !important; vertical-align:middle; }
+.katex-display { margin:1.5em 0 !important; overflow-x:auto; overflow-y:hidden; }
 
-/* --- CODE BLOCKS --- */
-.code-block { border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); margin:20px 0; display:flex; flex-direction:column; contain: content; }
-.code-header { display:flex; justify-content:space-between; align-items:center; height: var(--header-h); padding:0 14px; background: rgba(255,255,255,0.02); border-bottom:1px solid var(--border); }
-.code-lang { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono'; font-weight:700; text-transform: uppercase; }
-.copy-btn { background:transparent; border:none; color:var(--muted); cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center; transition:color 0.2s; }
-.copy-btn:hover { color: var(--accent); }
-.copy-btn svg { width:14px; height:14px; stroke-width:2.5; }
+/* --- Codeblocks --- */
+.code-block { border:1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin:20px 0; display:flex; flex-direction:column; contain:content; }
+.code-header { display:flex; justify-content:space-between; align-items:center; height: var(--header-h); padding:0 14px; background: rgba(255,255,255,0.02); border-bottom:1px solid var(--border);}
+.code-lang { font-size:10px; color: var(--muted); font-family:'JetBrains Mono'; font-weight:700; text-transform:uppercase;}
+.copy-btn { background:transparent; border:none; color:var(--muted); cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center; transition:color 0.2s;}
+.copy-btn:hover{color: var(--accent);}
+.copy-btn svg{width:14px;height:14px;stroke-width:2.5;}
 .md-body pre { padding:16px !important; margin:0 !important; background:transparent !important; overflow-x:auto; }
-code { font-family:'JetBrains Mono', monospace; font-size: var(--fs-code) !important; }
-:not(pre) > code { background: rgba(255,255,255,0.06); padding: 2px 5px; border-radius:4px; color: var(--accent); font-size:0.92em !important; }
+code { font-family:'JetBrains Mono',monospace; font-size: var(--fs-code) !important; }
+:not(pre)>code { background: rgba(255,255,255,0.06); padding:2px 5px; border-radius:4px; color:var(--accent); font-size:0.92em !important; }
 
-/* --- TABLE --- */
+/* --- Tables --- */
 .table-wrapper { overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); margin:24px 0; }
-table { width:100%; border-collapse:collapse; font-size: var(--fs-code); min-width:500px; }
-th { background: rgba(255,255,255,0.02); color: var(--accent); padding: var(--cell-padding); text-align:left; border-bottom:1px solid var(--border); font-size:10px; text-transform:uppercase; letter-spacing:0.05em; }
-td { padding: var(--cell-padding); border-bottom:1px solid var(--border); color: #94a3b8; }
-tr:last-child td { border-bottom:none; }
+table{width:100%;border-collapse:collapse; font-size: var(--fs-code); min-width:500px;}
+th{background:rgba(255,255,255,0.02); color:var(--accent); padding:12px 16px; text-align:left; border-bottom:1px solid var(--border); font-size:10px; text-transform:uppercase; letter-spacing:0.05em;}
+td{padding:12px 16px; border-bottom:1px solid var(--border); color:#94a3b8;}
+tr:last-child td{border-bottom:none;}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -94,68 +94,79 @@ tr:last-child td { border-bottom:none; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </head>
 <body>
-
 <div class="chat-scroll">
   <div class="container" id="content"></div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const contentEl = document.getElementById('content');
+document.addEventListener('DOMContentLoaded', function(){
+const contentEl = document.getElementById('content');
 
-  const tasks = [
-    { text: 'Checked: $a^2 + b^2 = c^2$', checked: true },
-    { text: 'Unchecked: $x_i + y_j = z_k$', checked: false },
-    { text: 'Long alignment test sentence', checked: false }
-  ];
+// --- Custom brute-force task list with math ---
+const taskItems = [
+  { text: 'Checked task: $a^2 + b^2 = c^2$', checked: true },
+  { text: 'Unchecked task: $x_{i}+y_{j}=z_{k}$', checked: false },
+  { text: 'Long alignment test item', checked: false }
+];
 
-  const mdDiv = document.createElement('div'); mdDiv.className='md-body';
-  const ul = document.createElement('ul'); ul.classList.add('task-list');
+const mdDiv = document.createElement('div'); mdDiv.className = 'md-body';
+const ul = document.createElement('ul'); ul.classList.add('task-list');
+taskItems.forEach(item=>{
+  const li=document.createElement('li');
+  if(item.checked) li.classList.add('is-checked');
+  li.innerHTML=`<div class="task-check"></div><div class="li-content">${item.text}</div>`;
+  li.querySelector('.task-check').addEventListener('click',()=>li.classList.toggle('is-checked'));
+  ul.appendChild(li);
+});
+mdDiv.appendChild(ul);
 
-  tasks.forEach(item => {
-    const li = document.createElement('li');
-    if(item.checked) li.classList.add('is-checked');
-    li.innerHTML = `<div class="task-check"></div><div class="li-content">${item.text}</div>`;
-    ul.appendChild(li);
-  });
-  mdDiv.appendChild(ul);
+// --- Example Markdown content with lists, quotes, math ---
+const omegaMD = `
+# 🛡️ Omega Stress Test V5.3
 
-  const omegaMD = `# 🛡️ Omega Parser V5.5
-### Header math: $\\oint_C \\vec{B} \\cdot d\\vec{l} = \\mu_0 I_{encl}$
-> Quote with inline code \`var x=10\` and math $\\alpha+\\beta=\\gamma$.`;
+### Math in heading: $\\oint_C \\vec{B} \\cdot d\\vec{l} = \\mu_0 I_{encl}$
 
-  mdDiv.innerHTML += marked.parse(omegaMD);
-  contentEl.appendChild(mdDiv);
+> "Quote with list:"
+> * Point A with inline code \`var x = 10\`
+> * Point B with inline math $\\alpha + \\beta = \\gamma$
+> * Nested list:
+>   1. Subitem math $\\sqrt{2}$
+>   2. Subitem code \`sudo rm -rf\`
+`;
 
-  renderMathInElement(contentEl, {
-    delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
-    throwOnError:false
-  });
+mdDiv.innerHTML += marked.parse(omegaMD);
+contentEl.appendChild(mdDiv);
 
-  // Example code block
-  const codeWrapper = document.createElement('div'); codeWrapper.className='code-block';
-  const head = document.createElement('div'); head.className='code-header';
-  const label = document.createElement('span'); label.className='code-lang'; label.innerText='javascript';
-  const btn = document.createElement('button'); btn.className='copy-btn';
-  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-  btn.onclick = async ()=>{ await navigator.clipboard.writeText('const mode="Brute Force Fixed";'); btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(()=>{btn.innerHTML=btn.innerHTML},2000); };
-  head.appendChild(label); head.appendChild(btn);
-  const pre = document.createElement('pre');
-  const code = document.createElement('code'); code.className='language-javascript';
-  code.textContent='const mode="Brute Force Fixed";';
-  pre.appendChild(code); codeWrapper.appendChild(head); codeWrapper.appendChild(pre);
-  mdDiv.appendChild(codeWrapper);
+// --- KaTeX render ---
+renderMathInElement(contentEl,{
+  delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
+  throwOnError:false
+});
 
-  document.querySelectorAll('table').forEach(t=>{
-    if(!t.parentNode.classList.contains('table-wrapper')){
-      const w = document.createElement('div'); w.className='table-wrapper';
-      t.parentNode.insertBefore(w,t); w.appendChild(t);
-    }
-  });
+// --- Codeblock example ---
+const codeWrapper = document.createElement('div'); codeWrapper.className='code-block';
+const head = document.createElement('div'); head.className='code-header';
+const label = document.createElement('span'); label.className='code-lang'; label.innerText='javascript';
+const btn = document.createElement('button'); btn.className='copy-btn';
+btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+btn.onclick=async()=>{await navigator.clipboard.writeText('const mode="Brute Force Fixed";'); btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`; setTimeout(()=>{btn.innerHTML=btn.innerHTML},2000);}
+head.appendChild(label); head.appendChild(btn);
+const pre=document.createElement('pre'); const code=document.createElement('code');
+code.className='language-javascript'; code.textContent='const mode="Brute Force Fixed";';
+pre.appendChild(code); codeWrapper.appendChild(head); codeWrapper.appendChild(pre);
+mdDiv.appendChild(codeWrapper);
 
-  Prism.highlightAll();
+// --- Wrap tables ---
+document.querySelectorAll('table').forEach(t=>{
+  if(!t.parentNode.classList.contains('table-wrapper')){
+    const w=document.createElement('div'); w.className='table-wrapper';
+    t.parentNode.insertBefore(w,t); w.appendChild(t);
+  }
+});
+
+// --- Prism highlight ---
+Prism.highlightAll();
 });
 </script>
-
 </body>
 </html>
