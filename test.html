@@ -3,165 +3,185 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dark Angel - Universal Syntax & Perfect Spacing</title>
+  <title>Dark Angel - Omega Parser V3.1</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   
   <style>
     :root {
-      --bg-base: #050505;
-      --bg-surface: #0a0a0b;
-      --border-subtle: rgba(255,255,255,0.08);
-      --text-main: #f8fafc;
-      --text-muted: #64748b;
-      --text-task-open: #f1f5f9;
+      --bg: #050505;
+      --surface: #0a0a0b;
+      --border: rgba(255,255,255,0.08);
+      --text: #f8fafc;
+      --muted: #64748b;
       --accent: #38bdf8;
-      --link-color: #a1cdf0; 
-      --gap-block: 24px; /* Consistente spacing tussen grote blokken */
-      --gap-item: 12px;  /* Spacing tussen lijstitems */
-      --content-width: 800px;
+      --radius: 12px;
+      --fs-base: 14px;
+      --fs-code: 13px;
+      --header-h: 36px;
     }
 
+    /* --- GLOBAL --- */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg-base); color: var(--text-main); font-family: 'Inter', sans-serif; min-height: 100vh; line-height: 1.6; }
-    
-    .chat-scroll { padding: 60px 24px; display: flex; justify-content: center; }
-    .container { max-width: var(--content-width); width: 100%; }
-    
-    /* --- TYPOGRAFIE & SPACING --- */
-    .md-body > * + * { margin-top: var(--gap-block); } /* Smart spacing: alleen tussen elementen */
-    
-    .md-body h1 { font-size: 2.25rem; font-weight: 600; letter-spacing: -0.025em; margin-bottom: 32px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; }
-    .md-body h2 { font-size: 1.5rem; margin-top: 48px; margin-bottom: 16px; color: #fff; }
-    .md-body p { margin-bottom: 0; }
-
-    /* --- LINKS --- */
-    .md-body a { color: var(--link-color); text-decoration: none; border-bottom: 1px solid rgba(161, 205, 240, 0.3); transition: 0.2s; }
-    .md-body a:hover { color: #fff; border-bottom-color: #fff; background: rgba(161, 205, 240, 0.05); }
-
-    /* --- LIJSTEN --- */
-    .md-body ul, .md-body ol { list-style: none; }
-    .md-body li { position: relative; margin-top: var(--gap-item); }
-    .md-body li:first-child { margin-top: 0; }
-    
-    .md-body ul li:not(.task-list-item) { padding-left: 28px; }
-    .md-body ul li:not(.task-list-item)::before {
-      content: ""; position: absolute; left: 4px; top: 11px; width: 12px; height: 2px; background: var(--accent); border-radius: 2px;
+    body { 
+      background: var(--bg); color: var(--text); 
+      font-family: 'Inter', sans-serif; font-size: var(--fs-base);
+      line-height: 1.6; -webkit-font-smoothing: antialiased; 
     }
+    .chat-scroll { padding: 40px 20px; display: flex; justify-content: center; }
+    .container { max-width: 800px; width: 100%; }
+
+    /* --- CONTENT CORE --- */
+    .md-body > * { margin-bottom: 20px; }
+    h1, h2, h3 { color: #fff; font-weight: 600; margin-top: 32px; }
+    p { color: #cbd5e1; }
     
-    .md-body ol { counter-reset: section; }
-    .md-body ol > li { padding-left: 32px; counter-increment: section; }
-    .md-body ol > li::before {
-      content: counter(section) "."; position: absolute; left: 0; color: var(--accent); font-family: 'JetBrains Mono'; font-weight: 600; font-size: 0.9em;
+    /* Blockquote Stress Fix */
+    blockquote { 
+      border-left: 3px solid var(--accent); 
+      background: rgba(56,189,248,0.03); 
+      padding: 12px 20px; 
+      margin: 20px 0; 
+      border-radius: 0 var(--radius) var(--radius) 0;
     }
+    blockquote p { font-style: italic; margin-bottom: 0; }
 
-    /* --- TASKS --- */
-    .task-list-item { display: flex; align-items: flex-start; gap: 14px; }
-    .task-list-item input {
-      appearance: none; width: 18px; height: 18px; border: 1.5px solid rgba(255,255,255,0.3); 
-      border-radius: 5px; cursor: pointer; position: relative; background: rgba(255,255,255,0.03); margin-top: 4px; flex-shrink: 0;
-    }
-    .task-list-item input:checked { background: var(--accent); border-color: var(--accent); }
-    .task-list-item input:checked::after {
-      content: ''; position: absolute; left: 5px; top: 2px; width: 5px; height: 9px;
-      border: solid #000; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
-    }
-    .task-list-item input:checked + span { color: var(--text-muted); text-decoration: line-through; }
+    /* List Stress Fix */
+    ul, ol { padding-left: 24px; margin: 16px 0; }
+    li { margin-bottom: 8px; }
 
-    /* --- CODE BLOCKS --- */
-    .code-block { border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--bg-surface); overflow: hidden; margin: 32px 0; }
-    .code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-subtle); }
-    .code-lang { font-size: 11px; color: var(--accent); font-family: 'JetBrains Mono'; text-transform: uppercase; font-weight: 600; }
-    .copy-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; transition: 0.2s; }
+    /* --- MATH & CODE (ZERO SHIFT) --- */
+    .katex { font-size: 1.05em !important; }
+    .katex-display { margin: 1.5em 0 !important; overflow-x: auto; overflow-y: hidden; }
+
+    .code-block { 
+      border: 1px solid var(--border); border-radius: var(--radius); 
+      background: var(--surface); margin: 20px 0; overflow: hidden;
+      display: flex; flex-direction: column; contain: content;
+    }
+    .code-header { 
+      display: flex; justify-content: space-between; align-items: center; 
+      height: var(--header-h); padding: 0 14px; 
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); 
+    }
+    .code-lang { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono'; font-weight: 700; text-transform: uppercase; }
+    
+    .copy-btn {
+      background: transparent; border: none; color: var(--muted); cursor: pointer;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      transition: color 0.2s;
+    }
     .copy-btn:hover { color: var(--accent); }
-    .copy-btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .copy-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
 
-    .md-body pre { padding: 24px !important; margin: 0 !important; background: transparent !important; }
-    code[class*="language-"] { font-family: 'JetBrains Mono', monospace; font-size: 14px; tab-size: 4; }
-
-    /* --- BLOCKQUOTE --- */
-    .md-body blockquote {
-      padding: 12px 24px; border-left: 4px solid var(--accent);
-      background: rgba(56,189,248,0.03); color: #cbd5e1; font-style: italic; border-radius: 0 8px 8px 0;
+    .md-body pre { padding: 16px !important; margin: 0 !important; background: transparent !important; overflow-x: auto; }
+    code { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-code) !important; }
+    :not(pre) > code { 
+      background: rgba(255,255,255,0.06); padding: 2px 5px; 
+      border-radius: 4px; color: var(--accent); font-size: 0.92em !important; 
     }
+
+    /* --- TABLE OMEGA --- */
+    .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); margin: 24px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--fs-code); min-width: 500px; }
+    th { background: rgba(255,255,255,0.02); color: var(--accent); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: #94a3b8; }
+    tr:last-child td { border-bottom: none; }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </head>
 <body>
 
-<div class="main">
-  <div class="chat-scroll">
-    <div class="container" id="content"></div>
-  </div>
+<div class="chat-scroll">
+  <div class="container" id="content"></div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const contentEl = document.getElementById('content');
 
-  // Stress Test met diverse talen voor de Autoloader
-  const markdown = "# 🌌 Universal Parser\n\n" +
-    "Check deze [blauwe link](#) en de verbeterde spacing. De autoloader regelt de syntax.\n\n" +
-    "## Rust Example\n" +
-    "```rust\n" +
-    "fn main() {\n" +
-    "    println!(\"Hello World from Rust!\");\n" +
-    "}\n" +
-    "```\n\n" +
-    "## SQL Example\n" +
-    "```sql\n" +
-    "SELECT id, name FROM users WHERE status = 'active' ORDER BY created_at DESC;\n" +
-    "```\n\n" +
-    "### Spacing & Checklist\n" +
-    "- [ ] Merk op hoe de afstand tussen items gelijk is.\n" +
-    "- [x] Alles is strak uitgelijnd op 12px en 24px grids.\n" +
-    "  - Genest item test.\n\n" +
-    "> \"Consistentie is de sleutel tot een premium UI.\"\n";
+  const omegaMD = `# 🛡️ Omega Stress Test V3.1
 
-  const renderer = new marked.Renderer();
-  renderer.listitem = function(token) {
-    let content = this.parser.parse(token.tokens);
-    if (token.task) {
-      const checked = token.checked ? 'checked' : '';
-      return `<li class="task-list-item"><input type="checkbox" ${checked} disabled> <span>${content}</span></li>`;
-    }
-    return `<li>${content}</li>`;
-  };
+### 1. Math-in-Heading: $\\oint_C \\vec{B} \\cdot d\\vec{l} = \\mu_0 I_{encl}$
+Dit test of headers hun grootte behouden wanneer KaTeX ze overneemt.
 
-  contentEl.innerHTML = '<div class="md-body">' + marked.parse(markdown, { renderer: renderer }) + '</div>';
+### 2. Deep Nesting & Lists
+> "Citaat met een lijst erin:"
+> * Punt A met inline code \`var x = 10\`
+> * Punt B met inline math $\\alpha + \\beta = \\gamma$
+> * Een geneste lijst:
+>   1. Sub-item met $\\sqrt{2}$
+>   2. Sub-item met \`sudo rm -rf\`
 
-  // UI Wrapping & Copy Logic
-  document.querySelectorAll('.md-body pre').forEach((pre) => {
-    const codeEl = pre.querySelector('code');
-    const lang = (codeEl.className.match(/language-(\w+)/) || [, 'code'])[1];
-    const wrapper = document.createElement('div');
-    wrapper.className = 'code-block';
-    const header = document.createElement('div');
-    header.className = 'code-header';
-    
-    const copyIcon = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
-    const checkIcon = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+### 3. The Table Boss
+| Feature | Complex Equation | Code Snippet | Status |
+|:--- |:--- |:--- |:--- |
+| **Physics** | $P = \\frac{W}{\\Delta t}$ | \`power()\` | ✅ |
+| **Matrix** | $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$ | \`new Matrix()\` | 🚀 |
+| **Overflow** | $x_{1,2} = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$ | \`LONG_STRING_CONSTANT_TEST_001\` | 🛠️ |
 
-    header.innerHTML = `<span class="code-lang">${lang}</span><button class="copy-btn">${copyIcon}</button>`;
-    
-    const btn = header.querySelector('.copy-btn');
-    btn.onclick = () => {
-      navigator.clipboard.writeText(codeEl.innerText);
-      btn.innerHTML = checkIcon;
-      setTimeout(() => btn.innerHTML = copyIcon, 2000);
-    };
+### 4. Code Security (HTML Injection)
+\`\`\`html
+<div class="fake-ui">
+  <script>alert('Dit mag niet uitgevoerd worden!');<\/script>
+  <p>Dit moet gewoon als tekst zichtbaar zijn.</p>
+</div>
+\`\`\`
 
-    pre.parentNode.insertBefore(wrapper, pre);
-    wrapper.appendChild(header);
-    wrapper.appendChild(pre);
+### 5. Inline Density Test
+Test: $a$ plus $b$ is $c$, en $\\pi$ is ongeveer $3.14$. Werkt $\\theta$? Ja. En $\\int f(x)dx$? Ook. \`Inline Code\` naast $Math$. Perfect.`;
+
+  // --- RENDERING PIPELINE ---
+  
+  // 1. Markdown
+  contentEl.innerHTML = '<div class="md-body">' + marked.parse(omegaMD) + '</div>';
+
+  // 2. KaTeX
+  renderMathInElement(contentEl, { 
+    delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
+    throwOnError: false 
   });
 
-  // Autoloader configuratie en trigger
-  Prism.plugins.autoloader.languages_path = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/';
+  // 3. UI Enhancement (CodeBlocks & Tables)
+  const iconCopy = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+  const iconCheck = `<svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+  document.querySelectorAll('.md-body pre').forEach((pre) => {
+    if (pre.parentElement.classList.contains('code-block')) return;
+    const codeEl = pre.querySelector('code');
+    const lang = (codeEl.className.match(/language-(\w+)/) || [, 'code'])[1];
+    
+    const wrap = document.createElement('div'); wrap.className = 'code-block';
+    const head = document.createElement('div'); head.className = 'code-header';
+    const label = document.createElement('span'); label.className = 'code-lang'; label.innerText = lang;
+    const btn = document.createElement('button'); btn.className = 'copy-btn'; btn.innerHTML = iconCopy;
+    
+    btn.onclick = async () => {
+      await navigator.clipboard.writeText(codeEl.innerText.trim());
+      btn.innerHTML = iconCheck;
+      setTimeout(() => { btn.innerHTML = iconCopy; }, 2000);
+    };
+
+    head.appendChild(label); head.appendChild(btn);
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(head); wrap.appendChild(pre);
+  });
+
+  document.querySelectorAll('table').forEach(t => {
+    if (!t.parentNode.classList.contains('table-wrapper')) {
+      const w = document.createElement('div'); w.className = 'table-wrapper';
+      t.parentNode.insertBefore(w, t); w.appendChild(t);
+    }
+  });
+
+  // 4. Prism Final Pass
   Prism.highlightAll();
 });
 </script>
