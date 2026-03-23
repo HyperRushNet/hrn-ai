@@ -1,0 +1,236 @@
+/* -------------------------------------------------------------------------
+   DARK ANGEL - DEEP CHARCOAL EDITION
+   Versie: 3.1 Ultra Dark
+   
+   Geoptimaliseerd voor: Deep Dark Mode & Developer Interfaces.
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* --- Deep Dark Color Palette --- */
+  --da-bg-main: #121212;           /* De diepe houtskool basis */
+  --da-surface: #1e1e1e;          /* Iets lichter voor elementen/kaarten */
+  --da-surface-bright: #2a2a2a;    /* Voor hover-states en headers */
+  
+  /* --- Text System --- */
+  --da-text-primary: #e5e7eb;      /* Gebroken wit voor rust aan de ogen */
+  --da-text-secondary: #9ca3af;    /* Grijs voor minder belangrijke info */
+  --da-text-muted: #6b7280;        /* Voor disabled/placeholder tekst */
+  
+  /* --- Borders & Separation --- */
+  --da-border-subtle: #2d2d2d;
+  --da-border-default: #3f3f46;
+  
+  /* --- Accent Colors (Neon/Vivid) --- */
+  --da-accent: #3b82f6;            /* Vivid Blue */
+  --da-accent-soft: rgba(59, 130, 246, 0.1);
+  --da-accent-glow: rgba(59, 130, 246, 0.4);
+  
+  /* --- Status Colors --- */
+  --da-success: #10b981;
+  --da-success-soft: rgba(16, 185, 129, 0.1);
+  --da-error: #ef4444;
+  
+  /* --- Geometry --- */
+  --da-radius-sm: 4px;
+  --da-radius-md: 8px;
+  --da-radius-lg: 12px;
+  --da-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  
+  --da-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --da-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  --da-transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* -------------------------------------------------------------------------
+   1. CORE STYLING
+   -------------------------------------------------------------------------- */
+
+.da-body {
+  background-color: var(--da-bg-main);
+  font-family: var(--da-font-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--da-text-primary);
+  -webkit-font-smoothing: antialiased;
+  padding: 20px;
+}
+
+/* Headings */
+.da-body h1, .da-body h2, .da-body h3 {
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 0.8em;
+}
+
+.da-body h1 { font-size: 2.25em; letter-spacing: -0.02em; border-bottom: 1px solid var(--da-border-subtle); padding-bottom: 0.4em; }
+.da-body h2 { font-size: 1.75em; }
+
+/* Links */
+.da-body a {
+  color: var(--da-accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: var(--da-transition);
+}
+
+.da-body a:hover {
+  border-bottom-color: var(--da-accent);
+  opacity: 0.9;
+}
+
+/* -------------------------------------------------------------------------
+   2. TASK LISTS (Modern Dark)
+   -------------------------------------------------------------------------- */
+
+.da-task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--da-radius-md);
+  transition: background var(--da-transition);
+}
+
+.da-task-item:hover { background: var(--da-surface); }
+
+.da-task-check {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--da-border-default);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--da-transition);
+  background: transparent;
+}
+
+.da-task-item.checked .da-task-check {
+  background: var(--da-accent);
+  border-color: var(--da-accent);
+  box-shadow: 0 0 8px var(--da-accent-glow);
+}
+
+.da-task-item.checked .da-task-content {
+  color: var(--da-text-muted);
+  text-decoration: line-through;
+}
+
+/* -------------------------------------------------------------------------
+   3. CODE BLOCKS (Studio Dark Look)
+   -------------------------------------------------------------------------- */
+
+.da-code-block {
+  margin: 2em 0;
+  background: var(--da-surface);
+  border: 1px solid var(--da-border-default);
+  border-radius: var(--da-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--da-shadow);
+}
+
+.da-code-header {
+  background: var(--da-surface-bright);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--da-border-subtle);
+}
+
+.da-code-lang {
+  font-family: var(--da-font-mono);
+  font-size: 12px;
+  color: var(--da-text-secondary);
+  text-transform: uppercase;
+}
+
+.da-code-block pre {
+  padding: 16px;
+  margin: 0;
+  background: transparent !important;
+  font-family: var(--da-font-mono);
+  font-size: 14px;
+  overflow-x: auto;
+}
+
+/* Syntax Highlighting (Hardcoded Dark) */
+.token.comment { color: #6a9955; }
+.token.keyword { color: #569cd6; } /* Blue */
+.token.string { color: #ce9178; }  /* Orange/Brown */
+.token.function { color: #dcdcaa; } /* Yellowish */
+.token.number { color: #b5cea8; }   /* Light Green */
+.token.operator { color: #d4d4d4; }
+.token.class-name { color: #4ec9b0; } /* Teal */
+
+/* Inline Code */
+.da-body code:not(pre code) {
+  background: var(--da-surface-bright);
+  color: #f472b6; /* Pink accent voor inline */
+  padding: 0.2em 0.4em;
+  border-radius: var(--da-radius-sm);
+  font-family: var(--da-font-mono);
+  font-size: 0.9em;
+}
+
+/* -------------------------------------------------------------------------
+   4. TABLES & QUOTES
+   -------------------------------------------------------------------------- */
+
+.da-body blockquote {
+  border-left: 4px solid var(--da-accent);
+  background: var(--da-surface);
+  margin: 1.5em 0;
+  padding: 1em 1.5em;
+  border-radius: 0 var(--da-radius-md) var(--da-radius-md) 0;
+  font-style: italic;
+  color: var(--da-text-secondary);
+}
+
+.da-body table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--da-surface);
+  border-radius: var(--da-radius-md);
+  overflow: hidden;
+}
+
+.da-body th {
+  background: var(--da-surface-bright);
+  color: #fff;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--da-border-default);
+}
+
+.da-body td {
+  padding: 12px;
+  border-bottom: 1px solid var(--da-border-subtle);
+}
+
+.da-body tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+/* -------------------------------------------------------------------------
+   5. DECORATION
+   -------------------------------------------------------------------------- */
+
+.da-body hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--da-border-default), transparent);
+  margin: 3em 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--da-bg-main); }
+::-webkit-scrollbar-thumb { 
+  background: var(--da-border-default); 
+  border-radius: 5px; 
+  border: 2px solid var(--da-bg-main);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--da-text-muted); }
