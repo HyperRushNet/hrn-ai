@@ -43,9 +43,11 @@ h1 { font-size: var(--fs-h1); }
 h2 { font-size: var(--fs-h2); }
 h3 { font-size: var(--fs-h3); }
 
+/* Lijsten */
 ul, ol { padding-left: 28px; margin: 10px 0; }
 li { margin-bottom: 6px; color: #cbd5e1; }
 
+/* Takenlijst */
 .task-list { list-style: none; padding-left: 0; }
 .task-list li { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
 .task-check { 
@@ -62,6 +64,7 @@ li { margin-bottom: 6px; color: #cbd5e1; }
 }
 .is-checked .li-content { color: var(--muted); text-decoration: line-through; }
 
+/* Quote Styling */
 blockquote { 
   border-left: 3px solid var(--accent); 
   background: rgba(56,189,248,0.03); 
@@ -69,17 +72,21 @@ blockquote {
   border-radius: 0 var(--radius) var(--radius) 0;
 }
 
+/* Math Styling (Zonder border of background) */
 .katex-display { 
-  background: rgba(255,255,255,0.02); 
-  padding: 20px; 
-  border-radius: var(--radius); 
-  border: 1px solid var(--border);
-  overflow-x: auto;
+  background: transparent !important; 
+  border: none !important;
+  padding: 10px 0; 
   margin: 20px 0;
+  overflow-x: auto;
 }
+.katex { font-size: 1.1em !important; }
+
+/* Code & Math inline */
 code { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-code) !important; }
 :not(pre) > code { background: rgba(255,255,255,0.06); padding: 2px 5px; border-radius: 4px; color: var(--accent); }
 
+/* Code Block met verbeterde header */
 .code-block { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: 24px 0; overflow: hidden; }
 .code-header { 
   display: flex; justify-content: space-between; align-items: center; 
@@ -88,6 +95,7 @@ code { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-code) !impo
 }
 .code-lang { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono'; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
+/* Copy Button Styling */
 .copy-btn { 
   background: transparent; border: none; color: var(--muted); 
   cursor: pointer; display: flex; align-items: center; gap: 6px;
@@ -99,6 +107,7 @@ code { font-family: 'JetBrains Mono', monospace; font-size: var(--fs-code) !impo
 
 pre { padding: 16px !important; margin: 0 !important; background: transparent !important; overflow-x: auto; }
 
+/* Table */
 .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); margin: 24px 0; }
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-code); }
 th { background: rgba(255,255,255,0.02); color: var(--accent); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; }
@@ -159,18 +168,18 @@ document.addEventListener('DOMContentLoaded', function(){
 
 ### Nested math and code stress test
 
-> Main quote met geneste items en wiskunde:
-> * Eerste niveau $\\alpha + \\beta$
->   * Tweede niveau:
+> Main quote with nested items:
+> * First level $\\alpha + \\beta$
+>   * Second level:
 >     1. Subitem $\\sqrt{2}+\\sqrt{3}$
 >     2. Subitem code \`rm -rf /\`
->     3. Subitem met inline math $\\frac{a_i}{b_j}$
+>     3. Subitem with inline math $\\frac{a_i}{b_j}$
 `;
   mdDiv.innerHTML += marked.parse(omegaMD);
 
   // 3. COMPLEX NON-INLINE FORMULA (DISPLAY MATH)
   const mathSectionHeader = document.createElement('h2');
-  mathSectionHeader.innerText = "Complex Display Math Stress Test";
+  mathSectionHeader.innerText = "Complex Display Math (Clean)";
   mdDiv.appendChild(mathSectionHeader);
 
   const displayMath = `$$
@@ -210,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function(){
     return container;
   }
 
-  const jsCode = `async function initializeOmega() {\n  const status = await system.check();\n  console.log(\`Status: \${status}\`);\n  return status === "OK";\n}`;
+  const jsCode = `function test() {\n  console.log("System stable");\n  return true;\n}`;
   mdDiv.appendChild(createCodeBlock('javascript', jsCode));
 
   // RENDERING & HIGHLIGHTING
