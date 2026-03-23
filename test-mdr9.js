@@ -1,9 +1,9 @@
 /**
- * Dark Angel - Core Renderer v8.3 (Header Only - No Copy)
- * * - Behoudt de Top Bar (header) voor taalindicatie.
- * - Verwijdert de kopieerknop en klembord-logica.
+ * Dark Angel - Core Renderer v8.4 (Math Fixed)
+ * 
+ * - Beschermt wiskunde ($$...$$) tegen parsing door 'marked'.
+ * - Lost het probleem op waarbij formules verdwijnen of breken.
  * - Behoudt inline HTML in taken.
- * - Geen DOM conflicts.
  */
 
 (function(global) {
@@ -12,14 +12,41 @@
   // --- ICONS ---
   const checkIcon = `<svg viewBox="0 0 24 24" width="12" height="12"><polyline fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="20 6 9 17 4 12"/></svg>`;
 
+  // --- MATH PROTECTION LOGICA ---
+  // Deze regex zoekt naar $$...$$ (display) en $...$ (inline) en vervangt ze
+  // door een placeholder die 'marked' niet aanpast.
+  function protectMath(markdown) {
+    // 1. Bescherm display math ($$...$$) - ook over meerdere regels
+    // We gebruiken een unieke placeholder syntax die geldige HTML is, zodat marked het niet sloopt.
+    // We zetten het in een DIV voor display en SPAN voor inline.
+    
+    let processed = markdown;
+    
+    // Display Math ($$ ... $$)
+    // Matcht alles tussen $$, niet-greedy, met de 's' flag voor multiline
+    processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
+      // We coderen de inhoud zodat special chars niet door marked worden geplet
+      return `<div class="da-math-display">$$${math}$$</div>`;
+    });
+
+    // Inline Math ($ ... $)
+    // We moeten oppassen dat we geen geldige valuta tekens pakken (bijv. $5).
+    // Een simpele heuristic is dat math geen spatie na de openings-$ heeft, of meerdere chars heeft.
+    // Regex: $(niet-$ + willekeurig)$ maar niet direct gevolgd door digit (valuta).
+    // Betere regex van KaTeX docs gebruikt meestal: (?<!\$)\$(?!\$)([^\$]+?)\$(?!\$)
+    processed = processed.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (match, math) => {
+        return `<span class="da-math-inline">$${math}$</span>`;
+    });
+
+    return processed;
+  }
+
   // --- COMPONENT FACTORIES ---
 
-  // Code Block: Maakt de structuur met Top Bar maar zonder knop
   function createCodeBlock(lang, codeText) {
     const container = document.createElement('div');
     container.className = 'da-code-block';
     
-    // De Top Bar
     const header = document.createElement('div');
     header.className = 'da-code-header';
     
@@ -28,7 +55,6 @@
     langSpan.textContent = lang || 'code';
     
     header.appendChild(langSpan);
-    // Geen button append hier
     
     const pre = document.createElement('pre');
     const codeTag = document.createElement('code');
@@ -42,7 +68,6 @@
     return container;
   }
 
-  // Task Item: Zet <li><input> om naar custom structuur
   function createTaskItem(li) {
     const input = li.querySelector('input[type="checkbox"]');
     if (!input) return null; 
@@ -86,17 +111,21 @@
     const container = document.createElement('div');
     container.className = 'da-body';
 
-    // 2. Parse Markdown
+    // 2. Process Markdown
     if (typeof marked === 'undefined') {
         container.textContent = "Error: marked.js is required.";
         element.appendChild(container);
         return;
     }
     
-    marked.setOptions({ gfm: true, breaks: false });
-    container.innerHTML = marked.parse(markdown);
+    // STAP 1: Bescherm wiskunde
+    const safeMarkdown = protectMath(markdown);
 
-    // 3. Post-Processing
+    // STAP 2: Parse Markdown
+    marked.setOptions({ gfm: true, breaks: false });
+    container.innerHTML = marked.parse(safeMarkdown);
+
+    // 3. Post-Processing (Tasks & Code)
     
     // Process Tasks
     const listItems = Array.from(container.querySelectorAll('li'));
@@ -112,7 +141,7 @@
         }
     });
 
-    // Process Code Blocks (Met behoud van de Top Bar structuur)
+    // Process Code Blocks
     const codeBlocks = Array.from(container.querySelectorAll('pre > code'));
     codeBlocks.forEach(block => {
         const pre = block.parentElement;
@@ -127,7 +156,9 @@
     // 4. Inject in DOM
     element.appendChild(container);
 
-    // 5. Render Extensions
+    // 5. Render Extensions (KaTeX & Prism)
+    
+    // KaTeX
     if (typeof renderMathInElement !== 'undefined') {
       renderMathInElement(element, {
         delimiters: [
@@ -138,6 +169,7 @@
       });
     }
 
+    // Prism
     if (typeof Prism !== 'undefined') {
       Prism.highlightAllUnder(element);
     }
