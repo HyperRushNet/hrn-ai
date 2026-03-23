@@ -1,9 +1,8 @@
 /**
- * Dark Angel - Core Renderer v8.4 (Math Fixed)
- * 
+ * Dark Angel - Core Renderer v8.5 (Nested Tasks & Math Fixed)
+ * * - Ondersteunt nu diep geneste checklists.
  * - Beschermt wiskunde ($$...$$) tegen parsing door 'marked'.
- * - Lost het probleem op waarbij formules verdwijnen of breken.
- * - Behoudt inline HTML in taken.
+ * - Behoudt inline HTML en iconen in taken.
  */
 
 (function(global) {
@@ -13,27 +12,15 @@
   const checkIcon = `<svg viewBox="0 0 24 24" width="12" height="12"><polyline fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="20 6 9 17 4 12"/></svg>`;
 
   // --- MATH PROTECTION LOGICA ---
-  // Deze regex zoekt naar $$...$$ (display) en $...$ (inline) en vervangt ze
-  // door een placeholder die 'marked' niet aanpast.
   function protectMath(markdown) {
-    // 1. Bescherm display math ($$...$$) - ook over meerdere regels
-    // We gebruiken een unieke placeholder syntax die geldige HTML is, zodat marked het niet sloopt.
-    // We zetten het in een DIV voor display en SPAN voor inline.
-    
     let processed = markdown;
     
     // Display Math ($$ ... $$)
-    // Matcht alles tussen $$, niet-greedy, met de 's' flag voor multiline
     processed = processed.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
-      // We coderen de inhoud zodat special chars niet door marked worden geplet
       return `<div class="da-math-display">$$${math}$$</div>`;
     });
 
     // Inline Math ($ ... $)
-    // We moeten oppassen dat we geen geldige valuta tekens pakken (bijv. $5).
-    // Een simpele heuristic is dat math geen spatie na de openings-$ heeft, of meerdere chars heeft.
-    // Regex: $(niet-$ + willekeurig)$ maar niet direct gevolgd door digit (valuta).
-    // Betere regex van KaTeX docs gebruikt meestal: (?<!\$)\$(?!\$)([^\$]+?)\$(?!\$)
     processed = processed.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, (match, math) => {
         return `<span class="da-math-inline">$${math}$</span>`;
     });
@@ -68,37 +55,43 @@
     return container;
   }
 
-  function createTaskItem(li) {
-    const input = li.querySelector('input[type="checkbox"]');
-    if (!input) return null; 
+  /**
+   * Converteert een standaard LI met checkbox naar een Dark Angel Task Item.
+   * Werkt nu ook voor geneste elementen door de content recursief te behouden.
+   */
+  function transformToTaskItem(li) {
+    const checkbox = li.querySelector(':scope > input[type="checkbox"]');
+    if (!checkbox) return;
 
-    const isChecked = input.hasAttribute('checked') || input.checked;
+    const isChecked = checkbox.hasAttribute('checked') || checkbox.checked;
     
-    const newLi = li.cloneNode(true);
-    const inputInClone = newLi.querySelector('input[type="checkbox"]');
-    if(inputInClone) inputInClone.remove();
-    
-    newLi.className = 'da-task-item'; 
-    if(isChecked) newLi.classList.add('checked');
-    
+    // Maak de nieuwe structuur
+    li.classList.add('da-task-item');
+    if(isChecked) li.classList.add('checked');
+
     const checkDiv = document.createElement('div');
     checkDiv.className = 'da-task-check';
     checkDiv.setAttribute('role', 'checkbox');
     checkDiv.setAttribute('aria-checked', isChecked);
     checkDiv.setAttribute('tabindex', '0');
     checkDiv.innerHTML = checkIcon;
-    
+
     const contentDiv = document.createElement('div');
     contentDiv.className = 'da-task-content';
-    
-    while (newLi.firstChild) {
-        contentDiv.appendChild(newLi.firstChild);
-    }
-    
-    newLi.appendChild(checkDiv);
-    newLi.appendChild(contentDiv);
-    
-    return newLi;
+
+    // Verplaats alle child nodes (behalve de checkbox) naar de content div
+    // Dit zorgt ervoor dat geneste <ul> of <ol> behouden blijven.
+    const nodes = Array.from(li.childNodes);
+    nodes.forEach(node => {
+      if (node !== checkbox) {
+        contentDiv.appendChild(node);
+      } else {
+        node.remove(); // Verwijder de originele browser checkbox
+      }
+    });
+
+    li.prepend(checkDiv);
+    li.appendChild(contentDiv);
   }
 
   // --- MAIN RENDER FUNCTION ---
@@ -106,42 +99,38 @@
   function render(element, markdown) {
     if(!element || !markdown) return;
 
-    // 1. Reset Container
     element.innerHTML = '';
     const container = document.createElement('div');
     container.className = 'da-body';
 
-    // 2. Process Markdown
     if (typeof marked === 'undefined') {
         container.textContent = "Error: marked.js is required.";
         element.appendChild(container);
         return;
     }
     
-    // STAP 1: Bescherm wiskunde
+    // 1. Bescherm wiskunde
     const safeMarkdown = protectMath(markdown);
 
-    // STAP 2: Parse Markdown
+    // 2. Parse Markdown naar HTML
     marked.setOptions({ gfm: true, breaks: false });
     container.innerHTML = marked.parse(safeMarkdown);
 
-    // 3. Post-Processing (Tasks & Code)
-    
-    // Process Tasks
-    const listItems = Array.from(container.querySelectorAll('li'));
-    listItems.forEach(li => {
-        if (li.querySelector('input[type="checkbox"]')) {
-            const parentUl = li.parentElement;
-            if(parentUl) parentUl.classList.add('da-task-list');
-            
-            const newTaskItem = createTaskItem(li);
-            if(newTaskItem) {
-                li.replaceWith(newTaskItem);
-            }
-        }
+    // 3. Post-Processing: Recursieve Checklist Transformatie
+    // We zoeken alle LI's die direct een checkbox bevatten
+    const allListItems = Array.from(container.querySelectorAll('li'));
+    allListItems.forEach(li => {
+      const checkbox = li.querySelector(':scope > input[type="checkbox"]');
+      if (checkbox) {
+        // Markeer de parent UL/OL als een task-list voor styling
+        const parentList = li.parentElement;
+        if (parentList) parentList.classList.add('da-task-list');
+        
+        transformToTaskItem(li);
+      }
     });
 
-    // Process Code Blocks
+    // 4. Process Code Blocks
     const codeBlocks = Array.from(container.querySelectorAll('pre > code'));
     codeBlocks.forEach(block => {
         const pre = block.parentElement;
@@ -153,12 +142,10 @@
         pre.replaceWith(newBlock);
     });
 
-    // 4. Inject in DOM
+    // 5. Inject in DOM
     element.appendChild(container);
 
-    // 5. Render Extensions (KaTeX & Prism)
-    
-    // KaTeX
+    // 6. Render Extensions (KaTeX & Prism)
     if (typeof renderMathInElement !== 'undefined') {
       renderMathInElement(element, {
         delimiters: [
@@ -169,12 +156,11 @@
       });
     }
 
-    // Prism
     if (typeof Prism !== 'undefined') {
       Prism.highlightAllUnder(element);
     }
 
-    // 6. Interaction Bindings
+    // 7. Interaction Bindings (Event Delegation)
     container.addEventListener('click', e => {
         const check = e.target.closest('.da-task-check');
         if (check) {
