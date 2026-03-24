@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- FIX: Removed user-scalable=no for accessibility -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HyperRush AI</title>
 <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/128/18548/18548385.png">
@@ -18,7 +17,6 @@
 ::-webkit-scrollbar-thumb{background:#3f3f46;border-radius:10px}
 ::-webkit-scrollbar-thumb:hover{background:#52525b}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-/* FIX: Removed user-select: none from body to allow text selection */
 body{background:var(--bg-base);color:var(--text-main);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;height:100dvh;display:flex;overflow:hidden;-webkit-font-smoothing:antialiased;}
 .lightbox-modal{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:20000;display:flex;flex-direction:column;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:opacity 0.2s}
 .lightbox-modal.show{opacity:1;pointer-events:auto}
@@ -67,7 +65,7 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 .header{height:54px;padding:0 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);background:rgba(5,5,5,0.9);backdrop-filter:blur(12px);z-index:10;user-select:none}
 .menu-btn{background:none;border:none;color:#fff;cursor:pointer;padding:5px;opacity:0.8}
 @media(min-width:1024px){.menu-btn{display:none}}
-.chat-scroll{flex:1;overflow-y:auto;padding:24px;scroll-behavior:auto}
+.chat-scroll{flex:1;overflow-y:auto;padding:24px;scroll-behavior:auto; position:relative;}
 .container{max-width:var(--content-width);margin:0 auto;padding-bottom:var(--input-spacing);width:100%}
 #welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;position:relative;overflow:hidden}
 #welcome::before{content:'';position:absolute;top:20%;left:50%;transform:translate(-50%,-50%);width:800px;height:600px;background:radial-gradient(circle,rgba(56,189,248,0.1) 0%,transparent 60%);pointer-events:none;filter:blur(60px)}
@@ -81,6 +79,14 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 .suggestion-card span{display:block;font-size:12px;color:var(--text-muted);line-height:1.4}
 @media(max-width:640px){.suggestions-grid{display:none}#welcome h1{font-size:26px}.welcome-content{padding:0 10px}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+
+/* Smart Scroll Button */
+.scroll-down-btn{position:fixed;bottom:160px;right:30px;width:40px;height:40px;border-radius:50%;background:var(--bg-elevated);border:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10015;opacity:0;pointer-events:none;transition:opacity 0.2s, transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.3);}
+.scroll-down-btn.show{opacity:1;pointer-events:auto}
+.scroll-down-btn:hover{transform:scale(1.1);border-color:var(--accent)}
+.scroll-down-btn svg{width:20px;height:20px;stroke:var(--text-muted)}
+@media(max-width:700px){.scroll-down-btn{bottom:145px;right:15px}}
+
 .msg{width:100%;margin-top:var(--msg-spacing);animation:fadeIn 0.3s ease;display:flex;flex-direction:column}
 .msg.user{align-items:flex-end}
 .msg.user .bubble{background:var(--bg-elevated);padding:10px 16px;border-radius:16px 16px 2px 16px;max-width:85%;font-size:14px;border:1px solid var(--border-subtle);line-height:1.5;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;position:relative}
@@ -220,6 +226,12 @@ New Chat
 <div id="chat-view" class="chat-scroll" style="display:none">
 <div class="container" id="chat-container"></div>
 </div>
+<!-- Scroll Down Button -->
+<button id="scroll-down-btn" class="scroll-down-btn" onclick="App.scrollToBottom()" title="Scroll to bottom">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M19 12l-7 7-7-7"/>
+    </svg>
+</button>
 <div class="input-wrap">
 <div id="attachment-preview" class="attachment-preview-area"></div>
 <div class="input-box">
@@ -244,7 +256,6 @@ New Chat
 </div>
 </div>
 <script>
-// Use an IIFE to avoid polluting the global scope, exposing only what's needed for HTML onclick
 const App = (() => {
     // --- Constants & Config ---
     const API_BASE = "https://gen.pollinations.ai";
@@ -268,8 +279,12 @@ You are HyperRush AI.
     let selectedFiles = [];
     let selectedFilePreviews = [];
     let countdownInterval = null;
+    
+    // --- Smart Scroll State ---
+    let userScrolledUp = false; // Tracks if user manually scrolled up
+    let visibilityObserver = null; // Intersection Observer for smart rendering
 
-    // --- DOM Elements (cached for performance) ---
+    // --- DOM Elements ---
     const $ = id => document.getElementById(id);
     const balanceEl = $('balance');
     const promptEl = $('prompt');
@@ -281,8 +296,8 @@ You are HyperRush AI.
     const iconStop = $('icon-stop');
     const attachmentPreviewEl = $('attachment-preview');
     const fileInputEl = $('file-input');
-    const sidebarEl = $('sidebar');
     const chatListEl = $('chat-list');
+    const scrollDownBtn = $('scroll-down-btn');
 
     // --- Security Helper ---
     const escapeHtml = (unsafe) => {
@@ -298,11 +313,9 @@ You are HyperRush AI.
     // --- MARKED.JS CONFIGURATION ---
     const renderer = new marked.Renderer();
 
-    // FIX: XSS Prevention in Code Renderer
     renderer.code = function(code, language) {
         let codeText = '';
         let lang = 'plaintext';
-        
         if (typeof code === 'object' && code !== null) {
             codeText = code.text || '';
             lang = code.lang || 'plaintext';
@@ -310,7 +323,6 @@ You are HyperRush AI.
             codeText = code;
             lang = language || 'plaintext';
         }
-
         let highlighted = codeText;
         try {
             if (hljs.getLanguage(lang)) {
@@ -318,42 +330,19 @@ You are HyperRush AI.
             } else {
                 highlighted = hljs.highlightAuto(codeText).value;
             }
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) { console.error(e); }
 
-        // Escaped lang here
-        return `
-        <div class="code-wrapper">
-            <div class="code-header">
-                <span class="code-lang">${escapeHtml(lang)}</span>
-                <button class="copy-code-btn" onclick="App.copyCodeBlock(this)">Copy</button>
-            </div>
-            <pre><code class="hljs language-${escapeHtml(lang)}">${highlighted}</code></pre>
-        </div>`;
+        return `<div class="code-wrapper"><div class="code-header"><span class="code-lang">${escapeHtml(lang)}</span><button class="copy-code-btn" onclick="App.copyCodeBlock(this)">Copy</button></div><pre><code class="hljs language-${escapeHtml(lang)}">${highlighted}</code></pre></div>`;
     };
 
     renderer.table = function(header, body) {
         if (typeof header === 'object' && header !== null && header.type === 'table') {
             const token = header;
             let headHtml = '<tr>';
-            if (token.header) {
-                token.header.forEach(cell => {
-                    headHtml += '<th>' + marked.parseInline(cell.text) + '</th>';
-                });
-            }
+            if (token.header) { token.header.forEach(cell => { headHtml += '<th>' + marked.parseInline(cell.text) + '</th>'; }); }
             headHtml += '</tr>';
-
             let bodyHtml = '';
-            if (token.rows) {
-                token.rows.forEach(row => {
-                    bodyHtml += '<tr>';
-                    row.forEach(cell => {
-                        bodyHtml += '<td>' + marked.parseInline(cell.text) + '</td>';
-                    });
-                    bodyHtml += '</tr>';
-                });
-            }
+            if (token.rows) { token.rows.forEach(row => { bodyHtml += '<tr>'; row.forEach(cell => { bodyHtml += '<td>' + marked.parseInline(cell.text) + '</td>'; }); bodyHtml += '</tr>'; }); }
             return `<div class="table-wrapper"><table>\n<thead>${headHtml}</thead>\n<tbody>${bodyHtml}</tbody></table></div>\n`;
         }
         if (body) body = '<tbody>' + body + '</tbody>';
@@ -366,24 +355,10 @@ You are HyperRush AI.
         if (!text) return "";
         const mathBlocks = [];
         let t = text;
-
-        // Protect Math
-        t = t.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => {
-            const id = mathBlocks.length;
-            mathBlocks.push('\\[' + p1 + '\\]');
-            return '[[MATHBLOCK' + id + ']]';
-        });
-        t = t.replace(/\$([^\$\n]+?)\$/g, (match, p1) => {
-            const id = mathBlocks.length;
-            mathBlocks.push('\\(' + p1 + '\\)');
-            return '[[MATHBLOCK' + id + ']]';
-        });
-
+        t = t.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => { const id = mathBlocks.length; mathBlocks.push('\\[' + p1 + '\\]'); return '[[MATHBLOCK' + id + ']]'; });
+        t = t.replace(/\$([^\$\n]+?)\$/g, (match, p1) => { const id = mathBlocks.length; mathBlocks.push('\\(' + p1 + '\\)'); return '[[MATHBLOCK' + id + ']]'; });
         let html = marked.parse(t);
-
-        mathBlocks.forEach((val, i) => {
-            html = html.split('[[MATHBLOCK' + i + ']]').join(val);
-        });
+        mathBlocks.forEach((val, i) => { html = html.split('[[MATHBLOCK' + i + ']]').join(val); });
         return html;
     }
 
@@ -395,9 +370,7 @@ You are HyperRush AI.
             request.onsuccess = (e) => { db = e.target.result; resolve(db); }; 
             request.onupgradeneeded = (e) => { 
                 const database = e.target.result; 
-                if (!database.objectStoreNames.contains(DB_STORE)) { 
-                    database.createObjectStore(DB_STORE, { keyPath: "id" }); 
-                } 
+                if (!database.objectStoreNames.contains(DB_STORE)) { database.createObjectStore(DB_STORE, { keyPath: "id" }); } 
             }; 
         }); 
     }
@@ -413,80 +386,23 @@ You are HyperRush AI.
         }); 
     }
 
-    function _saveChatsToDB() { 
-        const data = { id: "main_history", chats: CHATS }; 
-        return _dbOperation("readwrite", store => store.put(data)); 
-    }
-
-    function _loadChatsFromDB() { 
-        return _dbOperation("readonly", store => store.get("main_history")).then(data => { 
-            return data ? data.chats : []; 
-        }).catch(() => []); 
-    }
+    function _saveChatsToDB() { const data = { id: "main_history", chats: CHATS }; return _dbOperation("readwrite", store => store.put(data)); }
+    function _loadChatsFromDB() { return _dbOperation("readonly", store => store.get("main_history")).then(data => data ? data.chats : []).catch(() => []); }
 
     // --- Utility Functions ---
-    function _cleanTitle(text) { 
-        if (!text) return "New Chat"; 
-        return text.replace(/<br\s*\/?>/gi, ' ').replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').replace(/[#*`_~]/g, '').trim().substring(0, 50); 
-    }
-
-    function _renderMathLive(element) { 
-        if (!window.MathJax) return; 
-        const now = Date.now(); 
-        if (now - lastMathjaxRender < 100) return; 
-        lastMathjaxRender = now; 
-        MathJax.typesetPromise([element]).catch((err => console.log(err))); 
-    }
-
-    function _showQuotaToast() { 
-        const toast = $('quota-toast'); 
-        toast.classList.add('show'); 
-        if (countdownInterval) clearInterval(countdownInterval); 
-        _updateCountdown(); 
-        countdownInterval = setInterval(_updateCountdown, 1000); 
-    }
-
-    function _hideQuotaToast() { 
-        const toast = $('quota-toast'); 
-        toast.classList.remove('show'); 
-        if (countdownInterval) clearInterval(countdownInterval); 
-    }
-
-    function _updateCountdown() { 
-        const now = new Date(); 
-        const nextHour = new Date(now); 
-        nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); 
-        const diff = nextHour - now; 
-        if (diff <= 0) { 
-            _hideQuotaToast(); 
-            updateBalance(); 
-            return; 
-        } 
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); 
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000); 
-        const str = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
-        $('toast-countdown').innerText = str; 
-    }
-
-    function _fileToBase64(file) { 
-        return new Promise((resolve, reject) => { 
-            const reader = new FileReader(); 
-            reader.readAsDataURL(file); 
-            reader.onload = () => resolve(reader.result); 
-            reader.onerror = error => reject(error); 
-        }); 
-    }
+    function _cleanTitle(text) { if (!text) return "New Chat"; return text.replace(/<br\s*\/?>/gi, ' ').replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').replace(/[#*`_~]/g, '').trim().substring(0, 50); }
+    function _renderMathLive(element) { if (!window.MathJax) return; const now = Date.now(); if (now - lastMathjaxRender < 100) return; lastMathjaxRender = now; MathJax.typesetPromise([element]).catch(err => console.log(err)); }
     
-    function _isTruncated(text) { 
-        return !!text && (text.match(/```/g) || []).length % 2 !== 0; 
-    }
+    function _showQuotaToast() { $('quota-toast').classList.add('show'); if (countdownInterval) clearInterval(countdownInterval); _updateCountdown(); countdownInterval = setInterval(_updateCountdown, 1000); }
+    function _hideQuotaToast() { $('quota-toast').classList.remove('show'); if (countdownInterval) clearInterval(countdownInterval); }
+    function _updateCountdown() { const now = new Date(); const nextHour = new Date(now); nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); const diff = nextHour - now; if (diff <= 0) { _hideQuotaToast(); updateBalance(); return; } const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); const seconds = Math.floor((diff % (1000 * 60)) / 1000); $('toast-countdown').innerText = minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0'); }
+    
+    function _fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); }); }
+    function _isTruncated(text) { return !!text && (text.match(/```/g) || []).length % 2 !== 0; }
 
     // --- Core Logic ---
 
     async function init() {
-        // FIX: Removed contextmenu prevention for better UX
-        // FIX: Removed selectstart prevention to allow text selection
-        
         await _initDB();
         try { CHATS = await _loadChatsFromDB(); } catch (e) { CHATS = []; }
         
@@ -498,155 +414,198 @@ You are HyperRush AI.
                 window.location.href = `https://enter.pollinations.ai/authorize?redirect_url=${redirectUrl}&permissions=profile,balance,usage,offline_access&app_key=pk_kn9KoGgYC7i5Sk6P&expiry=never`;
                 return;
             }
-            localStorage.setItem("pk", apiKey);
-            PK = apiKey;
-            location.reload();
+            localStorage.setItem("pk", apiKey); PK = apiKey; location.reload();
         }
+        
+        // Setup Intersection Observer for Smart Rendering
+        initVisibilityObserver();
+        
+        // Setup Smart Scroll Listener
+        chatViewEl.addEventListener('scroll', handleSmartScroll);
         
         renderSidebar(); 
         updateBalance();
 
-        // FIX: Proper Event Listeners instead of inline attributes where possible
-        promptEl.addEventListener("input", () => {
-            promptEl.style.height = "auto";
-            promptEl.style.height = promptEl.scrollHeight + "px";
-        });
-        
-        promptEl.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendOrStop();
-            }
-        });
+        promptEl.addEventListener("input", () => { promptEl.style.height = "auto"; promptEl.style.height = promptEl.scrollHeight + "px"; });
+        promptEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendOrStop(); } });
     }
 
-    function toggleSidebar() {
-        document.body.classList.toggle("sidebar-open");
+    // --- Smart Rendering Logic ---
+    function initVisibilityObserver() {
+        const options = { root: chatViewEl, rootMargin: '200px', threshold: 0.0 };
+        visibilityObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const msgDiv = entry.target;
+                    // Check if it needs content
+                    if (msgDiv.dataset.needsRender === 'true') {
+                        renderMsgContent(msgDiv);
+                        msgDiv.dataset.needsRender = 'false'; // Mark as rendered
+                        visibilityObserver.unobserve(msgDiv); // Stop observing once rendered
+                    }
+                }
+            });
+        }, options);
     }
+
+    function handleSmartScroll() {
+        const isAtBottom = chatViewEl.scrollHeight - chatViewEl.clientHeight - chatViewEl.scrollTop < 50;
+        
+        // If user scrolled up, flag it
+        if (!isAtBottom) {
+            userScrolledUp = true;
+            scrollDownBtn.classList.add('show');
+        } else {
+            userScrolledUp = false;
+            scrollDownBtn.classList.remove('show');
+        }
+    }
+
+    function scrollToBottom() {
+        chatViewEl.scrollTo({ top: chatViewEl.scrollHeight, behavior: 'smooth' });
+    }
+
+    // --- Message Rendering ---
+
+    // Render just the shell (for virtual scrolling) or full content if immediate
+    function renderMsg(role, content, index, isComplete, images = null, forceRender = false) {
+        const isUser = role === "user";
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "msg " + (isUser ? "user" : "ai");
+        msgDiv.id = "msg-" + index;
+        msgDiv.dataset.index = index;
+
+        // Store data for lazy loading
+        msgDiv.dataset.role = role;
+        msgDiv.dataset.content = content || "";
+        if (images) msgDiv.dataset.images = JSON.stringify(images);
+
+        if (isUser) {
+            // User messages are usually small, render them directly, or use lazy logic if preferred.
+            // For simplicity, rendering user bubbles immediately.
+            const bubble = document.createElement("div"); bubble.className = "bubble";
+            if (images && images.length > 0) {
+                const pill = document.createElement('div'); pill.className = 'pill-tag'; pill.style.marginBottom = '6px';
+                pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + images.length + ' Image' + (images.length > 1 ? 's' : '');
+                pill.onclick = () => openLightbox(images, 0); bubble.appendChild(pill);
+            }
+            const contentDiv = document.createElement("div"); contentDiv.className = "bubble-content"; contentDiv.innerText = content || ""; bubble.appendChild(contentDiv);
+            const actionsDiv = document.createElement("div"); actionsDiv.className = "actions";
+            actionsDiv.innerHTML = `<button class="act-btn" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+            actionsDiv.querySelector('button').onclick = () => editUserMessage(index);
+            bubble.appendChild(actionsDiv); msgDiv.appendChild(bubble);
+        } else {
+            // AI Message
+            const bodyDiv = document.createElement("div"); bodyDiv.className = "md-body";
+            msgDiv.appendChild(bodyDiv);
+
+            // Logic: Render immediately if it's the last 3 messages, or if forced (streaming), else lazy
+            const totalMessages = CHATS.find(c => c.id === CURRENT_ID)?.messages?.length || 0;
+            const isNearEnd = index >= totalMessages - 3;
+
+            if (forceRender || isNearEnd || !isComplete) {
+                // Render now
+                renderAiContent(msgDiv, content, isComplete);
+                msgDiv.dataset.needsRender = 'false';
+            } else {
+                // Render placeholder / lazy
+                msgDiv.dataset.needsRender = 'true';
+                bodyDiv.innerHTML = `<div style="height: 50px; background: rgba(255,255,255,0.03); border-radius: 8px; margin: 10px 0;"></div>`; // Skeleton
+                visibilityObserver.observe(msgDiv);
+            }
+        }
+        
+        chatContainerEl.appendChild(msgDiv);
+        return msgDiv;
+    }
+
+    function renderMsgContent(msgDiv) {
+        const role = msgDiv.dataset.role;
+        const content = msgDiv.dataset.content || "";
+        const images = msgDiv.dataset.images ? JSON.parse(msgDiv.dataset.images) : null;
+
+        if (role === 'user') {
+            // Already handled in renderMsg for simplicity in this version
+        } else {
+            renderAiContent(msgDiv, content, true);
+        }
+    }
+
+    function renderAiContent(msgDiv, content, isComplete) {
+        const bodyDiv = msgDiv.querySelector('.md-body');
+        if (!bodyDiv) return;
+
+        // Clear existing actions if any (for re-renders)
+        const oldActions = msgDiv.querySelector('.actions');
+        if (oldActions) oldActions.remove();
+
+        if (isComplete) {
+            bodyDiv.innerHTML = parseMarkdown(content || "");
+            if (window.MathJax) MathJax.typesetPromise([bodyDiv]).catch(e => console.log(e));
+            
+            const actionsDiv = document.createElement("div");
+            actionsDiv.className = "actions";
+            actionsDiv.innerHTML = `
+                <button class="act-btn" title="Regenerate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+                <button class="act-btn" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`;
+            
+            actionsDiv.querySelector('button:first-child').onclick = () => handleRegen(parseInt(msgDiv.dataset.index));
+            actionsDiv.querySelector('button:last-child').onclick = function() { copyText(this, encodeURIComponent(content || "")); };
+            
+            msgDiv.appendChild(actionsDiv);
+        } else {
+            // Streaming loader
+            bodyDiv.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
+        }
+    }
+
+    function toggleSidebar() { document.body.classList.toggle("sidebar-open"); }
 
     async function updateBalance() {
         try {
-            const response = await fetch(`${API_BASE}/account/balance`, {
-                method: "GET",
-                headers: { Authorization: "Bearer " + PK, "Content-Type": "application/json" }
-            });
-            if (response.status === 402) { 
-                _showQuotaToast(); 
-                balanceEl.innerText = "LIMIT"; 
-                return; 
-            }
+            const response = await fetch(`${API_BASE}/account/balance`, { method: "GET", headers: { Authorization: "Bearer " + PK, "Content-Type": "application/json" } });
+            if (response.status === 402) { _showQuotaToast(); balanceEl.innerText = "LIMIT"; return; }
             _hideQuotaToast();
             if (!response.ok) throw new Error("HTTP status " + response.status);
             const data = await response.json();
             balanceEl.innerText = Math.round(((data.balance || 0) + Number.EPSILON) * 1000).toLocaleString() + " CREDITS";
-        } catch (err) { 
-            console.error("Balance fetch error:", err); 
-            balanceEl.innerText = "ERROR";
-        }
+        } catch (err) { console.error("Balance fetch error:", err); balanceEl.innerText = "ERROR"; }
     }
 
     function renderSidebar() {
         chatListEl.innerHTML = "";
         CHATS.forEach(chat => {
-            const item = document.createElement("div");
-            item.className = "chat-item " + (chat.id === CURRENT_ID ? "active" : "");
-            
-            const titleWrap = document.createElement("div");
-            titleWrap.className = "chat-title-wrap";
-            
-            const titleSpan = document.createElement("span");
-            titleSpan.className = "chat-title";
-            const displayTitle = _cleanTitle(chat.title);
-            titleSpan.innerText = displayTitle;
-            titleSpan.title = displayTitle;
-            
-            const editBtn = document.createElement("button");
-            editBtn.className = "edit-title-btn";
-            editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-            editBtn.title = "Edit title";
+            const item = document.createElement("div"); item.className = "chat-item " + (chat.id === CURRENT_ID ? "active" : "");
+            const titleWrap = document.createElement("div"); titleWrap.className = "chat-title-wrap";
+            const titleSpan = document.createElement("span"); titleSpan.className = "chat-title"; const displayTitle = _cleanTitle(chat.title); titleSpan.innerText = displayTitle; titleSpan.title = displayTitle;
+            const editBtn = document.createElement("button"); editBtn.className = "edit-title-btn"; editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'; editBtn.title = "Edit title";
             editBtn.onclick = (e) => { e.stopPropagation(); _startEditTitle(chat.id, titleSpan); };
-            
-            titleWrap.appendChild(titleSpan);
-            titleWrap.appendChild(editBtn);
-            
+            titleWrap.appendChild(titleSpan); titleWrap.appendChild(editBtn);
             titleSpan.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(chat.id, titleSpan); };
             item.onclick = () => loadChat(chat.id);
-            
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "act-btn";
-            deleteBtn.onclick = e => { e.stopPropagation(); deleteChat(chat.id); };
-            deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;opacity:0.6"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
-            
-            item.appendChild(titleWrap);
-            item.appendChild(deleteBtn);
-            chatListEl.appendChild(item);
+            const deleteBtn = document.createElement("button"); deleteBtn.className = "act-btn"; deleteBtn.onclick = e => { e.stopPropagation(); deleteChat(chat.id); }; deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;opacity:0.6"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+            item.appendChild(titleWrap); item.appendChild(deleteBtn); chatListEl.appendChild(item);
         });
     }
 
     function _startEditTitle(chatId, titleElement) {
-        const chat = CHATS.find(c => c.id === chatId);
-        if (!chat) return;
-        const currentTitle = chat.title || "New Chat";
-        
-        const input = document.createElement("input");
-        input.type = "text";
-        input.className = "chat-title-input";
-        input.value = currentTitle;
-        
-        const parent = titleElement.parentNode;
-        parent.replaceChild(input, titleElement);
-        input.focus();
-        input.select();
-        
+        const chat = CHATS.find(c => c.id === chatId); if (!chat) return; const currentTitle = chat.title || "New Chat";
+        const input = document.createElement("input"); input.type = "text"; input.className = "chat-title-input"; input.value = currentTitle;
+        const parent = titleElement.parentNode; parent.replaceChild(input, titleElement); input.focus(); input.select();
         const saveTitle = async () => {
-            const newTitle = input.value.trim() || "New Chat";
-            chat.title = newTitle;
-            await _saveChatsToDB();
-            
-            const newSpan = document.createElement("span");
-            newSpan.className = "chat-title";
-            newSpan.innerText = _cleanTitle(newTitle);
-            newSpan.title = _cleanTitle(newTitle);
-            newSpan.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(chatId, newSpan); };
-            parent.replaceChild(newSpan, input);
+            const newTitle = input.value.trim() || "New Chat"; chat.title = newTitle; await _saveChatsToDB();
+            const newSpan = document.createElement("span"); newSpan.className = "chat-title"; newSpan.innerText = _cleanTitle(newTitle); newSpan.title = _cleanTitle(newTitle);
+            newSpan.ondblclick = (e) => { e.stopPropagation(); _startEditTitle(chatId, newSpan); }; parent.replaceChild(newSpan, input);
         };
-        
-        input.onblur = saveTitle;
-        input.onkeydown = (e) => {
-            if (e.key === "Enter") { e.preventDefault(); input.blur(); }
-            else if (e.key === "Escape") { input.value = currentTitle; input.blur(); }
-        };
+        input.onblur = saveTitle; input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); input.blur(); } else if (e.key === "Escape") { input.value = currentTitle; input.blur(); } };
     }
 
     async function _generateChatTitle(chatId, userMessage, aiResponse) {
         try {
-            const response = await fetch(`${API_BASE}/v1/chat/completions`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK },
-                body: JSON.stringify({
-                    model: "gemini-fast",
-                    messages: [
-                        { role: "system", content: "Generate a very short title (max 4 words) for this conversation. Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." },
-                        { role: "user", content: "User: " + userMessage + "\n\nAssistant: " + aiResponse.substring(0, 200) }
-                    ],
-                    max_tokens: 20,
-                    temperature: 0.7
-                })
-            });
-            if (!response.ok) return null;
-            const data = await response.json();
-            const title = data.choices?.[0]?.message?.content?.trim();
-            if (title && title.length > 0 && title.length <= 50) {
-                const chat = CHATS.find(c => c.id === chatId);
-                if (chat) {
-                    chat.title = title;
-                    await _saveChatsToDB();
-                    renderSidebar();
-                    return title;
-                }
-            }
-        } catch (e) { console.error("Title generation error:", e); }
-        return null;
+            const response = await fetch(`${API_BASE}/v1/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK }, body: JSON.stringify({ model: "gemini-fast", messages: [{ role: "system", content: "Generate a very short title (max 4 words) for this conversation. Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." }, { role: "user", content: "User: " + userMessage + "\n\nAssistant: " + aiResponse.substring(0, 200) }], max_tokens: 20, temperature: 0.7 }) });
+            if (!response.ok) return null; const data = await response.json(); const title = data.choices?.[0]?.message?.content?.trim();
+            if (title && title.length > 0 && title.length <= 50) { const chat = CHATS.find(c => c.id === chatId); if (chat) { chat.title = title; await _saveChatsToDB(); renderSidebar(); return title; } }
+        } catch (e) { console.error("Title generation error:", e); } return null;
     }
 
     function loadChat(id) {
@@ -657,31 +616,27 @@ You are HyperRush AI.
             welcomeEl.style.display = "none";
             chatViewEl.style.display = "block";
             chatContainerEl.innerHTML = "";
+            
+            // Render all messages (skeletons or full based on position)
             if (chat.messages && Array.isArray(chat.messages)) {
                 chat.messages.forEach((msg, index) => {
+                    // Force render last 3, lazy load others via IntersectionObserver inside renderMsg
                     renderMsg(msg.role, msg.content, index, true, msg.images);
                 });
             }
             renderSidebar();
             if (window.innerWidth < 1024) document.body.classList.remove("sidebar-open");
+            
+            // FIX: Open at bottom
+            requestAnimationFrame(() => {
+                chatViewEl.scrollTop = chatViewEl.scrollHeight;
+                userScrolledUp = false; // Reset scroll state
+            });
         }
     }
 
-    function newChat() {
-        if (isGenerating) return;
-        CURRENT_ID = null;
-        welcomeEl.style.display = "flex";
-        chatViewEl.style.display = "none";
-        chatContainerEl.innerHTML = "";
-        renderSidebar();
-    }
-
-    async function deleteChat(id) {
-        CHATS = CHATS.filter(c => c.id !== id);
-        await _saveChatsToDB();
-        if (CURRENT_ID === id) newChat();
-        else renderSidebar();
-    }
+    function newChat() { if (isGenerating) return; CURRENT_ID = null; welcomeEl.style.display = "flex"; chatViewEl.style.display = "none"; chatContainerEl.innerHTML = ""; renderSidebar(); }
+    async function deleteChat(id) { CHATS = CHATS.filter(c => c.id !== id); await _saveChatsToDB(); if (CURRENT_ID === id) newChat(); else renderSidebar(); }
 
     function copyText(button, text) { 
         const textToCopy = text !== undefined ? text : (button.dataset.code || "");
@@ -694,236 +649,51 @@ You are HyperRush AI.
     }
 
     function copyCodeBlock(button) {
-        const wrapper = button.closest('.code-wrapper');
-        const codeEl = wrapper.querySelector('code');
-        const text = codeEl.innerText;
+        const wrapper = button.closest('.code-wrapper'); const codeEl = wrapper.querySelector('code'); const text = codeEl.innerText;
         navigator.clipboard.writeText(text).then(() => {
-            const originalText = button.innerText;
-            button.innerText = 'Copied!';
-            button.style.borderColor = 'var(--accent)';
-            button.style.color = 'var(--accent)';
-            setTimeout(() => {
-                button.innerText = originalText;
-                button.style.borderColor = '';
-                button.style.color = '';
-            }, 2000);
+            const originalText = button.innerText; button.innerText = 'Copied!'; button.style.borderColor = 'var(--accent)'; button.style.color = 'var(--accent)';
+            setTimeout(() => { button.innerText = originalText; button.style.borderColor = ''; button.style.color = ''; }, 2000);
         });
     }
 
-    function startSuggestion(text) {
-        promptEl.value = text;
-        handleSendOrStop();
-    }
-
-    // --- FIX: Smart Scroll Logic ---
-    function _scrollToBottom() {
-        const isNearBottom = chatViewEl.scrollHeight - chatViewEl.clientHeight - chatViewEl.scrollTop < 100;
-        if (isNearBottom) {
-            chatViewEl.scrollTop = chatViewEl.scrollHeight;
-        }
-    }
-
-    function renderMsg(role, content, index, isComplete, images = null) {
-        const isUser = role === "user";
-        const msgDiv = document.createElement("div");
-        msgDiv.className = "msg " + (isUser ? "user" : "ai");
-        msgDiv.id = "msg-" + index;
-        // FIX: Store index in dataset for reliable reference
-        msgDiv.dataset.index = index;
-
-        if (isUser) {
-            const bubble = document.createElement("div");
-            bubble.className = "bubble";
-            
-            if (images && images.length > 0) {
-                const pill = document.createElement('div');
-                pill.className = 'pill-tag';
-                pill.style.marginBottom = '6px';
-                pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + images.length + ' Image' + (images.length > 1 ? 's' : '');
-                pill.onclick = () => openLightbox(images, 0);
-                bubble.appendChild(pill);
-            }
-            
-            const contentDiv = document.createElement("div");
-            contentDiv.className = "bubble-content";
-            contentDiv.innerText = content || "";
-            bubble.appendChild(contentDiv);
-            
-            const actionsDiv = document.createElement("div");
-            actionsDiv.className = "actions";
-            actionsDiv.innerHTML = `<button class="act-btn" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
-            // FIX: Use event listener instead of inline onclick
-            actionsDiv.querySelector('button').onclick = () => editUserMessage(index);
-            
-            bubble.appendChild(actionsDiv);
-            msgDiv.appendChild(bubble);
-        } else {
-            const bodyDiv = document.createElement("div");
-            bodyDiv.className = "md-body";
-            
-            if (isComplete) {
-                bodyDiv.innerHTML = parseMarkdown(content || "");
-                if (window.MathJax) MathJax.typesetPromise([bodyDiv]).catch(e => console.log(e));
-                
-                const actionsDiv = document.createElement("div");
-                actionsDiv.className = "actions";
-                actionsDiv.innerHTML = `
-                    <button class="act-btn" title="Regenerate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-                    <button class="act-btn" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>`;
-                
-                actionsDiv.querySelector('button:first-child').onclick = () => handleRegen(index);
-                actionsDiv.querySelector('button:last-child').onclick = function() { copyText(this, encodeURIComponent(content || "")); };
-                
-                msgDiv.appendChild(bodyDiv);
-                msgDiv.appendChild(actionsDiv);
-            } else {
-                bodyDiv.innerHTML = '<div class="loader"><span></span><span></span><span></span></div>';
-                msgDiv.appendChild(bodyDiv);
-            }
-        }
-        
-        chatContainerEl.appendChild(msgDiv);
-        _scrollToBottom();
-        return msgDiv;
-    }
+    function startSuggestion(text) { promptEl.value = text; handleSendOrStop(); }
 
     function editUserMessage(index) {
-        const msgDiv = $('msg-' + index);
-        if (!msgDiv) return;
-        const bubble = msgDiv.querySelector('.bubble');
-        const contentDiv = bubble.querySelector('.bubble-content');
-        const oldText = contentDiv.innerText;
-        
-        const chat = CHATS.find(c => c.id === CURRENT_ID);
-        const currentImages = (chat && chat.messages[index] && chat.messages[index].images) ? chat.messages[index].images : [];
-        
-        const actions = bubble.querySelector('.actions');
-        if(actions) actions.style.display = 'none';
-        
-        bubble.innerHTML = ''; 
-        const container = document.createElement('div');
-        container.className = 'edit-container';
-        
-        if (currentImages.length > 0) {
-            const pill = document.createElement('div');
-            pill.className = 'pill-tag';
-            pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + currentImages.length + ' Image' + (currentImages.length > 1 ? 's' : '');
-            pill.onclick = () => openLightbox(currentImages, 0);
-            container.appendChild(pill);
-        }
-        
-        const textarea = document.createElement('textarea');
-        textarea.className = 'edit-msg-textarea';
-        textarea.value = oldText;
-        container.appendChild(textarea);
-        
-        const btns = document.createElement('div');
-        btns.className = 'edit-actions';
-        
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'edit-cancel-btn';
-        cancelBtn.innerText = 'Cancel';
-        cancelBtn.onclick = () => cancelEdit(index, oldText, currentImages);
-        
-        const saveBtn = document.createElement('button');
-        saveBtn.className = 'edit-save-btn';
-        saveBtn.innerText = 'Send';
-        saveBtn.onclick = () => saveEdit(index);
-        
-        btns.appendChild(cancelBtn);
-        btns.appendChild(saveBtn);
-        container.appendChild(btns);
-        bubble.appendChild(container);
-        
-        textarea.focus();
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
+        const msgDiv = $('msg-' + index); if (!msgDiv) return; const bubble = msgDiv.querySelector('.bubble'); const contentDiv = bubble.querySelector('.bubble-content'); const oldText = contentDiv.innerText;
+        const chat = CHATS.find(c => c.id === CURRENT_ID); const currentImages = (chat && chat.messages[index] && chat.messages[index].images) ? chat.messages[index].images : [];
+        const actions = bubble.querySelector('.actions'); if(actions) actions.style.display = 'none';
+        bubble.innerHTML = ''; const container = document.createElement('div'); container.className = 'edit-container';
+        if (currentImages.length > 0) { const pill = document.createElement('div'); pill.className = 'pill-tag'; pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + currentImages.length + ' Image' + (currentImages.length > 1 ? 's' : ''); pill.onclick = () => openLightbox(currentImages, 0); container.appendChild(pill); }
+        const textarea = document.createElement('textarea'); textarea.className = 'edit-msg-textarea'; textarea.value = oldText; container.appendChild(textarea);
+        const btns = document.createElement('div'); btns.className = 'edit-actions';
+        const cancelBtn = document.createElement('button'); cancelBtn.className = 'edit-cancel-btn'; cancelBtn.innerText = 'Cancel'; cancelBtn.onclick = () => cancelEdit(index, oldText, currentImages);
+        const saveBtn = document.createElement('button'); saveBtn.className = 'edit-save-btn'; saveBtn.innerText = 'Send'; saveBtn.onclick = () => saveEdit(index);
+        btns.appendChild(cancelBtn); btns.appendChild(saveBtn); container.appendChild(btns); bubble.appendChild(container);
+        textarea.focus(); textarea.style.height = 'auto'; textarea.style.height = textarea.scrollHeight + 'px';
     }
 
     function cancelEdit(index, oldText, images) {
-        // Re-render the specific message to restore state
         const msgDiv = $('msg-' + index);
-        msgDiv.outerHTML = ''; // Remove old
-        
-        // Re-render just this message at the same spot? 
-        // Actually, simpler to just rebuild the bubble manually like in editUserMessage reverse
-        // But let's use renderMsg logic. Since renderMsg appends, we need a helper.
-        
-        // Simple approach: Just rebuild the chat view for this index and keep later messages?
-        // The original code wiped everything. Let's do better.
-        
-        const chat = CHATS.find(c => c.id === CURRENT_ID);
-        const parent = chatContainerEl;
-        // Insert placeholder or just fix the specific node.
-        // Since renderMsg appends, let's create a standalone bubble.
-        
-        // To keep it bug-free and simple without full React-like DOM diffing:
-        // Just re-render the specific message node.
         const oldMsgDiv = document.createElement('div');
-        oldMsgDiv.className = 'msg user';
-        oldMsgDiv.id = 'msg-' + index;
-        oldMsgDiv.dataset.index = index;
-        
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble';
-        
-        if (images && images.length > 0) {
-            const pill = document.createElement('div');
-            pill.className = 'pill-tag';
-            pill.style.marginBottom = '6px';
-            pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + images.length + ' Image' + (images.length > 1 ? 's' : '');
-            pill.onclick = () => openLightbox(images, 0);
-            bubble.appendChild(pill);
-        }
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'bubble-content';
-        contentDiv.innerText = oldText;
-        bubble.appendChild(contentDiv);
-        
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'actions';
-        actionsDiv.innerHTML = '<button class="act-btn" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
-        actionsDiv.querySelector('button').onclick = () => editUserMessage(index);
-        bubble.appendChild(actionsDiv);
-        
+        oldMsgDiv.className = 'msg user'; oldMsgDiv.id = 'msg-' + index; oldMsgDiv.dataset.index = index;
+        const bubble = document.createElement('div'); bubble.className = 'bubble';
+        if (images && images.length > 0) { const pill = document.createElement('div'); pill.className = 'pill-tag'; pill.style.marginBottom = '6px'; pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + images.length + ' Image' + (images.length > 1 ? 's' : ''); pill.onclick = () => openLightbox(images, 0); bubble.appendChild(pill); }
+        const contentDiv = document.createElement('div'); contentDiv.className = 'bubble-content'; contentDiv.innerText = oldText; bubble.appendChild(contentDiv);
+        const actionsDiv = document.createElement('div'); actionsDiv.className = 'actions'; actionsDiv.innerHTML = '<button class="act-btn" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'; actionsDiv.querySelector('button').onclick = () => editUserMessage(index); bubble.appendChild(actionsDiv);
         oldMsgDiv.appendChild(bubble);
-        
-        // Replace the existing (now empty/removed) node.
-        // We need to find the current edit container node.
-        const currentEditNode = chatContainerEl.querySelector(`#msg-${index}`);
-        if (currentEditNode) {
-            chatContainerEl.replaceChild(oldMsgDiv, currentEditNode);
-        }
+        chatContainerEl.replaceChild(oldMsgDiv, msgDiv);
     }
 
     async function saveEdit(index) {
-        const msgDiv = $('msg-' + index);
-        const textarea = msgDiv.querySelector('textarea');
-        const newText = textarea.value.trim();
-        
-        const chat = CHATS.find(c => c.id === CURRENT_ID);
-        if (!chat) return;
-        
-        // Update message content
-        chat.messages[index].content = newText;
-        
-        // FIX: Don't wipe the whole DOM. Remove only subsequent messages.
-        chat.messages = chat.messages.slice(0, index + 1);
-        await _saveChatsToDB();
+        const msgDiv = $('msg-' + index); const textarea = msgDiv.querySelector('textarea'); const newText = textarea.value.trim();
+        const chat = CHATS.find(c => c.id === CURRENT_ID); if (!chat) return;
+        chat.messages[index].content = newText; chat.messages = chat.messages.slice(0, index + 1); await _saveChatsToDB();
         
         // Remove subsequent DOM elements
         const allMsgs = chatContainerEl.querySelectorAll('.msg');
-        allMsgs.forEach(el => {
-            if (parseInt(el.dataset.index) > index) {
-                el.remove();
-            }
-        });
+        allMsgs.forEach(el => { if (parseInt(el.dataset.index) > index) el.remove(); });
         
-        // Re-render the edited message to fix the bubble (remove textarea)
-        // We can just call cancelEdit logic to restore the bubble, then stream
         cancelEdit(index, newText, chat.messages[index].images);
-        
         streamAI(false);
     }
 
@@ -931,340 +701,106 @@ You are HyperRush AI.
         if (isGenerating) return;
         const chat = CHATS.find(c => c.id === CURRENT_ID);
         if (chat && chat.messages) {
-            chat.messages = chat.messages.slice(0, index);
-            await _saveChatsToDB();
-            
-            // FIX: Remove subsequent DOM elements instead of clearing innerHTML
+            chat.messages = chat.messages.slice(0, index); await _saveChatsToDB();
             const allMsgs = chatContainerEl.querySelectorAll('.msg');
-            allMsgs.forEach(el => {
-                if (parseInt(el.dataset.index) >= index) {
-                    el.remove();
-                }
-            });
-            
+            allMsgs.forEach(el => { if (parseInt(el.dataset.index) >= index) el.remove(); });
             streamAI();
         }
     }
 
     async function handleSendOrStop() {
-        if (isGenerating) {
-            if (abortController) abortController.abort();
-            return;
-        }
-
-        const text = promptEl.value.trim();
-        if (!text && selectedFiles.length === 0) return;
-
-        promptEl.value = "";
-        promptEl.style.height = "auto";
+        if (isGenerating) { if (abortController) abortController.abort(); return; }
+        const text = promptEl.value.trim(); if (!text && selectedFiles.length === 0) return;
+        promptEl.value = ""; promptEl.style.height = "auto";
+        welcomeEl.style.display = "none"; chatViewEl.style.display = "block";
         
-        welcomeEl.style.display = "none";
-        chatViewEl.style.display = "block";
+        // FIX: Reset scroll state on new message
+        userScrolledUp = false;
 
         const isNewChat = !CURRENT_ID;
-        if (!CURRENT_ID) {
-            CURRENT_ID = Date.now().toString();
-            CHATS.unshift({
-                id: CURRENT_ID,
-                title: "New Chat",
-                messages: [],
-                needsTitle: true,
-                firstUserMessage: text || "Image upload"
-            });
-            renderSidebar();
-        }
-
-        const chat = CHATS.find(c => c.id === CURRENT_ID);
-        const userMsg = { role: "user", content: text };
-        
-        if (selectedFilePreviews.length > 0) {
-            userMsg.images = [...selectedFilePreviews];
-            selectedFiles = [];
-            selectedFilePreviews = [];
-            attachmentPreviewEl.innerHTML = '';
-            fileInputEl.value = '';
-        }
-
-        if (chat) {
-            if (!chat.messages) chat.messages = [];
-            chat.messages.push(userMsg);
-            renderMsg("user", text, chat.messages.length - 1, true, userMsg.images);
-            streamAI(isNewChat);
-        }
+        if (!CURRENT_ID) { CURRENT_ID = Date.now().toString(); CHATS.unshift({ id: CURRENT_ID, title: "New Chat", messages: [], needsTitle: true, firstUserMessage: text || "Image upload" }); renderSidebar(); }
+        const chat = CHATS.find(c => c.id === CURRENT_ID); const userMsg = { role: "user", content: text };
+        if (selectedFilePreviews.length > 0) { userMsg.images = [...selectedFilePreviews]; selectedFiles = []; selectedFilePreviews = []; attachmentPreviewEl.innerHTML = ''; fileInputEl.value = ''; }
+        if (chat) { if (!chat.messages) chat.messages = []; chat.messages.push(userMsg); renderMsg("user", text, chat.messages.length - 1, true, userMsg.images); streamAI(isNewChat); }
     }
 
-    function _createImageContent(base64) {
-        if (base64.startsWith("data:")) return { type: "image_url", image_url: { url: base64 } };
-        return null;
-    }
+    function _createImageContent(base64) { if (base64.startsWith("data:")) return { type: "image_url", image_url: { url: base64 } }; return null; }
 
     async function streamAI(isNewChat = false) {
-        isGenerating = true;
-        sendBtn.classList.add("active");
-        iconSend.style.display = "none";
-        iconStop.style.display = "block";
-
-        const chat = CHATS.find(c => c.id === CURRENT_ID);
-        if (!chat) return;
-
+        isGenerating = true; sendBtn.classList.add("active"); iconSend.style.display = "none"; iconStop.style.display = "block";
+        const chat = CHATS.find(c => c.id === CURRENT_ID); if (!chat) return;
+        
+        // Force render the new AI message immediately
         const msgIndex = chat.messages.length;
-        const msgDiv = renderMsg("assistant", "", msgIndex, false);
+        const msgDiv = renderMsg("assistant", "", msgIndex, false, null, true);
         const bodyDiv = msgDiv.querySelector(".md-body");
         let fullText = "";
 
-        abortController = new AbortController();
+        // Scroll to bottom immediately because we just sent a message
+        scrollToBottom();
 
+        abortController = new AbortController();
         try {
             const apiMessages = chat.messages.map(msg => {
-                if (msg.images && msg.images.length > 0) {
-                    const content = [{ type: "text", text: msg.content || "What is in these images?" }];
-                    msg.images.forEach(img => {
-                        const imgContent = _createImageContent(img);
-                        if (imgContent) content.push(imgContent);
-                    });
-                    return { role: msg.role, content: content };
-                }
+                if (msg.images && msg.images.length > 0) { const content = [{ type: "text", text: msg.content || "What is in these images?" }]; msg.images.forEach(img => { const imgContent = _createImageContent(img); if (imgContent) content.push(imgContent); }); return { role: msg.role, content: content }; }
                 return { role: msg.role, content: msg.content };
             });
-
-            const response = await fetch(`${API_BASE}/v1/chat/completions`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK },
-                body: JSON.stringify({
-                    model: "gemini-search",
-                    messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages],
-                    stream: true,
-                    seed: Math.floor(1e6 * Math.random())
-                }),
-                signal: abortController.signal
-            });
-
+            const response = await fetch(`${API_BASE}/v1/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK }, body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: true, seed: Math.floor(1e6 * Math.random()) }), signal: abortController.signal });
             if (response.status === 402) { _showQuotaToast(); throw new Error("Quota Exceeded"); }
             if (!response.ok) throw new Error("HTTP error " + response.status);
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = "";
-
+            const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
             while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split("\n");
-                buffer = lines.pop(); // Keep incomplete line
-
+                const { done, value } = await reader.read(); if (done) break;
+                buffer += decoder.decode(value, { stream: true }); const lines = buffer.split("\n"); buffer = lines.pop();
                 for (const line of lines) {
-                    if (!line.trim().startsWith("data: ")) continue;
-                    const jsonStr = line.trim().slice(6);
-                    if ("[DONE]" === jsonStr) break;
-                    try {
-                        const data = JSON.parse(jsonStr);
-                        const content = data.choices?.[0]?.delta?.content;
-                        if (content) {
-                            fullText += content;
-                            bodyDiv.innerHTML = parseMarkdown(fullText);
-                            _renderMathLive(bodyDiv);
-                            _scrollToBottom(); // Smart scroll
-                        }
-                    } catch (e) { /* Ignore JSON parse errors for individual chunks */ }
+                    if (!line.trim().startsWith("data: ")) continue; const jsonStr = line.trim().slice(6); if ("[DONE]" === jsonStr) break;
+                    try { const data = JSON.parse(jsonStr); const content = data.choices?.[0]?.delta?.content; if (content) { fullText += content; bodyDiv.innerHTML = parseMarkdown(fullText); _renderMathLive(bodyDiv); if (!userScrolledUp) scrollToBottom(); } } catch (e) { }
                 }
             }
-
-            // Check for truncation
             if (_isTruncated(fullText)) {
                 chat.messages.push({ role: "assistant", content: fullText });
-                
-                const indicator = document.createElement('div');
-                indicator.id = 'continuation-indicator';
-                indicator.style.cssText = 'text-align:center;color:var(--accent);font-size:12px;margin-top:10px;opacity:0.8';
-                indicator.innerText = 'Continuing generation...';
-                bodyDiv.appendChild(indicator);
-                
+                const indicator = document.createElement('div'); indicator.style.cssText = 'text-align:center;color:var(--accent);font-size:12px;margin-top:10px;opacity:0.8'; indicator.innerText = 'Continuing generation...'; bodyDiv.appendChild(indicator);
                 await new Promise(res => setTimeout(res, 1200));
-                
                 chat.messages.push({ role: "user", content: "Continue exactly where you left off. Do not repeat text." });
                 await _continueGeneration(chat, bodyDiv, fullText);
             } else {
-                chat.messages.push({ role: "assistant", content: fullText });
-                await _saveChatsToDB();
-                updateBalance();
+                chat.messages.push({ role: "assistant", content: fullText }); await _saveChatsToDB(); updateBalance();
                 if (isNewChat && chat.firstUserMessage) _generateChatTitle(CURRENT_ID, chat.firstUserMessage, fullText);
             }
-
         } catch (err) {
-            if (err.name === "AbortError") {
-                if (fullText.length > 0) {
-                    chat.messages.push({ role: "assistant", content: fullText + " [Stopped]" });
-                    await _saveChatsToDB();
-                }
-            } else {
-                bodyDiv.innerHTML = '<span style="color:#ef4444">Error: ' + err.message + '</span>';
-            }
+            if (err.name === "AbortError") { if (fullText.length > 0) { chat.messages.push({ role: "assistant", content: fullText + " [Stopped]" }); await _saveChatsToDB(); } }
+            else bodyDiv.innerHTML = '<span style="color:#ef4444">Error: ' + err.message + '</span>';
         } finally {
-            // FIX: Remove continuation indicator if present
-            const indicator = $('continuation-indicator');
-            if(indicator) indicator.remove();
-
-            // Re-render the final message to add proper actions (Copy/Regen buttons)
-            msgDiv.remove();
-            if (fullText.length > 0 || chat.messages[chat.messages.length - 1]?.role === 'assistant') {
-                // If we have content, render it properly.
-                // Note: In case of error/abort, we still render what we have.
-                const finalIndex = chat.messages.length - 1;
-                renderMsg("assistant", fullText, finalIndex, true);
+            // Re-render the final message properly
+            msgDiv.remove(); // Remove streaming version
+            if (fullText.length > 0) {
+                renderMsg("assistant", fullText, msgIndex, true, null, true);
             }
-
-            abortController = null;
-            isGenerating = false;
-            sendBtn.classList.remove("active");
-            iconSend.style.display = "block";
-            iconStop.style.display = "none";
+            abortController = null; isGenerating = false; sendBtn.classList.remove("active"); iconSend.style.display = "block"; iconStop.style.display = "none";
         }
     }
 
     async function _continueGeneration(chat, bodyDiv, currentText) {
-        abortController = new AbortController();
-        let fullText = currentText;
-        
+        abortController = new AbortController(); let fullText = currentText;
         try {
-            const apiMessages = chat.messages.map(msg => {
-                if (msg.images && msg.images.length > 0) {
-                    const content = [{ type: "text", text: msg.content || "" }];
-                    msg.images.forEach(img => { const imgContent = _createImageContent(img); if (imgContent) content.push(imgContent); });
-                    return { role: msg.role, content: content };
-                }
-                return { role: msg.role, content: msg.content };
-            });
-
-            const response = await fetch(`${API_BASE}/v1/chat/completions`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK },
-                body: JSON.stringify({
-                    model: "gemini-search",
-                    messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages],
-                    stream: true,
-                    seed: Math.floor(1e6 * Math.random())
-                }),
-                signal: abortController.signal
-            });
-            
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = "";
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split("\n");
-                buffer = lines.pop();
-                
-                for (const line of lines) {
-                    if (!line.trim().startsWith("data: ")) continue;
-                    const jsonStr = line.trim().slice(6);
-                    if ("[DONE]" === jsonStr) break;
-                    try {
-                        const data = JSON.parse(jsonStr);
-                        const content = data.choices?.[0]?.delta?.content;
-                        if (content) {
-                            fullText += content;
-                            bodyDiv.innerHTML = parseMarkdown(fullText);
-                            _renderMathLive(bodyDiv);
-                            _scrollToBottom();
-                        }
-                    } catch (e) {}
-                }
-            }
-            
-            // Update the last assistant message in history
-            chat.messages[chat.messages.length - 1] = { role: "assistant", content: fullText };
-            await _saveChatsToDB();
-            updateBalance();
-
-        } catch (e) {
-            console.error(e);
-        }
+            const apiMessages = chat.messages.map(msg => { if (msg.images && msg.images.length > 0) { const content = [{ type: "text", text: msg.content || "" }]; msg.images.forEach(img => { const imgContent = _createImageContent(img); if (imgContent) content.push(imgContent); }); return { role: msg.role, content: content }; } return { role: msg.role, content: msg.content }; });
+            const response = await fetch(`${API_BASE}/v1/chat/completions`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK }, body: JSON.stringify({ model: "gemini-search", messages: [{ role: "system", content: SYS_PROMPT }, ...apiMessages], stream: true, seed: Math.floor(1e6 * Math.random()) }), signal: abortController.signal });
+            const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
+            while (true) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const lines = buffer.split("\n"); buffer = lines.pop(); for (const line of lines) { if (!line.trim().startsWith("data: ")) continue; const jsonStr = line.trim().slice(6); if ("[DONE]" === jsonStr) break; try { const data = JSON.parse(jsonStr); const content = data.choices?.[0]?.delta?.content; if (content) { fullText += content; bodyDiv.innerHTML = parseMarkdown(fullText); _renderMathLive(bodyDiv); if (!userScrolledUp) scrollToBottom(); } } catch (e) { } } }
+            chat.messages[chat.messages.length - 1] = { role: "assistant", content: fullText }; await _saveChatsToDB(); updateBalance();
+        } catch (e) { console.error(e); }
     }
 
     // --- Lightbox & File Handling ---
-    function openLightbox(images, index) {
-        const modal = $('lightbox-modal');
-        const mainImg = $('lightbox-img');
-        const thumbsContainer = $('lightbox-thumbs');
-        thumbsContainer.innerHTML = '';
-        
-        images.forEach((src, i) => {
-            const thumb = document.createElement('img');
-            thumb.src = src;
-            thumb.className = 'lightbox-thumb' + (i === index ? ' active' : '');
-            thumb.onclick = () => {
-                mainImg.src = src;
-                document.querySelectorAll('.lightbox-thumb').forEach(t => t.classList.remove('active'));
-                thumb.classList.add('active');
-            };
-            thumbsContainer.appendChild(thumb);
-        });
-        
-        mainImg.src = images[index];
-        modal.classList.add('show');
-    }
-
-    function closeLightbox() {
-        $('lightbox-modal').classList.remove('show');
-    }
-
-    async function handleFiles(files) {
-        const newFiles = Array.from(files);
-        const newPreviews = [];
-        
-        for (const file of newFiles) {
-            const b64 = await _fileToBase64(file);
-            newPreviews.push(b64);
-        }
-        
-        selectedFiles = [...selectedFiles, ...newFiles].slice(0, 5);
-        selectedFilePreviews = [...selectedFilePreviews, ...newPreviews].slice(0, 5);
-        
-        attachmentPreviewEl.innerHTML = '';
-        if (selectedFilePreviews.length > 0) {
-            const pill = document.createElement('div');
-            pill.className = 'pill-tag';
-            pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' +
-                selectedFilePreviews.length + ' Image' + (selectedFilePreviews.length > 1 ? 's' : '') + ' selected' +
-                '<div class="pill-remove" onclick="App.clearFiles(event)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>';
-            pill.onclick = (e) => {
-                if (e.target.closest('.pill-remove')) return;
-                openLightbox(selectedFilePreviews, 0);
-            };
-            attachmentPreviewEl.appendChild(pill);
-        }
-    }
-
-    function clearFiles(e) {
-        if(e) e.stopPropagation();
-        selectedFiles = [];
-        selectedFilePreviews = [];
-        attachmentPreviewEl.innerHTML = '';
-        fileInputEl.value = '';
-    }
+    function openLightbox(images, index) { const modal = $('lightbox-modal'); const mainImg = $('lightbox-img'); const thumbsContainer = $('lightbox-thumbs'); thumbsContainer.innerHTML = ''; images.forEach((src, i) => { const thumb = document.createElement('img'); thumb.src = src; thumb.className = 'lightbox-thumb' + (i === index ? ' active' : ''); thumb.onclick = () => { mainImg.src = src; document.querySelectorAll('.lightbox-thumb').forEach(t => t.classList.remove('active')); thumb.classList.add('active'); }; thumbsContainer.appendChild(thumb); }); mainImg.src = images[index]; modal.classList.add('show'); }
+    function closeLightbox() { $('lightbox-modal').classList.remove('show'); }
+    async function handleFiles(files) { const newFiles = Array.from(files); const newPreviews = []; for (const file of newFiles) { const b64 = await _fileToBase64(file); newPreviews.push(b64); } selectedFiles = [...selectedFiles, ...newFiles].slice(0, 5); selectedFilePreviews = [...selectedFilePreviews, ...newPreviews].slice(0, 5); attachmentPreviewEl.innerHTML = ''; if (selectedFilePreviews.length > 0) { const pill = document.createElement('div'); pill.className = 'pill-tag'; pill.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>' + selectedFilePreviews.length + ' Image' + (selectedFilePreviews.length > 1 ? 's' : '') + ' selected' + '<div class="pill-remove" onclick="App.clearFiles(event)"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>'; pill.onclick = (e) => { if (e.target.closest('.pill-remove')) return; openLightbox(selectedFilePreviews, 0); }; attachmentPreviewEl.appendChild(pill); } }
+    function clearFiles(e) { if(e) e.stopPropagation(); selectedFiles = []; selectedFilePreviews = []; attachmentPreviewEl.innerHTML = ''; fileInputEl.value = ''; }
 
     // --- Public API ---
-    return {
-        init,
-        toggleSidebar,
-        newChat,
-        startSuggestion,
-        handleSendOrStop,
-        copyCodeBlock,
-        handleFiles,
-        clearFiles,
-        openLightbox,
-        closeLightbox
-    };
+    return { init, toggleSidebar, newChat, startSuggestion, handleSendOrStop, copyCodeBlock, handleFiles, clearFiles, openLightbox, closeLightbox, scrollToBottom, copyText };
 })();
 
-// Initialize on load
 App.init();
 </script>
 </body>
