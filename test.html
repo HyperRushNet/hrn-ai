@@ -8,14 +8,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<!-- MathJax Config: Disable auto-render on load, we will call it manually -->
-<script>
-window.MathJax = {
-  tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-  options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
-  startup: { pageReady: () => MathJax.startup.defaultReady() }
-};
-</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -126,19 +118,17 @@ body.sidebar-open .sidebar{transform:translateX(0)}
 
 /* Messages */
 .msg{width:100%;margin-top:var(--msg-spacing);animation:fadeIn 0.3s ease;display:flex;flex-direction:column}
+.msg.user{align-items:flex-end; position: relative;}
 .msg.ai{align-items:flex-start}
 
-/* User Message Layout: Row, Right Aligned */
-.msg.user{flex-direction:row;justify-content:flex-end;align-items:flex-end;gap:6px;position:relative}
+/* User Bubble - Simplified, actions moved to bottom bar */
 .msg.user .bubble{background:var(--bg-elevated);padding:10px 16px;border-radius:16px 16px 2px 16px;max-width:85%;font-size:14px;border:1px solid var(--border-subtle);line-height:1.5;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;position:relative}
 
-/* User Actions (Edit Icon) */
-.msg-user-actions{display:flex;align-items:center;opacity:0;transition:opacity 0.2s}
-.msg.user:hover .msg-user-actions{opacity:0.6}
-.msg.user:hover .msg-user-actions:hover{opacity:1}
-.act-btn{background:none;border:none;color:#a1a1aa;cursor:pointer;padding:6px;border-radius:6px;transition:0.15s;display:flex;align-items:center;justify-content:center}
-.act-btn:hover{color:var(--accent);background:var(--accent-dim)}
-.act-btn svg{width:16px;height:16px;stroke-width:2}
+.edit-container{width:100%;display:flex;flex-direction:column;gap:8px}
+.edit-msg-textarea{width:100%;background:var(--bg-base);border:1px solid var(--accent);color:var(--text-main);font-family:inherit;font-size:14px;padding:8px;border-radius:8px;resize:vertical;min-height:60px;outline:none}
+.edit-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+.edit-save-btn{background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.edit-cancel-btn{background:var(--bg-elevated);color:var(--text-main);border:1px solid var(--border-subtle);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer}
 
 /* AI Message */
 .md-body{font-size:15px;line-height:1.65;color:#e4e4e7;width:100%;overflow-wrap:break-word}
@@ -175,6 +165,9 @@ tr:hover td{background:rgba(255,255,255,0.03)}
 /* AI Actions */
 .actions{display:flex;gap:4px;margin-top:8px;opacity:0.4;transition:opacity 0.2s}
 .msg:hover .actions{opacity:1}
+.act-btn{background:none;border:none;color:#a1a1aa;cursor:pointer;padding:6px;border-radius:6px;transition:0.15s;display:flex;align-items:center}
+.act-btn:hover{color:var(--accent);background:var(--accent-dim)}
+.act-btn svg{width:16px;height:16px;stroke-width:2}
 
 /* Input Box */
 .input-box{max-width:680px;margin:0 auto;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:16px;display:flex;align-items:center;padding:10px 12px;gap:10px;pointer-events:auto;transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;width:100%}
@@ -191,6 +184,11 @@ textarea{flex:1;background:transparent;border:none;color:#fff;font-family:inheri
 mjx-container{font-size:110% !important;pointer-events:none}
 @keyframes bounce{0%,100%{opacity:0.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Edit Button in Input Bar */
+.edit-last-btn{background:none;border:none;color:#71717a;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color 0.15s, opacity 0.15s; opacity:0.5}
+.edit-last-btn:hover{color:var(--accent);opacity:1}
+.edit-last-btn svg{width:20px;height:20px}
 
 @media(max-width:900px){:root{--msg-spacing:20px;--input-spacing:150px}.input-wrap{padding:14px 18px 22px 18px}}
 @media(max-width:700px){:root{--msg-spacing:16px;--input-spacing:140px}.input-wrap{padding:12px 16px 20px 16px}}
@@ -277,7 +275,7 @@ New Chat
 <h1>HyperRush AI</h1>
 <p>From prompt to perfection.</p>
 <div class="suggestions-grid">
-<div class="suggestion-card" onclick="App.startSuggestion('Explain quantum physics like I am 5 years old')">
+<div class="suggestion-card" onclick="App.startSuggestion('Explain quantum physics like I\\'m 5 years old')">
 <strong>Explain Concept</strong>
 <span>"Explain quantum physics simply"</span>
 </div>
@@ -307,6 +305,12 @@ New Chat
 <div class="input-wrap">
 <div id="attachment-preview" class="attachment-preview-area"></div>
 <div class="input-box">
+<button id="edit-last-btn" class="edit-last-btn" onclick="App.openEditModal()" title="Edit last message" style="display:none">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+</svg>
+</button>
 <button class="upload-btn" onclick="document.getElementById('file-input').click()" title="Upload Image">
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -347,11 +351,12 @@ You are HyperRush AI.
     let PK = localStorage.getItem("pk");
     let isGenerating = false;
     let abortController = null;
+    let lastMathjaxRender = 0;
     let db;
     let selectedFiles = [];
     let selectedFilePreviews = [];
     let countdownInterval = null;
-    let editingIndex = -1;
+    let editingIndex = -1; // For modal editing
     
     // --- Smart Scroll & Render State ---
     let userScrolledUp = false;
@@ -359,6 +364,7 @@ You are HyperRush AI.
     let renderPending = false;
     let currentStreamText = ""; 
     let currentStreamElement = null;
+    let lastRenderedText = ""; // Optimization to prevent flickering
 
     // --- Web Worker for Image Processing ---
     const imageWorkerCode = `
@@ -395,6 +401,7 @@ You are HyperRush AI.
     const fileInputEl = $('file-input');
     const chatListEl = $('chat-list');
     const scrollDownBtn = $('scroll-down-btn');
+    const editLastBtn = $('edit-last-btn');
     const editModal = $('edit-modal');
     const editModalTextarea = $('edit-modal-textarea');
 
@@ -454,13 +461,9 @@ You are HyperRush AI.
         if (!text) return "";
         const mathBlocks = [];
         let t = text;
-        // Replace math with placeholders to protect them from markdown parsing
         t = t.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => { const id = mathBlocks.length; mathBlocks.push('\\[' + p1 + '\\]'); return '[[MATHBLOCK' + id + ']]'; });
         t = t.replace(/\$([^\$\n]+?)\$/g, (match, p1) => { const id = mathBlocks.length; mathBlocks.push('\\(' + p1 + '\\)'); return '[[MATHBLOCK' + id + ']]'; });
-        
         let html = marked.parse(t);
-        
-        // Restore math placeholders
         mathBlocks.forEach((val, i) => { html = html.split('[[MATHBLOCK' + i + ']]').join(val); });
         return html;
     }
@@ -494,6 +497,7 @@ You are HyperRush AI.
 
     // --- Utility Functions ---
     function _cleanTitle(text) { if (!text) return "New Chat"; return text.replace(/<br\s*\/?>/gi, ' ').replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').replace(/[#*`_~]/g, '').trim().substring(0, 50); }
+    function _renderMathLive(element) { if (!window.MathJax) return; const now = Date.now(); if (now - lastMathjaxRender < 100) return; lastMathjaxRender = now; MathJax.typesetPromise([element]).catch(err => console.log(err)); }
     
     function _showQuotaToast() { $('quota-toast').classList.add('show'); if (countdownInterval) clearInterval(countdownInterval); _updateCountdown(); countdownInterval = setInterval(_updateCountdown, 1000); }
     function _hideQuotaToast() { $('quota-toast').classList.remove('show'); if (countdownInterval) clearInterval(countdownInterval); }
@@ -525,6 +529,9 @@ You are HyperRush AI.
 
         promptEl.addEventListener("input", () => { promptEl.style.height = "auto"; promptEl.style.height = promptEl.scrollHeight + "px"; });
         promptEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendOrStop(); } });
+        
+        // Initial check for edit button visibility
+        updateEditButtonVisibility();
     }
 
     function handleSmartScroll() {
@@ -539,8 +546,20 @@ You are HyperRush AI.
     }
 
     function scrollToBottom(smooth = false) {
-        // Force scroll to absolute bottom
-        chatViewEl.scrollTop = chatViewEl.scrollHeight;
+        chatViewEl.scrollTo({ top: chatViewEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    }
+
+    function updateEditButtonVisibility() {
+        const chat = CHATS.find(c => c.id === CURRENT_ID);
+        // Show only if chat exists, has messages, and last message is from user
+        if (chat && chat.messages && chat.messages.length > 0) {
+            const lastMsg = chat.messages[chat.messages.length - 1];
+            if (lastMsg.role === 'user') {
+                editLastBtn.style.display = 'flex';
+                return;
+            }
+        }
+        editLastBtn.style.display = 'none';
     }
 
     // --- Message Rendering ---
@@ -556,17 +575,6 @@ You are HyperRush AI.
         if (images) msgDiv.dataset.images = JSON.stringify(images);
 
         if (isUser) {
-            // 1. Create Actions (Edit Icon)
-            const actionsDiv = document.createElement("div");
-            actionsDiv.className = "msg-user-actions";
-            const editBtn = document.createElement("button");
-            editBtn.className = "act-btn";
-            editBtn.title = "Edit";
-            editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-            editBtn.onclick = () => openEditModal(index);
-            actionsDiv.appendChild(editBtn);
-
-            // 2. Create Bubble
             const bubble = document.createElement("div"); 
             bubble.className = "bubble";
             
@@ -577,7 +585,7 @@ You are HyperRush AI.
             }
             const contentDiv = document.createElement("div"); contentDiv.className = "bubble-content"; contentDiv.innerText = content || ""; bubble.appendChild(contentDiv);
             
-            msgDiv.appendChild(actionsDiv);
+            // Removed inline edit button. It is now in the bottom bar.
             msgDiv.appendChild(bubble);
         } else {
             // AI Message
@@ -590,6 +598,7 @@ You are HyperRush AI.
             if (forceRender || isNearEnd || !isComplete) {
                 renderAiContent(msgDiv, content, isComplete);
             } else {
+                // Lazy load placeholder
                 bodyDiv.innerHTML = `<div style="height: 50px; background: rgba(255,255,255,0.03); border-radius: 8px; margin: 10px 0;"></div>`;
             }
         }
@@ -607,7 +616,6 @@ You are HyperRush AI.
 
         if (isComplete) {
             bodyDiv.innerHTML = parseMarkdown(content || "");
-            // Render MathJax only when complete
             if (window.MathJax) MathJax.typesetPromise([bodyDiv]).catch(e => console.log(e));
             
             const actionsDiv = document.createElement("div");
@@ -689,6 +697,7 @@ You are HyperRush AI.
                 });
             }
             renderSidebar();
+            updateEditButtonVisibility(); // Update edit button visibility on load
             if (window.innerWidth < 1024) document.body.classList.remove("sidebar-open");
             
             requestAnimationFrame(() => {
@@ -698,7 +707,7 @@ You are HyperRush AI.
         }
     }
 
-    function newChat() { if (isGenerating) return; CURRENT_ID = null; welcomeEl.style.display = "flex"; chatViewEl.style.display = "none"; chatContainerEl.innerHTML = ""; renderSidebar(); }
+    function newChat() { if (isGenerating) return; CURRENT_ID = null; welcomeEl.style.display = "flex"; chatViewEl.style.display = "none"; chatContainerEl.innerHTML = ""; renderSidebar(); updateEditButtonVisibility(); }
     async function deleteChat(id) { CHATS = CHATS.filter(c => c.id !== id); await _saveChatsToDB(); if (CURRENT_ID === id) newChat(); else renderSidebar(); }
 
     function copyText(button, text) { 
@@ -727,12 +736,25 @@ You are HyperRush AI.
         const chat = CHATS.find(c => c.id === CURRENT_ID);
         if (!chat || !chat.messages) return;
         
+        // If index is not provided, use the last user message
+        if (index === undefined) {
+            for (let i = chat.messages.length - 1; i >= 0; i--) {
+                if (chat.messages[i].role === 'user') {
+                    index = i;
+                    break;
+                }
+            }
+        }
+        
+        if (index === -1 || index === undefined) return;
+        
         const msg = chat.messages[index];
         editingIndex = index;
         
         editModalTextarea.value = msg.content || "";
         editModal.classList.add('show');
         
+        // Focus and set height
         setTimeout(() => {
             editModalTextarea.focus();
             editModalTextarea.style.height = 'auto';
@@ -748,20 +770,26 @@ You are HyperRush AI.
     async function saveEditModal() {
         if (editingIndex === -1) return;
         const newText = editModalTextarea.value.trim();
-        if (!newText) return;
+        if (!newText) return; // Don't save empty
         
         const chat = CHATS.find(c => c.id === CURRENT_ID);
         if (!chat) return;
         
         chat.messages[editingIndex].content = newText;
+        // Truncate messages after this index
         chat.messages = chat.messages.slice(0, editingIndex + 1);
         await _saveChatsToDB();
         
         closeEditModal();
+        
+        // Re-render chat
         loadChat(CURRENT_ID);
+        
+        // Trigger AI
         streamAI(false);
     }
 
+    // Handle keydown in modal (Ctrl+Enter to save)
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && editModal.classList.contains('show')) {
             e.preventDefault();
@@ -795,7 +823,7 @@ You are HyperRush AI.
         if (!CURRENT_ID) { CURRENT_ID = Date.now().toString(); CHATS.unshift({ id: CURRENT_ID, title: "New Chat", messages: [], needsTitle: true, firstUserMessage: text || "Image upload" }); renderSidebar(); }
         const chat = CHATS.find(c => c.id === CURRENT_ID); const userMsg = { role: "user", content: text };
         if (selectedFilePreviews.length > 0) { userMsg.images = [...selectedFilePreviews]; selectedFiles = []; selectedFilePreviews = []; attachmentPreviewEl.innerHTML = ''; fileInputEl.value = ''; }
-        if (chat) { if (!chat.messages) chat.messages = []; chat.messages.push(userMsg); renderMsg("user", text, chat.messages.length - 1, true, userMsg.images); streamAI(isNewChat); }
+        if (chat) { if (!chat.messages) chat.messages = []; chat.messages.push(userMsg); renderMsg("user", text, chat.messages.length - 1, true, userMsg.images); updateEditButtonVisibility(); streamAI(isNewChat); }
     }
 
     function _createImageContent(base64) { if (base64.startsWith("data:")) return { type: "image_url", image_url: { url: base64 } }; return null; }
@@ -803,6 +831,7 @@ You are HyperRush AI.
     // --- Stream AI ---
     async function streamAI(isNewChat = false) {
         isGenerating = true; sendBtn.classList.add("active"); iconSend.style.display = "none"; iconStop.style.display = "block";
+        updateEditButtonVisibility(); // Hide edit button during generation
         const chat = CHATS.find(c => c.id === CURRENT_ID); if (!chat) return;
         
         const msgIndex = chat.messages.length;
@@ -810,6 +839,7 @@ You are HyperRush AI.
         const bodyDiv = msgDiv.querySelector(".md-body");
         
         currentStreamText = "";
+        lastRenderedText = ""; // Reset rendered text tracker
         currentStreamElement = bodyDiv;
         startRenderLoop();
 
@@ -869,11 +899,13 @@ You are HyperRush AI.
                 renderMsg("assistant", currentStreamText, msgIndex, true, null, true);
             }
             abortController = null; isGenerating = false; sendBtn.classList.remove("active"); iconSend.style.display = "block"; iconStop.style.display = "none";
+            updateEditButtonVisibility();
         }
     }
 
     async function streamAIContinuation(chat, bodyDiv, initialText) {
         currentStreamText = initialText;
+        lastRenderedText = ""; // Reset for continuation
         startRenderLoop();
         
         abortController = new AbortController();
@@ -907,15 +939,21 @@ You are HyperRush AI.
         
         function loop() {
             if (!renderPending) return;
-            if (currentStreamElement && currentStreamText !== undefined) {
-                // Optimized: Only update innerHTML, no MathJax during stream
-                currentStreamElement.innerHTML = parseMarkdown(currentStreamText);
-                
-                // Auto scroll logic
-                if (!userScrolledUp) {
-                   scrollToBottom();
+
+            // Only update DOM if text has changed
+            if (currentStreamText !== lastRenderedText) {
+                lastRenderedText = currentStreamText;
+                if (currentStreamElement) {
+                    currentStreamElement.innerHTML = parseMarkdown(currentStreamText);
+                    _renderMathLive(currentStreamElement);
                 }
             }
+            
+            // Always check scroll position
+            if (!userScrolledUp && currentStreamElement) {
+                scrollToBottom();
+            }
+            
             rafId = requestAnimationFrame(loop);
         }
         loop();
@@ -927,7 +965,6 @@ You are HyperRush AI.
             cancelAnimationFrame(rafId);
             rafId = null;
         }
-        // Final MathJax render happens in renderMsg -> renderAiContent when isComplete=true
     }
 
     // --- Lightbox & File Handling ---
