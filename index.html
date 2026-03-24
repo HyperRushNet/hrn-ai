@@ -178,7 +178,7 @@
       current_events: true
     },
     "gemini-fast": {
-      internet: true, // Gemini fast also has search tools in this API
+      internet: false, // Gemini fast also has search tools in this API
       web_search: true,
       code: true,
       reasoning: true,
@@ -728,7 +728,7 @@ End of setup.
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + PK },
         body: JSON.stringify({
-          model: "openai-fast", // Use fast model for title gen
+          model: "gemini-fast", // Use fast model for title gen
           messages: [
             { role: "system", content: "Generate a very short title (max 4 words) for this conversation. Respond with ONLY the title, no quotes, no punctuation. Use the same language as the user's message." },
             { role: "user", content: "User: " + userMessage + "\n\nAssistant: " + aiResponse.substring(0, 200) }
