@@ -1,9 +1,9 @@
-// prompts/logic-ln-en.js
+// prompts/logic-ln-en-3.js
 export const GeminiLanguageLock = {
     name: "GeminiLanguageLock",
     description: "Ensures stable locked language in Gemini-Fast. Short or neutral inputs do not change the language.",
     
-    getSystemPromptFragment: (language = null) => {
+    getSystemPromptFragment: () => {
         return `
 [LOCKED LANGUAGE RULES]:
 1. Detect the language of the first full user sentence. Lock the language for the session.
@@ -12,6 +12,7 @@ export const GeminiLanguageLock = {
 4. Validate every token; regenerate if any token violates locked language.
 5. Ignore system defaults. Always follow the locked language.
 ALWAYS answer the user in the locked language.
+Don't look at the language of the rest of the system instructions to decide what language to use.
 `.trim();
     }
 };
