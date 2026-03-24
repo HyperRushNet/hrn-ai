@@ -3,21 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Apex - Gemini Fast Edition</title>
+    <title>Gemini Fast Chat – Locked Language</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.6.min.js"></script>
+    <script type="module">
+        import { GeminiLanguageLock } from 'https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai@main/prompts/logic-ln-en-3.js';
+
+        let client = null;
+
+        const SYSTEM_PROMPT = `
+Welcome to Gemini-Fast Chat.
+${GeminiLanguageLock.getSystemPromptFragment('nl')}
+`;
+
+        function addMessage(role, text = "") {
+            const win = document.getElementById('chat-window');
+            const div = document.createElement('div');
+            div.className = `msg ${role === 'user' ? 'user' : 'ai'}`;
+            div.innerHTML = role === 'ai' ? (text ? marked.parse(text) : '...') : text;
+            win.appendChild(div);
+            win.scrollTo({ top: win.scrollHeight, behavior: 'smooth' });
+            return div;
+        }
+
+        async function send() {
+            const input = document.getElementById('prompt');
+            const val = input.value.trim();
+            if (!val || !client) return;
+
+            addMessage('user', val);
+            input.value = '';
+            const aiMsgDiv = addMessage('ai', '');
+            let fullText = "";
+
+            document.getElementById('statusBar').textContent = "⚡ ANALYSING...";
+            try {
+                await client.generate(val, {
+                    onStream: (chunk) => {
+                        fullText += chunk;
+                        aiMsgDiv.innerHTML = marked.parse(fullText);
+                        document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
+                    }
+                });
+                document.getElementById('statusBar').textContent = "✅ APEX ONLINE";
+            } catch (e) {
+                aiMsgDiv.innerHTML = "<strong>Fout:</strong> " + e.message;
+                document.getElementById('statusBar').textContent = "❌ ERROR";
+            }
+        }
+
+        function init() {
+            const key = localStorage.getItem('pk');
+            if (!key) {
+                const newKey = prompt("Geen API-key gevonden. Voer je key in:");
+                if (newKey) {
+                    localStorage.setItem('pk', newKey);
+                    location.reload();
+                    return;
+                }
+            }
+
+            client = new AIClient({
+                apiKey: localStorage.getItem('pk'),
+                model: 'gemini-fast',
+                systemPrompt: SYSTEM_PROMPT,
+                historyLimit: 30,
+                stream: true
+            });
+
+            document.getElementById('statusBar').textContent = "✅ APEX ONLINE";
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('sendBtn').onclick = send;
+            document.getElementById('prompt').onkeydown = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    send();
+                }
+            };
+            document.getElementById('clearChat').onclick = () => {
+                if (client && client.clearHistory) client.clearHistory();
+                document.getElementById('chat-window').innerHTML = '';
+            };
+
+            init();
+        });
+    </script>
     <style>
-        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 900px; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
         .status { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
-        #chat-window { height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px; }
+        #chat-window {
+            height: 600px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 10px;
+        }
         .msg { padding: 14px 20px; border-radius: 15px; max-width: 80%; line-height: 1.6; font-size: 1rem; word-wrap: break-word; }
         .user { background: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
         .ai { background: #f8fafc; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e2e8f0; }
         .controls { display: flex; gap: 10px; margin-top: 20px; }
-        .hidden { display: none !important; }
         #prompt { flex-grow: 1; height: 56px; border: 2px solid #e2e8f0; border-radius: 12px; padding: 15px; font-size: 1rem; resize: none; transition: border-color 0.2s; }
         #prompt:focus { border-color: var(--accent); outline: none; }
         .btn { background: var(--primary); color: white; border: none; padding: 0 25px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
@@ -32,99 +147,10 @@
         <div id="clearChat" class="clear-btn">Reset Historie</div>
     </div>
     <div id="chat-window"></div>
-    <div id="input-area" class="controls">
+    <div class="controls">
         <textarea id="prompt" placeholder="Stel een scherpe vraag..."></textarea>
         <button id="sendBtn" class="btn">SEND</button>
     </div>
 </div>
-
-<script>
-    let client = null;
-
-const APEX_PROMPT = `
-[5 RULES YOU **HAVE** TO FOLLOW REGARDING LANGUAGE]:[1. CONTEXT OVER WORDS: Detect the overall sentence structure. Do not switch language based on loanwords (e.g., 'computer', 'e-mail', 'weekend', 'okay').},{LAST-INPUT LOCK: Identify the syntax of the user's last message and respond 100% in that language.},{FORBIDDEN FALLBACK: If the user speaks English, respond in English. Do NOT default to $LANGUAGE$ just because the interface is that language.},{FORBIDDEN FALLBACK: If the user speaks French, respond in French.},{NO TRANSLATIONS: Never provide a response in two languages. Only the detected language of the user's last turn.}]
-ALWAYS answer the user.
-`;
-
-    function addMessage(role, text = "") {
-        const win = document.getElementById('chat-window');
-        const div = document.createElement('div');
-        div.className = `msg ${role === 'user' ? 'user' : 'ai'}`;
-        div.innerHTML = role === 'ai' ? (text ? marked.parse(text) : '...') : text;
-        win.appendChild(div);
-        win.scrollTo({ top: win.scrollHeight, behavior: 'smooth' });
-        return div;
-    }
-
-    async function send() {
-        const input = document.getElementById('prompt');
-        const val = input.value.trim();
-        if (!val || !client) return;
-
-        addMessage('user', val);
-        input.value = '';
-        const aiMsgDiv = addMessage('ai', '');
-        let fullText = "";
-
-        try {
-            document.getElementById('statusBar').textContent = "⚡ ANALYSING...";
-            await client.generate(val, {
-                onStream: (chunk) => {
-                    fullText += chunk;
-                    aiMsgDiv.innerHTML = marked.parse(fullText);
-                    document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
-                }
-            });
-            document.getElementById('statusBar').textContent = "✅ APEX ONLINE";
-        } catch (e) {
-            aiMsgDiv.innerHTML = "<strong>Fout:</strong> " + e.message;
-            document.getElementById('statusBar').textContent = "❌ ERROR";
-        }
-    }
-
-    function init() {
-        const key = localStorage.getItem('pk');
-        if (key) {
-            try {
-                // Hier gebruiken we weer AIClient zoals gevraagd
-                client = new AIClient({
-                    apiKey: key,
-                    model: 'gemini-fast',
-                    historyLimit: 30,
-                    systemPrompt: APEX_PROMPT,
-                    stream: true
-                });
-                document.getElementById('statusBar').textContent = "✅ APEX ONLINE";
-                addMessage('ai', 'Systeem operationeel via Gemini-Fast. Analyse-modus actief.');
-            } catch (err) {
-                document.getElementById('statusBar').textContent = "❌ INITIALISATIE FOUT";
-            }
-        } else {
-            document.getElementById('statusBar').textContent = "❌ GEEN API-KEY GEVONDEN";
-            // Optioneel: vraag hier om de key als deze mist
-            const newKey = prompt("Geen API-key gevonden in localStorage. Voer je key in:");
-            if(newKey) {
-                localStorage.setItem('pk', newKey);
-                location.reload();
-            }
-        }
-    }
-
-    document.getElementById('clearChat').onclick = () => {
-        if(client && client.clearHistory) client.clearHistory();
-        document.getElementById('chat-window').innerHTML = '';
-        addMessage('ai', 'Geheugen gewist. Nieuwe analysesessie gestart.');
-    };
-    
-    document.getElementById('sendBtn').onclick = send;
-    document.getElementById('prompt').onkeydown = (e) => { 
-        if(e.key === 'Enter' && !e.shiftKey) { 
-            e.preventDefault(); 
-            send(); 
-        }
-    };
-    
-    init();
-</script>
 </body>
 </html>
