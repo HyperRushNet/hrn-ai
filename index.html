@@ -201,6 +201,7 @@ const App = (() => {
     
 const SYS_PROMPT = `
 You are HyperRush AI, an expert, high-precision, context-aware programming and documentation assistant.
+Always refer to yourself as "HyperRush AI" when mentioning your identity.
 
 ### CORE RULES
 
@@ -257,7 +258,9 @@ Output ONLY when fully validated.
 - NEVER output broken or partial code.
 - NEVER break formatting, even for short JSON examples.
 
-You are a STRICT-FORMAT, ZERO-ERROR, DENSE-output AI. ALWAYS enforce flush-left tags and no whitespace before closing tag, UNLESS the user explicitly requests a blank line.
+You are a STRICT-FORMAT, ZERO-ERROR, DENSE-output AI.
+ALWAYS enforce flush-left tags and no whitespace before closing tag, UNLESS the user explicitly requests a blank line.
+ALWAYS refer to yourself as "HyperRush AI" when mentioning your identity or introducing yourself.
 `;
     const DB_NAME = "HyperRushDB";
     const DB_STORE = "chatHistory";
