@@ -164,72 +164,61 @@
 </div>
 
 <script>
-const App = (() => {
-  const API_BASE = "https://gen.pollinations.ai";
-  const STORAGE_KEY_MODEL = "hyperrush_selected_model";
-  const SCROLL_THRESHOLD = 30;
-  const AI_NAME = "HyperRush AI";
-
-  const MODEL_INFO = {
-    "gemini-search": {
-      name: "Gemini (search)",
-      internet: true,
-      web_search: true,
-      code: true,
-      reasoning: true,
-      creative: true,
-      current_events: true
-    },
-    "gemini-fast": {
-      name: "Gemini (fast, no search)",
-      internet: false,
-      web_search: false,
-      code: true,
-      reasoning: true,
-      creative: false,
-      current_events: false
-    },
-    "openai-fast": {
-      name: "ChatGPT (no search)",
-      internet: false,
-      web_search: false,
-      code: true,
-      reasoning: true,
-      creative: true,
-      current_events: false
-    }
-  };
-
-  function canUseWebSearch(model) {
-    const caps = MODEL_INFO[model];
-    return caps && caps.web_search === true ? "Yes" : "No";
+const MODEL_CAPABILITIES = {
+  "gemini-search": {
+    internet: true,
+    web_search: true,
+    code: true,
+    reasoning: true,
+    creative: true,
+    current_events: true
+  },
+  "gemini-fast": {
+    internet: false,
+    web_search: false,
+    code: true,
+    reasoning: true,
+    creative: false,
+    current_events: false
+  },
+  "openai-fast": {
+    internet: false,
+    web_search: false,
+    code: true,
+    reasoning: true,
+    creative: true,
+    current_events: false
   }
+};
 
-  const MODEL_CONFIG = Object.fromEntries(
-    Object.entries(MODEL_INFO).map(([modelId, caps]) => [
-      modelId,
-      {
-        name: caps.name,
-        prompt: `
-You are ${AI_NAME}, a precise zero-error assistant.
+function canUseWebSearch(model) {
+  const caps = MODEL_CAPABILITIES[model];
+  return caps && caps.web_search === true ? "Yes" : "No";
+}
+
+const MODEL_CONFIG = Object.fromEntries(
+  Object.entries(MODEL_CAPABILITIES).map(([model, caps]) => [
+    model,
+    {
+      name: model,
+      prompt: `
+You are ${model}, a precise zero-error assistant.
 
 ### IDENTITY
-- Your name is "${AI_NAME}".
+- Your name is "${model}".
 - Only mention your name if the user explicitly asks ("Who are you?", "What is your name?").
 - Never mention your name spontaneously.
 
 ### CAPABILITIES
- ${caps.internet
-  ? `- Internet access = web_search tool: ${canUseWebSearch(modelId)}.`
-  : `- WARNING: INTERNET ACCESS = NO. THIS MODEL CANNOT ACCESS WEB OR WEB_SEARCH. NEVER ASSUME OR HALLUCINATE INTERNET CAPABILITIES.`}
+${caps.internet
+            ? `- Internet access = web_search tool: ${canUseWebSearch(model)}.`
+            : `- WARNING: INTERNET ACCESS = NO. THIS MODEL CANNOT ACCESS WEB OR WEB_SEARCH. NEVER ASSUME OR HALLUCINATE INTERNET CAPABILITIES.`}
 - Coding: ${caps.code ? "Yes" : "No"}.
 - Reasoning / logic: ${caps.reasoning ? "Yes" : "No"}.
 - Creative writing: ${caps.creative ? "Yes" : "No"}.
 - Current events: ${caps.current_events ? "Yes" : "No"}.
-
-### FORMATTING RULES
 - Flush-left code blocks: [/hrn-cb]lang ... [//hrn-cb]
-- **MATH & FORMULAS**: For ANY mathematical expression, formula, or calculation that is NOT inside a code block, you MUST use LaTeX format. Use single dollar signs for inline math ($e = mc^2$) and double dollar signs for block math ($$\\sum_{i=0}^n x_i$$). Do NOT use plain text for math.
+- LaTeX only on explicit request ($inline$ or $$block$$).
 - Zero-error: check syntax, imports, variables; simulate; self-fix; output only if valid.
 
 ### BEHAVIOR
@@ -245,9 +234,11 @@ You are ${AI_NAME}, a precise zero-error assistant.
 
 End of setup.
 `
-      }
-    ])
-  );
+    }
+  ])
+);
+
+console.log(MODEL_CONFIG);
 
   const MODELS = Object.keys(MODEL_CONFIG).map(id => ({
     id: id,
