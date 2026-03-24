@@ -3,43 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Apex Ultra - Official Stream Edition</title>
+    <title>AI Apex - Gemini Fast Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.6.min.js"></script>
     <style>
-        :root { --primary: #0f172a; --accent: #10b981; --bg: #f3f4f6; }
+        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 850px; background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        
-        #chat-window { height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
-        .msg { padding: 12px 18px; border-radius: 14px; max-width: 85%; line-height: 1.6; font-size: 1rem; word-wrap: break-word; }
-        .user { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .ai { background: #f1f5f9; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e2e8f0; }
-
-        /* Markdown Styling */
-        .ai p { margin: 0 0 10px 0; }
-        .ai code { background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
-        .ai pre { background: #1e293b; color: #fff; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
-        .ai table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-        .ai th, .ai td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
-
-        .controls { display: flex; gap: 10px; align-items: flex-end; }
-        #prompt { flex-grow: 1; height: 54px; resize: none; border: 2px solid #e2e8f0; border-radius: 8px; padding: 14px; font-size: 1rem; }
-        #prompt:focus { border-color: #2563eb; outline: none; }
-        
-        .btn { background: var(--primary); color: white; border: none; padding: 0 25px; height: 54px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .hidden { display: none; }
-        .status-bar { font-size: 0.75rem; color: #94a3b8; text-align: center; margin-bottom: 10px; }
+        .container { width: 100%; max-width: 900px; background: #fff; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        .status { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        #chat-window { height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px; }
+        .msg { padding: 14px 20px; border-radius: 15px; max-width: 80%; line-height: 1.6; font-size: 1rem; word-wrap: break-word; }
+        .user { background: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .ai { background: #f8fafc; color: var(--primary); align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e2e8f0; }
+        .controls { display: flex; gap: 10px; margin-top: 20px; }
+        .hidden { display: none !important; }
+        #prompt { flex-grow: 1; height: 56px; border: 2px solid #e2e8f0; border-radius: 12px; padding: 15px; font-size: 1rem; resize: none; transition: border-color 0.2s; }
+        #prompt:focus { border-color: var(--accent); outline: none; }
+        .btn { background: var(--primary); color: white; border: none; padding: 0 25px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .clear-btn { color: #ef4444; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <div id="statusBar" class="status-bar">Systeem laden...</div>
+    <div class="header">
+        <div id="statusBar" class="status">Systeem Actief</div>
+        <div id="clearChat" class="clear-btn">Reset Historie</div>
+    </div>
     <div id="chat-window"></div>
-    <div id="input-area" class="controls hidden">
-        <textarea id="prompt" placeholder="Stel je vraag..."></textarea>
-        <button id="sendBtn" class="btn">Verzend</button>
+    <div id="input-area" class="controls">
+        <textarea id="prompt" placeholder="Stel een scherpe vraag..."></textarea>
+        <button id="sendBtn" class="btn">SEND</button>
     </div>
 </div>
 
@@ -47,51 +42,18 @@
     let client = null;
 
 const APEX_PROMPT = `
-[CORE_LANGUAGE_PROTOCOL: MANDATORY]
-1. DETECTION: Identify the dominant language of the USER'S history. Ignore the language of this system prompt.
-2. STICKY_MODE: Once a language is active (Dutch, Japanese, Korean, etc.), stay in that language.
-3. ANTI-DRIFT: 
-   - Never switch to English based on neutral tokens: "ok", "cool", "hey", "yes", "no", "test".
-   - Only switch language if the user provides a complete, syntactically correct sentence in a new language.
-4. RESPONSE_WEIGHT: 
-   - Strict ban on 1- or 2-word replies. 
-   - Even if the user is minimalist, the response must be substantive, analytical, and context-aware.
-   - If the user says "Ok", acknowledge it within the current context and provide a brief intellectual follow-up in the same language.
-5. INTEGRATION: Execute all other system roles (Identity, Persona) strictly within the bounds of this Language Protocol.
-
-[IDENTITY_PROMPT: DARK_ANGEL]
-- Tone: Ancient, analytical, and uncompromising.
-- Style: Use solemn and profound vocabulary (shadows, truth, void). No service-talk.
-- Formatting: Clean Markdown.
+[5 RULES YOU **HAVE** TO FOLLOW REGARDING LANGUAGE]:[1. CONTEXT OVER WORDS: Detect the overall sentence structure. Do not switch language based on loanwords (e.g., 'computer', 'e-mail', 'weekend', 'okay').},{LAST-INPUT LOCK: Identify the syntax of the user's last message and respond 100% in that language.},{FORBIDDEN FALLBACK: If the user speaks English, respond in English. Do NOT default to $LANGUAGE$ just because the interface is that language.},{FORBIDDEN FALLBACK: If the user speaks French, respond in French.},{NO TRANSLATIONS: Never provide a response in two languages. Only the detected language of the user's last turn.}]
+ALWAYS answer the user.
 `;
 
     function addMessage(role, text = "") {
         const win = document.getElementById('chat-window');
         const div = document.createElement('div');
         div.className = `msg ${role === 'user' ? 'user' : 'ai'}`;
-        div.innerHTML = role === 'ai' ? marked.parse(text) : text;
+        div.innerHTML = role === 'ai' ? (text ? marked.parse(text) : '...') : text;
         win.appendChild(div);
         win.scrollTo({ top: win.scrollHeight, behavior: 'smooth' });
         return div;
-    }
-
-    // Volgens docs: Initialiseer met localStorage sleutel
-    function init() {
-        const key = localStorage.getItem('pk');
-        if (key) {
-            client = new AIClient({
-                apiKey: key,
-                model: 'gemini-fast',
-                historyLimit: 30,
-                systemPrompt: APEX_PROMPT,
-                stream: true // Global stream setting
-            });
-            document.getElementById('input-area').classList.remove('hidden');
-            document.getElementById('statusBar').textContent = "✅ Verbonden | Streaming Actief";
-            addMessage('ai', 'Systeem operationeel. Streaming mode geactiveerd.');
-        } else {
-            document.getElementById('statusBar').textContent = "❌ Geen sleutel 'pk' gevonden in localStorage";
-        }
     }
 
     async function send() {
@@ -101,30 +63,67 @@ const APEX_PROMPT = `
 
         addMessage('user', val);
         input.value = '';
-        
-        const aiMsgDiv = addMessage('ai', '...');
+        const aiMsgDiv = addMessage('ai', '');
         let fullText = "";
 
         try {
-            // Gebruik de officiële .generate() met onStream callback uit de docs
+            document.getElementById('statusBar').textContent = "⚡ ANALYSING...";
             await client.generate(val, {
                 onStream: (chunk) => {
                     fullText += chunk;
                     aiMsgDiv.innerHTML = marked.parse(fullText);
-                    // Forceer scroll naar beneden tijdens streamen
                     document.getElementById('chat-window').scrollTop = document.getElementById('chat-window').scrollHeight;
                 }
             });
+            document.getElementById('statusBar').textContent = "✅ APEX ONLINE";
         } catch (e) {
-            aiMsgDiv.textContent = "Fout: " + e.message;
+            aiMsgDiv.innerHTML = "<strong>Fout:</strong> " + e.message;
+            document.getElementById('statusBar').textContent = "❌ ERROR";
         }
     }
 
-    document.getElementById('sendBtn').addEventListener('click', send);
-    document.getElementById('prompt').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-    });
+    function init() {
+        const key = localStorage.getItem('pk');
+        if (key) {
+            try {
+                // Hier gebruiken we weer AIClient zoals gevraagd
+                client = new AIClient({
+                    apiKey: key,
+                    model: 'gemini-fast',
+                    historyLimit: 30,
+                    systemPrompt: APEX_PROMPT,
+                    stream: true
+                });
+                document.getElementById('statusBar').textContent = "✅ APEX ONLINE";
+                addMessage('ai', 'Systeem operationeel via Gemini-Fast. Analyse-modus actief.');
+            } catch (err) {
+                document.getElementById('statusBar').textContent = "❌ INITIALISATIE FOUT";
+            }
+        } else {
+            document.getElementById('statusBar').textContent = "❌ GEEN API-KEY GEVONDEN";
+            // Optioneel: vraag hier om de key als deze mist
+            const newKey = prompt("Geen API-key gevonden in localStorage. Voer je key in:");
+            if(newKey) {
+                localStorage.setItem('pk', newKey);
+                location.reload();
+            }
+        }
+    }
 
+    document.getElementById('clearChat').onclick = () => {
+        if(client && client.clearHistory) client.clearHistory();
+        document.getElementById('chat-window').innerHTML = '';
+        addMessage('ai', 'Geheugen gewist. Nieuwe analysesessie gestart.');
+    };
+    
+    document.getElementById('sendBtn').onclick = send;
+    document.getElementById('prompt').onkeydown = (e) => { 
+        if(e.key === 'Enter' && !e.shiftKey) { 
+            e.preventDefault(); 
+            send(); 
+        }
+    };
+    
     init();
 </script>
 </body>
