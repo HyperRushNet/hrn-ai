@@ -364,6 +364,7 @@ You are HyperRush AI.
     let renderPending = false;
     let currentStreamText = ""; 
     let currentStreamElement = null;
+    let lastRenderedText = ""; // Optimization to prevent flickering
 
     // --- Web Worker for Image Processing ---
     const imageWorkerCode = `
@@ -838,6 +839,7 @@ You are HyperRush AI.
         const bodyDiv = msgDiv.querySelector(".md-body");
         
         currentStreamText = "";
+        lastRenderedText = ""; // Reset rendered text tracker
         currentStreamElement = bodyDiv;
         startRenderLoop();
 
@@ -903,6 +905,7 @@ You are HyperRush AI.
 
     async function streamAIContinuation(chat, bodyDiv, initialText) {
         currentStreamText = initialText;
+        lastRenderedText = ""; // Reset for continuation
         startRenderLoop();
         
         abortController = new AbortController();
@@ -936,11 +939,21 @@ You are HyperRush AI.
         
         function loop() {
             if (!renderPending) return;
-            if (currentStreamElement && currentStreamText !== undefined) {
-                currentStreamElement.innerHTML = parseMarkdown(currentStreamText);
-                _renderMathLive(currentStreamElement);
-                if (!userScrolledUp) scrollToBottom();
+
+            // Only update DOM if text has changed
+            if (currentStreamText !== lastRenderedText) {
+                lastRenderedText = currentStreamText;
+                if (currentStreamElement) {
+                    currentStreamElement.innerHTML = parseMarkdown(currentStreamText);
+                    _renderMathLive(currentStreamElement);
+                }
             }
+            
+            // Always check scroll position
+            if (!userScrolledUp && currentStreamElement) {
+                scrollToBottom();
+            }
+            
             rafId = requestAnimationFrame(loop);
         }
         loop();
