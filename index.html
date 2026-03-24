@@ -225,8 +225,6 @@ You are HyperRush AI. You MUST use custom tags for code blocks.
     let currentStreamText = "";
     let currentStreamElement = null;
     let lastRenderedText = "";
-    let activeCodeBlockElement = null;
-    let lastCodeBlockLang = "";
 
     // Worker for images
     const imageWorkerCode = `self.onmessage=function(e){const f=e.data,r=new FileReader();r.onload=function(ev){self.postMessage({id:f.name,result:ev.target.result});};r.readAsDataURL(f);};`;
@@ -267,16 +265,40 @@ You are HyperRush AI. You MUST use custom tags for code blocks.
     // --- NEW CODE BLOCK LOGIC ---
     // Generates the HTML for a code block manually
     function generateCodeBlockHtml(code, lang) {
-        let highlighted = code;
+        // 1. Escape the code content first
+        let escapedCode = escapeHtml(code);
+        
+        // 2. Apply highlighting manually to the escaped string
+        // We use highlight.js on the raw text, but since we escaped it, we need to be careful.
+        // Actually, hljs works on the raw string. We should highlight FIRST, then escape? 
+        // No, hljs returns HTML. If we escape first, hljs won't see the tags.
+        // Correct order: 
+        // a. Decode entities if any? No, input is raw text.
+        // b. Highlight using hljs. This returns HTML string with <span class="...">.
+        // c. BUT, we want the output to be safe. If the code contains HTML, hljs puts it in spans.
+        //    If the code contains <script>, hljs might output <span...>&lt;script&gt;...</span> IF we configure it, 
+        //    but usually hljs just returns text with spans.
+        //    We must ensure the raw code text is escaped inside the returned HTML.
+        
+        // Let's refine:
+        let highlightedCode = "";
         try {
             if (lang && hljs.getLanguage(lang)) {
-                highlighted = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+                highlightedCode = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
             } else {
-                highlighted = hljs.highlightAuto(code).value;
+                highlightedCode = hljs.highlightAuto(code).value;
             }
-        } catch (e) { console.error(e); highlighted = escapeHtml(code); }
+        } catch (e) { 
+            console.error(e); 
+            highlightedCode = escapeHtml(code); 
+        }
         
-        return `<div class="code-wrapper"><div class="code-header"><span class="code-lang">${escapeHtml(lang || 'plaintext')}</span><button class="copy-code-btn" onclick="App.copyCodeBlock(this)">Copy</button></div><pre><code class="hljs language-${escapeHtml(lang || '')}">${highlighted}</code></pre></div>`;
+        // Note: hljs.highlight returns HTML where special chars are already converted to entities mostly?
+        // Actually, hljs returns HTML safe string. 
+        // Example: code = "<div>" -> hljs returns "&lt;div&gt;" (wrapped in spans usually).
+        // So we trust hljs output.
+        
+        return `<div class="code-wrapper"><div class="code-header"><span class="code-lang">${escapeHtml(lang || 'plaintext')}</span><button class="copy-code-btn" onclick="App.copyCodeBlock(this)">Copy</button></div><pre><code class="hljs language-${escapeHtml(lang || '')}">${highlightedCode}</code></pre></div>`;
     }
 
     // --- MARKDOWN PARSER ---
@@ -851,8 +873,6 @@ You are HyperRush AI. You MUST use custom tags for code blocks.
         currentStreamText = "";
         lastRenderedText = "";
         currentStreamElement = bodyDiv;
-        activeCodeBlockElement = null;
-        lastCodeBlockLang = "";
         
         startRenderLoop();
         abortController = new AbortController();
@@ -939,70 +959,67 @@ You are HyperRush AI. You MUST use custom tags for code blocks.
         function loop() {
             if (!renderPending) return;
             
-            const openTags = (currentStreamText.match(/\[\/hrn-cb\]/g) || []).length;
-            const closeTags = (currentStreamText.match(/\[\/\/hrn-cb\]/g) || []).length;
-            const isInCustomCodeBlock = openTags > closeTags;
-
             if (currentStreamText !== lastRenderedText) {
-                
+                // Check if we are inside a custom code block
+                const openTags = (currentStreamText.match(/\[\/hrn-cb\]/g) || []).length;
+                const closeTags = (currentStreamText.match(/\[\/\/hrn-cb\]/g) || []).length;
+                const isInCustomCodeBlock = openTags > closeTags;
+
                 if (isInCustomCodeBlock) {
-                    const prevOpen = (lastRenderedText.match(/\[\/hrn-cb\]/g) || []).length;
-                    const prevClose = (lastRenderedText.match(/\[\/\/hrn-cb\]/g) || []).length;
-                    const wasInCustomCodeBlock = prevOpen > prevClose;
-
+                    // We are streaming inside a code block.
+                    // We split the text: everything before the LAST open tag is "stable", the rest is "active".
                     const lastOpenIndex = currentStreamText.lastIndexOf("[/hrn-cb]");
-                    let lang = "";
-                    let codeContent = "";
                     
-                    if (lastOpenIndex !== -1) {
-                        const blockContent = currentStreamText.substring(lastOpenIndex + 9); 
-                        const firstNewLine = blockContent.indexOf("\n");
-                        
-                        if (firstNewLine !== -1) {
-                            lang = blockContent.substring(0, firstNewLine).trim();
-                            codeContent = blockContent.substring(firstNewLine + 1);
+                    // 1. Render stable part (normal markdown)
+                    const stableText = currentStreamText.substring(0, lastOpenIndex);
+                    currentStreamElement.innerHTML = parseMarkdown(stableText);
+                    
+                    // 2. Render active part (streaming code)
+                    const activePart = currentStreamText.substring(lastOpenIndex); // includes tag
+                    const codeContent = activePart.substring(9); // remove "[/hrn-cb]"
+                    
+                    // Parse lang and code
+                    const firstNewline = codeContent.indexOf("\n");
+                    let lang = "";
+                    let code = "";
+                    
+                    if (firstNewline !== -1) {
+                        lang = codeContent.substring(0, firstNewline).trim();
+                        code = codeContent.substring(firstNewline + 1);
+                    } else {
+                        // Still typing language or no newline yet
+                        lang = codeContent;
+                        code = "";
+                    }
+
+                    // Generate HTML for active block
+                    // We manually highlight and escape here to ensure safety during stream
+                    let highlightedCode = "";
+                    try {
+                        if (lang && hljs.getLanguage(lang)) {
+                            highlightedCode = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
                         } else {
-                            lang = blockContent;
-                            codeContent = "";
+                            highlightedCode = hljs.highlightAuto(code).value;
                         }
+                    } catch(e) {
+                        highlightedCode = escapeHtml(code);
                     }
-
-                    if (!wasInCustomCodeBlock || !activeCodeBlockElement) {
-                        currentStreamElement.innerHTML = parseMarkdown(currentStreamText);
-                        
-                        const wrappers = currentStreamElement.querySelectorAll('.code-wrapper');
-                        if (wrappers.length > 0) {
-                            const lastWrapper = wrappers[wrappers.length - 1];
-                            activeCodeBlockElement = lastWrapper.querySelector('pre code');
-                            
-                            const headerSpan = lastWrapper.querySelector('.code-lang');
-                            if (headerSpan) headerSpan.innerText = lang || 'code';
-                        }
-                    } 
-                    else if (activeCodeBlockElement) {
-                        try {
-                            if (lang && hljs.getLanguage(lang)) {
-                                activeCodeBlockElement.innerHTML = hljs.highlight(codeContent, { language: lang, ignoreIllegals: true }).value;
-                            } else {
-                                activeCodeBlockElement.innerHTML = escapeHtml(codeContent);
-                            }
-                        } catch (e) {
-                            activeCodeBlockElement.innerHTML = escapeHtml(codeContent);
-                        }
-
-                        if (lang !== lastCodeBlockLang) {
-                            const wrapper = activeCodeBlockElement.closest('.code-wrapper');
-                            if (wrapper) {
-                                const langLabel = wrapper.querySelector('.code-lang');
-                                if (langLabel) langLabel.innerText = lang || 'code';
-                            }
-                            lastCodeBlockLang = lang;
-                        }
-                    }
+                    
+                    // Note: hljs output is HTML safe. We trust it.
+                    // But since we are inserting via innerHTML, it's fine.
+                    
+                    const activeHtml = `
+                        <div class="code-wrapper">
+                           <div class="code-header"><span class="code-lang">${escapeHtml(lang || 'code')}</span></div>
+                           <pre><code class="hljs language-${escapeHtml(lang)}">${highlightedCode}</code></pre>
+                        </div>
+                    `;
+                    
+                    currentStreamElement.innerHTML += activeHtml;
+                    
                 } else {
+                    // Not inside code block, render everything normally
                     currentStreamElement.innerHTML = parseMarkdown(currentStreamText);
-                    activeCodeBlockElement = null;
-                    lastCodeBlockLang = "";
                     
                     if (window.MathJax && Date.now() - lastMathjaxRender > 500) {
                          lastMathjaxRender = Date.now();
