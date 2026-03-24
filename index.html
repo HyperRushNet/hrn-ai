@@ -227,7 +227,7 @@ New Chat
 <div class="container" id="chat-container"></div>
 </div>
 <!-- Scroll Down Button -->
-<button id="scroll-down-btn" class="scroll-down-btn" onclick="App.scrollToBottom()" title="Scroll to bottom">
+<button id="scroll-down-btn" class="scroll-down-btn" onclick="App.scrollToBottom(true)" title="Scroll to bottom">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 5v14M19 12l-7 7-7-7"/>
     </svg>
@@ -461,8 +461,11 @@ You are HyperRush AI.
         }
     }
 
-    function scrollToBottom() {
-        chatViewEl.scrollTo({ top: chatViewEl.scrollHeight, behavior: 'smooth' });
+    // Modified to handle instant vs smooth scroll
+    function scrollToBottom(smooth = false) {
+        // Use 'auto' (instant) for generation to prevent scroll breaking logic
+        // Use 'smooth' for manual button press
+        chatViewEl.scrollTo({ top: chatViewEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
     }
 
     // --- Message Rendering ---
