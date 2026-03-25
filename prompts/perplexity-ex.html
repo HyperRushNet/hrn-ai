@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pure</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/HyperRushNet/hrn-ai/client/1.0.6.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg: #000; --fg: #f5f5f7; --muted: #444; --border: rgba(255,255,255,0.06); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+    body { background: var(--bg); color: var(--fg); height: 100dvh; display: flex; overflow: hidden; }
+    .sidebar { width: 240px; border-right: 1px solid var(--border); padding: 40px 20px; display: flex; flex-direction: column; transition: 0.3s; }
+    @media (max-width: 900px) { .sidebar { position: fixed; left: -240px; height: 100%; z-index: 100; background: #000; } body.open .sidebar { left: 0; } }
+    .new-chat { background: none; border: none; color: var(--fg); font-size: 13px; cursor: pointer; margin-bottom: 40px; opacity: 0.4; text-align: left; }
+    .chat-item { padding: 10px 0; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-item.active { color: var(--fg); font-weight: 500; }
+    .main { flex: 1; display: flex; flex-direction: column; }
+    header { padding: 30px; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .chat-container { flex: 1; overflow-y: auto; padding: 0 40px; scrollbar-width: none; }
+    .content-limit { max-width: 680px; margin: 0 auto; width: 100%; }
+    .msg { margin-bottom: 50px; line-height: 1.8; font-size: 16px; animation: fadeIn 0.4s ease; }
+    .msg.user { color: var(--fg); font-weight: 500; margin-top: 40px; }
+    .msg.ai { color: #999; }
+    .cite { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; font-size: 9px; color: var(--muted); border: 1px solid var(--muted); border-radius: 3px; margin: 0 4px; text-decoration: none; }
+    .input-wrap { padding: 40px; }
+    .input-box { max-width: 680px; margin: 0 auto; display: flex; border-bottom: 1px solid var(--border); padding: 12px 0; }
+    .input-box:focus-within { border-bottom-color: var(--fg); }
+    textarea { flex: 1; background: none; border: none; color: var(--fg); outline: none; font-size: 16px; resize: none; line-height: 1.5; }
+    .send-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding-left: 15px; }
+    pre { background: #080808; padding: 20px; border-radius: 4px; margin: 25px 0; border: 1px solid var(--border); overflow-x: auto; }
+    code { font-family: monospace; font-size: 13px; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+<aside class="sidebar"><button class="new-chat" onclick="App.newChat()">New Thread</button><div id="chat-list" class="chat-list"></div></aside>
+<main class="main">
+  <header><div onclick="document.body.classList.toggle('open')" style="cursor:pointer">Archive</div><div id="status">Ready</div></header>
+  <div class="chat-container" id="scroll-area"><div class="content-limit" id="chat-box"></div></div>
+  <div class="input-wrap"><div class="input-box"><textarea id="input" placeholder="Message..." rows="1"></textarea><button id="send-btn" class="send-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg></button></div></div>
+</main>
+<script>
+  const App = {
+    state: { chats: [], id: null, busy: false, lastNeedsSources: false },
+    async init() {
+      const pk = localStorage.getItem("hr_pk") || new URLSearchParams(location.hash.slice(1)).get("api_key");
+      if (!pk) return location.href = `https://enter.pollinations.ai/authorize?redirect_url=${encodeURIComponent(location.href)}&app_key=pk_kn9KoGgYC7i5Sk6P`;
+      localStorage.setItem("hr_pk", pk);
+      this.ai = new AIClient({ apiKey: pk, model: "perplexity-fast", stream: true });
+      this.bind(); this.load(); this.newChat();
+    },
+    bind() {
+      document.getElementById("send-btn").onclick = () => this.send();
+      const input = document.getElementById("input");
+      input.oninput = () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; };
+      input.onkeydown = e => { if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.send(); } };
+    },
+    parse(text, forceHide) {
+      let clean = text.replace(/\[SOURCES\][\s\S]*?(\[\/SOURCES\]|$)/, '');
+      
+      // Als de user NIET om bronnen vroeg, verwijderen we ALLE [cijfers] patronen
+      if (forceHide) {
+        clean = clean.replace(/\[\d+\]/g, ''); 
+        // Verwijder ook onbedoelde cijfers aan het eind van zinnen die de AI soms plakt
+        clean = clean.replace(/(\w)(\d{1,3})(\s|$)/g, '$1$3'); 
+      }
+
+      const match = text.match(/\[SOURCES\]([\s\S]*?)\[\/SOURCES\]/);
+      const sources = {};
+      if (match) {
+        match[1].split('\n').forEach(l => {
+          const m = l.match(/(\d+)[:]\s*(https?:\/\/[^\s]+)/);
+          if (m) sources[m[1]] = m[2];
+        });
+      }
+
+      let html = clean.replace(/\[(\d+)\]/g, (f, n) => sources[n] ? `<a href="${sources[n]}" target="_blank" class="cite">${n}</a>` : '');
+      return DOMPurify.sanitize(marked.parse(html), { ADD_ATTR: ['target'] });
+    },
+    async send() {
+      if (this.state.busy) return;
+      const input = document.getElementById("input");
+      const val = input.value.trim();
+      if (!val) return;
+
+      this.state.lastNeedsSources = /bron|source|cite|waarom|onderzoek/i.test(val);
+      this.ai.systemPrompt = this.state.lastNeedsSources 
+        ? "Answer with [1] citations. End with [SOURCES] 1: URL [/SOURCES]." 
+        : "Direct answer. NEVER use any brackets like [1], [2] or reference numbers. Just plain text.";
+
+      if (!this.state.id) {
+        this.state.id = Date.now();
+        this.state.chats.unshift({ id: this.state.id, title: val.slice(0, 30), msgs: [] });
+      }
+
+      this.state.chats.find(c => c.id === this.state.id).msgs.push({ role: 'user', content: val });
+      this.render('user', val);
+      input.value = ""; input.style.height = "auto";
+      this.setBusy(true);
+      
+      let aiText = "";
+      const aiBox = this.render('ai', '');
+      try {
+        await this.ai.generate(val, {
+          onStream: (t) => {
+            aiText += t;
+            aiBox.innerHTML = this.parse(aiText, !this.state.lastNeedsSources);
+            document.getElementById("scroll-area").scrollTop = document.getElementById("scroll-area").scrollHeight;
+          }
+        });
+        this.state.chats.find(c => c.id === this.state.id).msgs.push({ role: 'assistant', content: aiText });
+        this.save();
+      } finally { this.setBusy(false); this.renderList(); }
+    },
+    render(role, text) {
+      const div = document.createElement("div");
+      div.className = `msg ${role}`;
+      div.innerHTML = role === 'user' ? text : this.parse(text, !this.state.lastNeedsSources);
+      document.getElementById("chat-box").appendChild(div);
+      return div;
+    },
+    setBusy(b) { this.state.busy = b; document.getElementById("status").textContent = b ? "Thinking" : "Ready"; },
+    save() { localStorage.setItem("hr_pure_v10", JSON.stringify(this.state.chats)); },
+    load() { this.state.chats = JSON.parse(localStorage.getItem("hr_pure_v10") || "[]"); this.renderList(); },
+    renderList() {
+      const l = document.getElementById("chat-list"); l.innerHTML = "";
+      this.state.chats.forEach(c => {
+        const d = document.createElement("div");
+        d.className = `chat-item ${c.id === this.state.id ? 'active' : ''}`;
+        d.textContent = c.title;
+        d.onclick = () => this.loadChat(c.id);
+        l.appendChild(d);
+      });
+    },
+    loadChat(id) {
+      this.state.id = id; document.getElementById("chat-box").innerHTML = "";
+      this.state.chats.find(c => c.id === id).msgs.forEach(m => {
+          // Bij het laden van oude chats ook de filter checken
+          this.state.lastNeedsSources = /bron|source|cite|waarom|onderzoek/i.test(m.content);
+          this.render(m.role, m.content);
+      });
+      this.renderList(); document.body.classList.remove("open");
+    },
+    newChat() { this.state.id = null; document.getElementById("chat-box").innerHTML = ""; this.renderList(); }
+  };
+  window.onload = () => App.init();
+</script>
+</body>
+</html>
