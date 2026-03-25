@@ -658,15 +658,9 @@ End of setup.
       const bodyDiv = document.createElement("div");
       bodyDiv.className = "md-body";
       msgDiv.appendChild(bodyDiv);
-
-      const totalMessages = CHATS.find(c => c.id === CURRENT_ID)?.messages?.length || 0;
-      const isNearEnd = index >= totalMessages - 3;
-
-      if (forceRender || isNearEnd || !isComplete) {
-        renderAiContent(msgDiv, content, isComplete);
-      } else {
-        bodyDiv.innerHTML = `<div style="height: 50px; background: rgba(255,255,255,0.03); border-radius: 8px; margin: 10px 0;"></div>`;
-      }
+      
+      // FIX: Removed lazy rendering logic that caused gray boxes
+      renderAiContent(msgDiv, content, isComplete);
     }
     chatContainerEl.appendChild(msgDiv);
     return msgDiv;
